@@ -110,6 +110,7 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
       if (ipHash && deps.attempts) {
         await deps.attempts.recordFailure(ipHash, nowMs, 900000);
       }
+      await audit("identity.register.captcha-failed", null, clientIp);
       return { ok: false, reason: "captcha-failed" };
     }
     try {
