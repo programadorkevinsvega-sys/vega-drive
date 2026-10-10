@@ -57,6 +57,11 @@ describe("architecture guard", () => {
     expect(pkg.scripts["cloudflare:build"]).toMatch(
       /^pnpm run deploy:preflight &&/,
     );
+    const workflow = await readFile(
+      resolve(".github/workflows/ci.yml"),
+      "utf8",
+    );
+    expect(workflow).toContain("pnpm run verify:module-migrations");
   });
 
   it("rejects cross-module internal imports", async () => {
