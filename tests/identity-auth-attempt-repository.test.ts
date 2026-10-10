@@ -26,7 +26,9 @@ describe("identity auth-attempt repository", () => {
     });
     const repository = new D1IdentityAuthAttemptRepository(fake.db);
 
-    await expect(repository.find("sha256-key", 1_000_000, 900_000)).resolves.toEqual({
+    await expect(
+      repository.find("sha256-key", 1_000_000, 900_000),
+    ).resolves.toEqual({
       failedAttempts: 10,
       windowStartedAt: 0,
       lockedUntil: 1_800_000,

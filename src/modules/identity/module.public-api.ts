@@ -74,7 +74,13 @@ export function createIdentityModule(
     outbox,
     maxUsers,
   });
-  const login = createLoginUser({ users, sessions, attempts, turnstile, outbox });
+  const login = createLoginUser({
+    users,
+    sessions,
+    attempts,
+    turnstile,
+    outbox,
+  });
   const resolveSession = createSessionResolver({ sessions, users });
   const changePassword = createChangePassword({ users, sessions, outbox });
   const ready = Boolean(turnstileSiteKey && turnstileSecretConfigured);
