@@ -11,10 +11,14 @@ const UPLOAD_COLUMNS =
 export class D1FilesUploadRepository implements FilesUploadRepository {
   constructor(private readonly db: D1Database) {}
 
-  findByIdForOwner(id: string, ownerId: string): Promise<FilesUploadRecord | null> {
+  findByIdForOwner(
+    id: string,
+    ownerId: string,
+  ): Promise<FilesUploadRecord | null> {
     return this.db
       .prepare(
-        "SELECT " + UPLOAD_COLUMNS +
+        "SELECT " +
+          UPLOAD_COLUMNS +
           " FROM files_uploads WHERE id = ? AND owner_id = ? LIMIT 1",
       )
       .bind(id, ownerId)

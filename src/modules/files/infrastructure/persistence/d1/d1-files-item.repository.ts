@@ -16,10 +16,14 @@ function boundedLimit(limit: number): number {
 export class D1FilesItemRepository implements FilesItemRepository {
   constructor(private readonly db: D1Database) {}
 
-  findByIdForOwner(id: string, ownerId: string): Promise<FilesItemRecord | null> {
+  findByIdForOwner(
+    id: string,
+    ownerId: string,
+  ): Promise<FilesItemRecord | null> {
     return this.db
       .prepare(
-        "SELECT " + ITEM_COLUMNS +
+        "SELECT " +
+          ITEM_COLUMNS +
           " FROM files_items WHERE id = ? AND owner_id = ? LIMIT 1",
       )
       .bind(id, ownerId)

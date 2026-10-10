@@ -35,7 +35,8 @@ export class D1FilesOutboxRepository implements FilesOutboxRepository {
   async listUnpublished(limit: number): Promise<FilesOutboxRecord[]> {
     const result = await this.db
       .prepare(
-        "SELECT " + OUTBOX_COLUMNS +
+        "SELECT " +
+          OUTBOX_COLUMNS +
           " FROM files_outbox WHERE published_at IS NULL " +
           "ORDER BY created_at ASC LIMIT ?",
       )

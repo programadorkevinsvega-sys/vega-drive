@@ -13,7 +13,8 @@ export class D1IdentityInviteRepository implements IdentityInviteRepository {
   findByTokenHash(tokenHash: string): Promise<IdentityInviteRecord | null> {
     return this.db
       .prepare(
-        "SELECT " + INVITE_COLUMNS +
+        "SELECT " +
+          INVITE_COLUMNS +
           " FROM identity_invites WHERE token_hash = ? LIMIT 1",
       )
       .bind(tokenHash)

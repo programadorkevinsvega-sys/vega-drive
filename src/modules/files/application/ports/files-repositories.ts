@@ -12,7 +12,10 @@ export interface FilesItemRecord {
 }
 
 export interface FilesItemRepository {
-  findByIdForOwner(id: string, ownerId: string): Promise<FilesItemRecord | null>;
+  findByIdForOwner(
+    id: string,
+    ownerId: string,
+  ): Promise<FilesItemRecord | null>;
   listByOwnerAndFolder(
     ownerId: string,
     folderId: string | null,
@@ -26,7 +29,11 @@ export interface FilesItemRepository {
     name: string,
     updatedAt: string,
   ): Promise<boolean>;
-  markDeleted(id: string, ownerId: string, deletedAt: string): Promise<boolean>;
+  markDeleted(
+    id: string,
+    ownerId: string,
+    deletedAt: string,
+  ): Promise<boolean>;
 }
 
 export interface FilesFolderRecord {
@@ -40,7 +47,10 @@ export interface FilesFolderRecord {
 }
 
 export interface FilesFolderRepository {
-  findByIdForOwner(id: string, ownerId: string): Promise<FilesFolderRecord | null>;
+  findByIdForOwner(
+    id: string,
+    ownerId: string,
+  ): Promise<FilesFolderRecord | null>;
   listChildren(
     ownerId: string,
     parentFolderId: string | null,
@@ -73,7 +83,10 @@ export interface FilesUploadRecord {
 }
 
 export interface FilesUploadRepository {
-  findByIdForOwner(id: string, ownerId: string): Promise<FilesUploadRecord | null>;
+  findByIdForOwner(
+    id: string,
+    ownerId: string,
+  ): Promise<FilesUploadRecord | null>;
   insert(upload: FilesUploadRecord): Promise<void>;
   updateStatus(
     id: string,
