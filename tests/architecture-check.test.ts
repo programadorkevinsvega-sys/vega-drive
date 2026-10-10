@@ -36,17 +36,16 @@ function expectRejected(
 
 describe("architecture guard", () => {
   it("is wired into lint", async () => {
-    const pkg = JSON.parse(
-      await readFile(resolve("package.json"), "utf8"),
-    ) as { scripts: Record<string, string> };
+    const pkg = JSON.parse(await readFile(resolve("package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+    };
 
     expect(pkg.scripts.lint).toContain("architecture-check.mjs");
   });
 
   it("rejects cross-module internal imports", async () => {
     const result = await runGuard({
-      "src/modules/files/repository.ts":
-        'import "../identity/repository.js";',
+      "src/modules/files/repository.ts": 'import "../identity/repository.js";',
     });
 
     expectRejected(result, "importa interior de identity");
