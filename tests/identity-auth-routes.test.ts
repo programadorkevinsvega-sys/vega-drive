@@ -74,6 +74,25 @@ describe("identity HTTP boundary", () => {
     });
   });
 
+  it("rejects cross-origin password changes before session resolution", async () => {
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/api/auth/password", {
+        method: "POST",
+        headers: {
+          Origin: "https://attacker.example",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword: "Old passphrase 42!",
+          newPassword: "New passphrase 84!",
+        }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "Invalid request origin" });
+  });
+
   it("protects future authenticated routes at the BFF boundary", async () => {
     const response = await app.fetch(
       new Request("https://vega-drive.test/api/protected/files"),
