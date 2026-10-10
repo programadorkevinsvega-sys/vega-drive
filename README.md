@@ -17,8 +17,6 @@ Vega Drive se diseña como un monolito modular serverless:
 
 El contrato arquitectónico está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), los controles de seguridad en [Security.md](./Security.md), el procedimiento de recuperación en [Rollback.md](./Rollback.md) y el plan por fases en [roadmap.md](./roadmap.md).
 
-
-
 ## Rollback y recuperación
 
 La política de rollback del Worker, compatibilidad de D1/R2, staging y evidencia operativa está en [Rollback.md](./Rollback.md), y su implementación planificada en la [Fase 9 del roadmap](./roadmap.md#fase-9--despliegue-operación-y-rollback).
