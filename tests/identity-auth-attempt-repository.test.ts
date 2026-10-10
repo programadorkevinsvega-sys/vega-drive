@@ -20,6 +20,19 @@ describe("identity auth-attempt repository", () => {
     expect(fake.calls[0]?.sql).not.toContain("sha256-key");
   });
 
+  it("keeps an active long lockout after the failure window expires", async () => {
+    const fake = createFakeD1({
+      first: { failedAttempts: 10, windowStartedAt: 0, lockedUntil: 1_800_000 },
+    });
+    const repository = new D1IdentityAuthAttemptRepository(fake.db);
+
+    await expect(repository.find("sha256-key", 1_000_000, 900_000)).resolves.toEqual({
+      failedAttempts: 10,
+      windowStartedAt: 0,
+      lockedUntil: 1_800_000,
+    });
+  });
+
   it("records failures atomically and applies progressive lockout thresholds", async () => {
     const fake = createFakeD1({
       first: { failedAttempts: 6, windowStartedAt: 1000, lockedUntil: 301000 },
