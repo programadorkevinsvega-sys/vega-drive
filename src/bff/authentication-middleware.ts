@@ -19,8 +19,8 @@ function sessionToken(cookie: string | undefined): string | null {
   return null;
 }
 
-export const requireAuthenticatedActor =
-  createMiddleware<AuthenticatedEnv>(async (c, next) => {
+export const requireAuthenticatedActor = createMiddleware<AuthenticatedEnv>(
+  async (c, next) => {
     const session = await createCompositionRoot(c.env).identity.resolveSession(
       sessionToken(c.req.header("Cookie")),
     );
@@ -31,4 +31,5 @@ export const requireAuthenticatedActor =
       email: session.email,
     });
     await next();
-  });
+  },
+);

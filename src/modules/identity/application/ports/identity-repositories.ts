@@ -7,12 +7,14 @@ export interface IdentityUserRecord {
   updatedAt: string;
   disabledAt: string | null;
 }
-
 export interface IdentityUserRepository {
   findById(id: string): Promise<IdentityUserRecord | null>;
   findByNormalizedEmail(email: string): Promise<IdentityUserRecord | null>;
   insert(user: IdentityUserRecord): Promise<void>;
-  insertWithinLimit(user: IdentityUserRecord, maxUsers: number): Promise<boolean>;
+  insertWithinLimit(
+    user: IdentityUserRecord,
+    maxUsers: number,
+  ): Promise<boolean>;
   updatePassword(
     userId: string,
     passwordHash: string,
@@ -20,7 +22,6 @@ export interface IdentityUserRepository {
     updatedAt: string,
   ): Promise<boolean>;
 }
-
 export interface IdentitySessionRecord {
   id: string;
   userId: string;
@@ -30,9 +31,10 @@ export interface IdentitySessionRecord {
   expiresAt: string;
   revokedAt: string | null;
 }
-
 export interface IdentitySessionRepository {
-  findByTokenHash(tokenHash: string): Promise<IdentitySessionRecord | null>;
+  findByTokenHash(
+    tokenHash: string,
+  ): Promise<IdentitySessionRecord | null>;
   insert(session: IdentitySessionRecord): Promise<void>;
   revokeForUser(
     sessionId: string,
@@ -46,7 +48,6 @@ export interface IdentitySessionRepository {
   ): Promise<void>;
   touch(sessionId: string, lastSeenAt: string): Promise<void>;
 }
-
 export interface IdentityInviteRecord {
   id: string;
   tokenHash: string;
@@ -55,13 +56,11 @@ export interface IdentityInviteRecord {
   expiresAt: string;
   usedAt: string | null;
 }
-
 export interface IdentityInviteRepository {
   findByTokenHash(tokenHash: string): Promise<IdentityInviteRecord | null>;
   insert(invite: IdentityInviteRecord): Promise<void>;
   consume(tokenHash: string, now: string): Promise<boolean>;
 }
-
 export interface IdentityOutboxRecord {
   id: string;
   eventType: string;
@@ -69,19 +68,16 @@ export interface IdentityOutboxRecord {
   createdAt: string;
   publishedAt: string | null;
 }
-
 export interface IdentityOutboxRepository {
   append(event: IdentityOutboxRecord): Promise<void>;
   listUnpublished(limit: number): Promise<IdentityOutboxRecord[]>;
   markPublished(id: string, publishedAt: string): Promise<boolean>;
 }
-
 export interface AuthAttemptState {
   failedAttempts: number;
   windowStartedAt: number;
   lockedUntil: number | null;
 }
-
 export interface IdentityAuthAttemptRepository {
   find(
     keyHash: string,

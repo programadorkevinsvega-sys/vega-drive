@@ -33,7 +33,11 @@ export function createLoginUser(deps: {
   now?: () => Date;
 }) {
   const now = deps.now ?? (() => new Date());
-  async function audit(eventType: string, emailKey: string, ipKey: string | null) {
+  async function audit(
+    eventType: string,
+    emailKey: string,
+    ipKey: string | null,
+  ) {
     try {
       await deps.outbox.append({
         id: crypto.randomUUID(),
@@ -67,7 +71,9 @@ export function createLoginUser(deps: {
     const emailKey = await hashRateKey("email:" + (email || "invalid"));
     const ipKey = ip ? await hashRateKey("ip:" + ip) : null;
     const timestamp = now().getTime();
-    for (const key of [emailKey, ipKey].filter((value): value is string => Boolean(value))) {
+    for (const key of [emailKey, ipKey].filter(
+      (value): value is string => Boolean(value),
+    )) {
       const state = await deps.attempts.find(key, timestamp, WINDOW_MS);
       if (state?.lockedUntil && state.lockedUntil > timestamp) {
         return { ok: false, reason: "rate-limited" };

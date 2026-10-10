@@ -24,7 +24,9 @@ export class D1IdentityUserRepository implements IdentityUserRepository {
   findByNormalizedEmail(email: string): Promise<IdentityUserRecord | null> {
     return this.db
       .prepare(
-        "SELECT " + USER_COLUMNS + " FROM identity_users WHERE email = ? LIMIT 1",
+        "SELECT " +
+          USER_COLUMNS +
+          " FROM identity_users WHERE email = ? LIMIT 1",
       )
       .bind(email)
       .first<IdentityUserRecord>();
