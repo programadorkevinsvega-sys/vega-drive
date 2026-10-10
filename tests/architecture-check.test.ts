@@ -48,7 +48,9 @@ describe("architecture guard", () => {
       scripts: Record<string, string>;
     };
 
-    expect(pkg.scripts["deploy:preflight"]).toContain("verify:module-migrations");
+    expect(pkg.scripts["deploy:preflight"]).toContain(
+      "verify:module-migrations",
+    );
     expect(pkg.scripts["deploy:preflight"]).toContain("verify:architecture");
     expect(pkg.scripts["verify:module-migrations"]).toContain(
       "check-module-migrations.mjs",

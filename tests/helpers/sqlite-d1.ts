@@ -11,9 +11,9 @@ export function createSqliteD1() {
           return statement;
         },
         async first<T>() {
-          const result = sqlite
-            .prepare(sql)
-            .get(...(bindings as never[])) as T | undefined;
+          const result = sqlite.prepare(sql).get(...(bindings as never[])) as
+            | T
+            | undefined;
           return result ?? null;
         },
         async all<T>() {
@@ -27,9 +27,7 @@ export function createSqliteD1() {
           };
         },
         async run() {
-          const result = sqlite
-            .prepare(sql)
-            .run(...(bindings as never[]));
+          const result = sqlite.prepare(sql).run(...(bindings as never[]));
           return {
             success: true,
             meta: { changes: Number(result.changes) },

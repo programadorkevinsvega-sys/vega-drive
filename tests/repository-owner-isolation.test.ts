@@ -121,11 +121,11 @@ describe("D1 repository owner isolation against SQLite", () => {
         timestamp,
       ),
     ).toBe(false);
-    expect(await items.markDeleted("item-b", "owner-a", timestamp)).toBe(
-      false,
-    );
+    expect(await items.markDeleted("item-b", "owner-a", timestamp)).toBe(false);
 
-    await expect(items.findByIdForOwner("item-b", "owner-b")).resolves.toMatchObject({
+    await expect(
+      items.findByIdForOwner("item-b", "owner-b"),
+    ).resolves.toMatchObject({
       ownerId: "owner-b",
       name: "item-b.txt",
       deletedAt: null,
@@ -171,12 +171,7 @@ describe("D1 repository owner isolation against SQLite", () => {
 
     expect(await uploads.findByIdForOwner("upload-b", "owner-a")).toBeNull();
     expect(
-      await uploads.updateStatus(
-        "upload-b",
-        "owner-a",
-        "completed",
-        timestamp,
-      ),
+      await uploads.updateStatus("upload-b", "owner-a", "completed", timestamp),
     ).toBe(false);
 
     await expect(
@@ -192,18 +187,22 @@ describe("D1 repository owner isolation against SQLite", () => {
     await sessions.insert(session("session-a", "user-a"));
     await sessions.insert(session("session-b", "user-b"));
 
-    expect(
-      await sessions.revokeForUser("session-b", "user-a", timestamp),
-    ).toBe(false);
-    await expect(sessions.findByTokenHash("hash-session-b")).resolves.toMatchObject({
+    expect(await sessions.revokeForUser("session-b", "user-a", timestamp)).toBe(
+      false,
+    );
+    await expect(
+      sessions.findByTokenHash("hash-session-b"),
+    ).resolves.toMatchObject({
       userId: "user-b",
       revokedAt: null,
     });
 
-    expect(
-      await sessions.revokeForUser("session-b", "user-b", timestamp),
-    ).toBe(true);
-    await expect(sessions.findByTokenHash("hash-session-b")).resolves.toMatchObject({
+    expect(await sessions.revokeForUser("session-b", "user-b", timestamp)).toBe(
+      true,
+    );
+    await expect(
+      sessions.findByTokenHash("hash-session-b"),
+    ).resolves.toMatchObject({
       userId: "user-b",
       revokedAt: timestamp,
     });

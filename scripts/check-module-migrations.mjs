@@ -34,7 +34,9 @@ const config = await readFile(join(root, "wrangler.toml"), "utf8").catch(
 if (!config) {
   failures.push("No se encontró wrangler.toml en la raíz del proyecto.");
 } else {
-  const configuredDir = config.match(/^\s*migrations_dir\s*=\s*"([^"]+)"/m)?.[1];
+  const configuredDir = config.match(
+    /^\s*migrations_dir\s*=\s*"([^"]+)"/m,
+  )?.[1];
   const configuredPattern = config.match(
     /^\s*migrations_pattern\s*=\s*"([^"]+)"/m,
   )?.[1];
@@ -145,7 +147,9 @@ for (const file of migrationFiles) {
 for (const requiredModule of ["identity", "files"]) {
   if (!migrationsByModule.has(requiredModule)) {
     failures.push(
-      "El módulo " + requiredModule + " debe tener al menos una migración propia.",
+      "El módulo " +
+        requiredModule +
+        " debe tener al menos una migración propia.",
     );
   }
 }
