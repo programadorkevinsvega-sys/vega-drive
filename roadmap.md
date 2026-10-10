@@ -34,7 +34,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 ## Fase 0 — Fundamentos del monolito modular
 
-Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está desplegado, `/api/health` responde 200, D1 tiene 17 tablas/índices que coinciden con las migraciones y el último `cloudflare:build` confirmado por el usuario pasó formato, guardia arquitectónica, typecheck, 4 tests y `pnpm audit --audit-level=high`. El criterio principal es el resultado de los scripts `pnpm` ejecutados en el build/despliegue de Cloudflare, no GitHub Actions. Estas evidencias no demuestran por sí solas la privacidad real de R2.
+Estado de cierre: **implementación fundacional y pipeline verificados; cierre operativo de seguridad aún condicionado a los puntos externos pendientes de 0.2**. El 2026-10-10 Cloudflare completó `pnpm run cloudflare:build` y `pnpm run deploy`: formato, guardia arquitectónica, TypeScript, 4 archivos de pruebas/12 tests, `pnpm audit --audit-level=high`, migraciones remotas, verificación estructural de D1 (17 tablas/índices), despliegue y `verify:production` con `/api/health` HTTP 200. Versión Worker: `a13aa208-2f9c-4da3-a4e5-318b933738ae`. GitHub Actions del commit `0d1c145904f20678ea9397f114f551ce18e01cee` también terminó en verde y Gitleaks no detectó secretos. El usuario confirmó que el bucket R2 es privado. Estas evidencias validan el esqueleto y el pipeline, pero no certifican permisos mínimos de R2, ausencia de dominio público/`r2.dev`/CORS ni la certificación global de seguridad.
 
 ### 0.1 Contrato y convenciones
 
@@ -48,12 +48,12 @@ Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está d
 
 - [x] Configurar el binding `VEGA_DRIVE_DB` y verificar remotamente que las 17 tablas/índices coinciden con la migración versionada.
 - [x] Configurar el binding `FILES_BUCKET` al bucket `vega-drive-files`.
-- [ ] Verificar en el panel de Cloudflare que R2 no tiene acceso público, dominio público ni `r2.dev` habilitado y que no existe CORS para navegador. La configuración del binding no demuestra privacidad.
-- [ ] Confirmar permisos mínimos y secretos del Worker en Cloudflare; la configuración local no demuestra los permisos reales del recurso.
+- [x] Confirmar en el panel de Cloudflare que el bucket `vega-drive-files` es privado (confirmación del usuario, 2026-10-10).\n- [ ] Verificar por separado que no tiene dominio público ni `r2.dev` habilitado y que no existe configuración CORS para navegador; la confirmación de privacidad no demuestra por sí sola esos tres ajustes.
+- [ ] Confirmar permisos mínimos del recurso/credenciales de R2 y revisar la configuración de secretos del Worker en Cloudflare; el build y el escaneo Gitleaks no demuestran los permisos efectivos de producción.
 - [ ] Configurar Turnstile solo cuando se habilite registro/login; actualmente `TURNSTILE_SITE_KEY` está vacío y no hay flujo de autenticación en Fase 0.
 - [x] Ejecutar `pnpm audit --audit-level=high` dentro de `pnpm run cloudflare:build`.
 - [ ] Definir un control de secretos que forme parte del camino de despliegue si se requiere que también bloquee despliegues. Gitleaks existe en GitHub Actions, pero ese job no debe presentarse como una comprobación ejecutada por `cloudflare:build`. Mantener secretos fuera de archivos versionados.
-- **Aceptación:** D1/R2 solo se usan desde el Worker, privacidad R2 comprobada en Cloudflare y no hay secretos versionados. Los dos últimos puntos de privacidad/permisos siguen pendientes de verificación externa.
+- **Aceptación:** D1/R2 solo se usan desde el Worker, bucket confirmado como privado y secretos versionados no detectados por Gitleaks. La comprobación específica de dominio público/`r2.dev`/CORS y permisos mínimos permanece como verificación operativa pendiente; no equivale a certificar la seguridad global.
 - 🔒 SEC-R2-01, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
 
 ### 0.3 Esqueleto único del Worker
@@ -72,8 +72,8 @@ Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está d
 - [x] `pnpm run cloudflare:build` ejecuta `predeploy`, `pnpm run check` (formato, guardia arquitectónica, TypeScript y tests) y `pnpm audit --audit-level=high`.
 - [x] Existe Gitleaks como comprobación complementaria en GitHub Actions; no forma parte del gate de despliegue de Cloudflare según el script actual.
 - [x] La guardia arquitectónica está conectada a `pnpm run lint` y revisa imports entre módulos, SQL con prefijos ajenos, JOIN, FOREIGN KEY, `db.batch()` y uso del binding R2 fuera de files.
-- [ ] Ejecutar `pnpm run check` en el build de Cloudflare con las nuevas pruebas negativas, y corregir cualquier fallo antes de considerar cerrada esta subfase. Las pruebas cubren imports internos, SQL con prefijo ajeno, JOIN, FOREIGN KEY, `db.batch()` y binding R2 fuera de files.
-- **Aceptación:** `pnpm run cloudflare:build` termina con código 0 y las pruebas de `pnpm test` demuestran que la guardia rechaza las violaciones insertadas a propósito. La ejecución anterior de build pasó los checks base, pero las nuevas pruebas negativas todavía necesitan una ejecución verde en el camino de build/despliegue.
+- [x] Ejecutar `pnpm run check` en el build de Cloudflare con las pruebas negativas de arquitectura; la ejecución del 2026-10-10 pasó los 4 archivos y 12 tests. Las pruebas cubren imports internos, SQL con prefijo ajeno, JOIN, FOREIGN KEY, `db.batch()` y binding R2 fuera de files.
+- **Aceptación:** `pnpm run cloudflare:build` termina con código 0 y las pruebas de `pnpm test` demuestran que la guardia rechaza violaciones insertadas a propósito. Cumplido en Cloudflare el 2026-10-10.
 - 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
 ---
