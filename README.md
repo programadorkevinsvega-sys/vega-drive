@@ -66,7 +66,7 @@ El esquema de D1 para `identity` y `files` está versionado en migraciones indep
 
 ## Desarrollo
 
-Requisitos: Node.js 22+ y pnpm 10.18.3.
+Requisitos: Node.js 22.13+ y pnpm 10.18.3. La suite de aislamiento usa `node:sqlite`, disponible sin bandera experimental desde Node 22.13.
 
 ```bash
 pnpm install --frozen-lockfile
