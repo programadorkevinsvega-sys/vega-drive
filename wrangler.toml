@@ -12,6 +12,7 @@ run_worker_first = ["/api/*"]
 binding = "VEGA_DRIVE_DB"
 database_name = "vega_drive_db"
 database_id = "822bf438-18c7-4492-9436-139988c1ec78"
+migrations_dir = "migrations"
 
 [[r2_buckets]]
 binding = "FILES_BUCKET"
