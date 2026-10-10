@@ -48,4 +48,34 @@ export class D1IdentityUserRepository implements IdentityUserRepository {
       )
       .run();
   }
+
+  async insertWithinLimit(
+    user: IdentityUserRecord,
+    maxUsers: number,
+  ): Promise<boolean> {
+    if (!Number.isInteger(maxUsers) || maxUsers < 1 || maxUsers > 10) {
+      return false;
+    }
+
+    const result = await this.db
+      .prepare(
+        "INSERT INTO identity_users " +
+          "(id, email, password_hash, password_salt, created_at, updated_at, disabled_at) " +
+          "SELECT ?, ?, ?, ?, ?, ?, ? " +
+          "WHERE (SELECT COUNT(*) FROM identity_users) < ?",
+      )
+      .bind(
+        user.id,
+        user.email,
+        user.passwordHash,
+        user.passwordSalt,
+        user.createdAt,
+        user.updatedAt,
+        user.disabledAt,
+        maxUsers,
+      )
+      .run();
+
+    return result.meta.changes > 0;
+  }
 }
