@@ -13,7 +13,9 @@ Vega Drive se diseña como un monolito modular serverless:
 - Un bucket R2 privado con binding `FILES_BUCKET`.
 - El navegador solo consume rutas del mismo origen bajo `/api`; nunca accede directamente a R2.
 - Los módulos previstos son `identity`, `files`, `quota` y `sharing`. Cada módulo debe poseer sus tablas con prefijo, migraciones, dominio y API pública.
-- Los módulos solo se comunican mediante sus API públicas/gateways. No se permiten JOIN, claves foráneas ni SQL entre prefijos de módulos.
+- Los módulos solo se comunican mediante sus API públicas y gateways. No se permiten JOIN, claves foráneas ni SQL entre prefijos de módulos.
+
+El contrato arquitectónico está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), los controles de seguridad en [Security.md](./Security.md) y el plan por fases en [roadmap.md](./roadmap.md).
 
 El adaptador real de almacenamiento, autenticación, autorización por usuario y flujo de archivos siguen pendientes. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
@@ -31,7 +33,7 @@ Las descargas se harán por `GET /api/files/:id/download`, tras autorizar el rec
 
 - `src/worker`: entrada del Worker.
 - `src/bff`: Hono y composition root.
-- `src/modules/identity`, `files`, `quota`, `sharing`: límites y APIs públicas de módulos.
+- `src/modules/identity`, `files`, `quota` y `sharing`: límites y APIs públicas de módulos.
 - `src/platform`: infraestructura técnica compartida.
 - `src/shared-kernel`: abstracciones compartidas mínimas.
 - `public`: assets estáticos.
@@ -39,12 +41,10 @@ Las descargas se harán por `GET /api/files/:id/download`, tras autorizar el rec
 
 ## Servicios Cloudflare
 
-| Necesidad | Servicio |
-| --- | --- |
-| Backend, BFF y assets | Cloudflare Workers |
-| Metadatos, usuarios y sesiones | D1: `VEGA_DRIVE_DB` |
-| Archivos | R2 privado: `FILES_BUCKET` |
-| Anti-bots | Turnstile, pendiente de configuración |
+- Backend, BFF y assets: Cloudflare Workers.
+- Metadatos, usuarios y sesiones: D1 mediante `VEGA_DRIVE_DB`.
+- Archivos: R2 privado mediante `FILES_BUCKET`.
+- Anti-bots: Turnstile, pendiente de configuración.
 
 El ID D1 y el nombre del bucket en `wrangler.toml` corresponden a recursos de la cuenta conectada al despliegue. La existencia de un binding no demuestra que exista el esquema de tablas ni que el bucket sea privado. Verifica en Cloudflare que R2 no tenga acceso público, dominio público, `r2.dev` ni CORS de navegador.
 
