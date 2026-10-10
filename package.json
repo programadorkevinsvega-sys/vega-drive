@@ -15,7 +15,8 @@
     "lint": "node scripts/architecture-check.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test"
+    "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test",
+    "cloudflare:build": "pnpm run predeploy && pnpm run check && pnpm audit --audit-level=high"
   },
   "dependencies": {
     "hono": "4.12.25"
