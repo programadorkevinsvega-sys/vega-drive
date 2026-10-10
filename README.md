@@ -68,7 +68,9 @@ La clave de sitio de Turnstile es pública; la clave secreta nunca debe incluirs
 
 ## Comprobaciones y CI
 
-`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. GitHub Actions debe ejecutar esas comprobaciones, auditoría de dependencias y Gitleaks en los pushes a `main` y en PRs. Un workflow no protege por sí solo la rama: la obligatoriedad de los checks debe configurarse en GitHub.
+`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. `pnpm run cloudflare:build` ejecuta primero `predeploy`, después todas las comprobaciones y finalmente `pnpm audit --audit-level=high`; debe usarse como comando de build de Cloudflare Workers Builds, junto con la instalación reproducible `pnpm install --frozen-lockfile`. Cloudflare solo debe desplegar si ese comando termina correctamente.
+
+GitHub Actions mantiene temporalmente las mismas comprobaciones como respaldo hasta confirmar que Cloudflare ejecuta correctamente el comando en cada push. Gitleaks permanece en GitHub Actions para el escaneo de secretos; no se elimina ni se considera sustituido por las pruebas de build. Después de verificar un build de Cloudflare exitoso, se puede retirar el job duplicado `verify` y conservar el job `secrets`. La obligatoriedad de checks en GitHub es una configuración separada de la rama.
 
 ## Cierre de Fase 0 y preparación para producción
 
