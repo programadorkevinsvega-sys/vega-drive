@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hashPassword, validatePassword, verifyPassword } from "../src/modules/identity/application/registration/password.js";
+import {
+  hashPassword,
+  validatePassword,
+  verifyPassword,
+} from "../src/modules/identity/application/registration/password.js";
 
 describe("identity password policy and storage", () => {
   it("rejects short, trivial, repetitive and overlong passwords", () => {
@@ -16,8 +20,26 @@ describe("identity password policy and storage", () => {
     const second = await hashPassword("A strong passphrase 42!");
     expect(first.passwordSalt).not.toBe(second.passwordSalt);
     expect(first.passwordHash).not.toBe("A strong passphrase 42!");
-    expect(await verifyPassword("A strong passphrase 42!", first.passwordHash, first.passwordSalt)).toBe(true);
-    expect(await verifyPassword("Wrong passphrase 42!", first.passwordHash, first.passwordSalt)).toBe(false);
-    expect(await verifyPassword("A strong passphrase 42!", "not-base64!", "bad-salt")).toBe(false);
+    expect(
+      await verifyPassword(
+        "A strong passphrase 42!",
+        first.passwordHash,
+        first.passwordSalt,
+      ),
+    ).toBe(true);
+    expect(
+      await verifyPassword(
+        "Wrong passphrase 42!",
+        first.passwordHash,
+        first.passwordSalt,
+      ),
+    ).toBe(false);
+    expect(
+      await verifyPassword(
+        "A strong passphrase 42!",
+        "not-base64!",
+        "bad-salt",
+      ),
+    ).toBe(false);
   });
 });

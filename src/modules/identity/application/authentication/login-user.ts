@@ -6,7 +6,11 @@ import type {
 } from "../ports/identity-repositories.js";
 import type { TurnstileVerifier } from "../registration/register-user.types.js";
 import { verifyPassword } from "../registration/password.js";
-import { createSession, hashRateKey, sha256Hex } from "../sessions/session-tokens.js";
+import {
+  createSession,
+  hashRateKey,
+  sha256Hex,
+} from "../sessions/session-tokens.js";
 
 export interface LoginUserInput {
   email: unknown;
@@ -73,8 +77,8 @@ export function createLoginUser(deps: {
     const emailKey = await hashRateKey("email:" + (email || "invalid"));
     const ipKey = ip ? await hashRateKey("ip:" + ip) : null;
     const timestamp = now().getTime();
-    for (const key of [emailKey, ipKey].filter(
-      (value): value is string => Boolean(value),
+    for (const key of [emailKey, ipKey].filter((value): value is string =>
+      Boolean(value),
     )) {
       const state = await deps.attempts.find(key, timestamp, WINDOW_MS);
       if (state?.lockedUntil && state.lockedUntil > timestamp) {
@@ -101,7 +105,13 @@ export function createLoginUser(deps: {
     if (!user || user.disabledAt || !valid) {
       await deps.attempts.recordFailure(emailKey, timestamp, WINDOW_MS);
       if (ipKey) await deps.attempts.recordFailure(ipKey, timestamp, WINDOW_MS);
-      await audit("identity.login.failed", emailKey, ipKey, ip, user?.id ?? null);
+      await audit(
+        "identity.login.failed",
+        emailKey,
+        ipKey,
+        ip,
+        user?.id ?? null,
+      );
       return { ok: false, reason: "invalid-credentials" };
     }
     const created = await createSession(user.id, deps.sessions, now());

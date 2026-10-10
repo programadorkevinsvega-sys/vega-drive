@@ -21,10 +21,14 @@ describe("identity login HTTP integration", () => {
       prepare(sql: string) {
         let bindings: unknown[] = [];
         return {
-          bind(...values: unknown[]) { bindings = values; return this; },
+          bind(...values: unknown[]) {
+            bindings = values;
+            return this;
+          },
           async first<T>() {
             calls.push({ sql, bindings: [...bindings] });
-            if (sql.includes("FROM identity_users WHERE email = ?")) return user as T;
+            if (sql.includes("FROM identity_users WHERE email = ?"))
+              return user as T;
             return null;
           },
           async run() {
@@ -34,9 +38,13 @@ describe("identity login HTTP integration", () => {
         };
       },
     };
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({ success: true }), { status: 200 }),
-    ));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ success: true }), { status: 200 }),
+      ),
+    );
     const env = {
       ASSETS: { fetch: async () => new Response("asset") },
       VEGA_DRIVE_DB: db,
@@ -46,18 +54,21 @@ describe("identity login HTTP integration", () => {
       MAX_USERS: "10",
     } as unknown as Env;
 
-    const response = await app.fetch(new Request("https://vega-drive.test/api/auth/login", {
-      method: "POST",
-      headers: {
-        Origin: "https://vega-drive.test",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: " PERSON@EXAMPLE.TEST ",
-        password: "A strong passphrase 42!",
-        turnstileToken: "valid-captcha-token",
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/api/auth/login", {
+        method: "POST",
+        headers: {
+          Origin: "https://vega-drive.test",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: " PERSON@EXAMPLE.TEST ",
+          password: "A strong passphrase 42!",
+          turnstileToken: "valid-captcha-token",
+        }),
       }),
-    }), env);
+      env,
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
@@ -72,10 +83,14 @@ describe("identity login HTTP integration", () => {
     expect(cookie).toContain("Path=/");
     expect(cookie).toContain("Max-Age=604800");
     expect(cookie).not.toContain("Domain=");
-    const sessionInsert = calls.find((call) => call.sql.includes("INSERT INTO identity_sessions"));
+    const sessionInsert = calls.find((call) =>
+      call.sql.includes("INSERT INTO identity_sessions"),
+    );
     expect(sessionInsert).toBeDefined();
     expect(sessionInsert?.bindings).toHaveLength(7);
-    expect(sessionInsert?.bindings).not.toContain(cookie.split("=")[1]?.split(";")[0]);
+    expect(sessionInsert?.bindings).not.toContain(
+      cookie.split("=")[1]?.split(";")[0],
+    );
     expect(String(sessionInsert?.bindings[2])).toMatch(/^[a-f0-9]{64}$/);
   });
 });

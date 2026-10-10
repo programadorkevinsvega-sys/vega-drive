@@ -20,18 +20,24 @@ const baseUser = {
   disabledAt: null,
 };
 
-function makeDeps(overrides: {
-  user?: IdentityUserRecord | null;
-  previousSession?: IdentitySessionRecord | null;
-  locked?: boolean;
-  captcha?: boolean;
-} = {}) {
+function makeDeps(
+  overrides: {
+    user?: IdentityUserRecord | null;
+    previousSession?: IdentitySessionRecord | null;
+    locked?: boolean;
+    captcha?: boolean;
+  } = {},
+) {
   const attempts: IdentityAuthAttemptRepository = {
-    find: vi.fn(async () => overrides.locked ? {
-      failedAttempts: 10,
-      windowStartedAt: Date.parse(timestamp),
-      lockedUntil: Date.parse(timestamp) + 60_000,
-    } : null),
+    find: vi.fn(async () =>
+      overrides.locked
+        ? {
+            failedAttempts: 10,
+            windowStartedAt: Date.parse(timestamp),
+            lockedUntil: Date.parse(timestamp) + 60_000,
+          }
+        : null,
+    ),
     recordFailure: vi.fn(async (_key, now) => ({
       failedAttempts: 1,
       windowStartedAt: now,
@@ -43,12 +49,17 @@ function makeDeps(overrides: {
   const revoked: Array<{ sessionId: string; userId: string }> = [];
   const sessions: IdentitySessionRepository = {
     findByTokenHash: vi.fn(async (hash) => {
-      if (overrides.previousSession && hash === overrides.previousSession.tokenHash) {
+      if (
+        overrides.previousSession &&
+        hash === overrides.previousSession.tokenHash
+      ) {
         return overrides.previousSession;
       }
       return null;
     }),
-    insert: vi.fn(async (session) => { inserted.push(session); }),
+    insert: vi.fn(async (session) => {
+      inserted.push(session);
+    }),
     revokeForUser: vi.fn(async (sessionId, userId) => {
       revoked.push({ sessionId, userId });
       return true;
@@ -56,9 +67,7 @@ function makeDeps(overrides: {
     revokeOtherSessions: vi.fn(async () => undefined),
     touch: vi.fn(async () => undefined),
   };
-  const user = overrides.user === undefined
-    ? null
-    : overrides.user;
+  const user = overrides.user === undefined ? null : overrides.user;
   const users: IdentityUserRepository = {
     findById: vi.fn(async () => user),
     findByNormalizedEmail: vi.fn(async () => user),
@@ -87,11 +96,15 @@ describe("identity login use case", () => {
     const credentials = await hashPassword("A strong passphrase 42!");
     const user = { ...baseUser, ...credentials };
     const deps = makeDeps({ user });
-    const result = await deps.login({
-      email: " PERSON@EXAMPLE.TEST ",
-      password: "A strong passphrase 42!",
-      turnstileToken: "valid-captcha",
-    }, "203.0.113.10", null);
+    const result = await deps.login(
+      {
+        email: " PERSON@EXAMPLE.TEST ",
+        password: "A strong passphrase 42!",
+        turnstileToken: "valid-captcha",
+      },
+      "203.0.113.10",
+      null,
+    );
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -106,21 +119,32 @@ describe("identity login use case", () => {
 
   it("uses the same public failure for unknown and incorrect credentials", async () => {
     const unknown = makeDeps();
-    const unknownResult = await unknown.login({
-      email: "person@example.test",
-      password: "Wrong passphrase 42!",
-      turnstileToken: "captcha",
-    }, null, null);
+    const unknownResult = await unknown.login(
+      {
+        email: "person@example.test",
+        password: "Wrong passphrase 42!",
+        turnstileToken: "captcha",
+      },
+      null,
+      null,
+    );
     const credentials = await hashPassword("A strong passphrase 42!");
     const incorrect = makeDeps({ user: { ...baseUser, ...credentials } });
-    const incorrectResult = await incorrect.login({
-      email: "person@example.test",
-      password: "Wrong passphrase 42!",
-      turnstileToken: "captcha",
-    }, null, null);
+    const incorrectResult = await incorrect.login(
+      {
+        email: "person@example.test",
+        password: "Wrong passphrase 42!",
+        turnstileToken: "captcha",
+      },
+      null,
+      null,
+    );
 
     expect(unknownResult).toEqual({ ok: false, reason: "invalid-credentials" });
-    expect(incorrectResult).toEqual({ ok: false, reason: "invalid-credentials" });
+    expect(incorrectResult).toEqual({
+      ok: false,
+      reason: "invalid-credentials",
+    });
   });
 
   it("does not revoke a different user's session when a stale cookie accompanies login", async () => {
@@ -138,11 +162,15 @@ describe("identity login use case", () => {
       user: { ...baseUser, ...credentials },
       previousSession,
     });
-    const result = await deps.login({
-      email: baseUser.email,
-      password: "A strong passphrase 42!",
-      turnstileToken: "captcha",
-    }, null, "stale-session-token");
+    const result = await deps.login(
+      {
+        email: baseUser.email,
+        password: "A strong passphrase 42!",
+        turnstileToken: "captcha",
+      },
+      null,
+      "stale-session-token",
+    );
 
     expect(result.ok).toBe(true);
     expect(deps.revoked).toEqual([]);
@@ -150,11 +178,15 @@ describe("identity login use case", () => {
 
   it("blocks locked attempts before calling Turnstile or password verification", async () => {
     const deps = makeDeps({ locked: true });
-    const result = await deps.login({
-      email: baseUser.email,
-      password: "Wrong passphrase 42!",
-      turnstileToken: "captcha",
-    }, "203.0.113.10", null);
+    const result = await deps.login(
+      {
+        email: baseUser.email,
+        password: "Wrong passphrase 42!",
+        turnstileToken: "captcha",
+      },
+      "203.0.113.10",
+      null,
+    );
 
     expect(result).toEqual({ ok: false, reason: "rate-limited" });
     expect(deps.users.findByNormalizedEmail).not.toHaveBeenCalled();
@@ -162,11 +194,15 @@ describe("identity login use case", () => {
 
   it("fails closed when Turnstile verification fails", async () => {
     const deps = makeDeps({ captcha: false });
-    const result = await deps.login({
-      email: baseUser.email,
-      password: "A strong passphrase 42!",
-      turnstileToken: "captcha",
-    }, "203.0.113.10", null);
+    const result = await deps.login(
+      {
+        email: baseUser.email,
+        password: "A strong passphrase 42!",
+        turnstileToken: "captcha",
+      },
+      "203.0.113.10",
+      null,
+    );
 
     expect(result).toEqual({ ok: false, reason: "captcha-failed" });
     expect(deps.users.findByNormalizedEmail).not.toHaveBeenCalled();

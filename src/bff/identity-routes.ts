@@ -1,7 +1,10 @@
 import { Hono } from "hono";
 import type { Env } from "../worker/env.js";
 import { createCompositionRoot } from "./composition-root.js";
-import { requireAuthenticatedActor, type AuthenticatedEnv } from "./authentication-middleware.js";
+import {
+  requireAuthenticatedActor,
+  type AuthenticatedEnv,
+} from "./authentication-middleware.js";
 
 const COOKIE = "__Host-session";
 const MAX_BODY_BYTES = 64 * 1024;

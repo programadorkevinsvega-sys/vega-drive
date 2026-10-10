@@ -29,19 +29,25 @@ const session: IdentitySessionRecord = {
   revokedAt: null,
 };
 
-function setup(options: {
-  session?: IdentitySessionRecord | null;
-  user?: IdentityUserRecord | null;
-} = {}) {
+function setup(
+  options: {
+    session?: IdentitySessionRecord | null;
+    user?: IdentityUserRecord | null;
+  } = {},
+) {
   const sessions: IdentitySessionRepository = {
-    findByTokenHash: vi.fn(async () => options.session === undefined ? session : options.session),
+    findByTokenHash: vi.fn(async () =>
+      options.session === undefined ? session : options.session,
+    ),
     insert: vi.fn(async () => undefined),
     revokeForUser: vi.fn(async () => true),
     revokeOtherSessions: vi.fn(async () => undefined),
     touch: vi.fn(async () => undefined),
   };
   const users: IdentityUserRepository = {
-    findById: vi.fn(async () => options.user === undefined ? user : options.user),
+    findById: vi.fn(async () =>
+      options.user === undefined ? user : options.user,
+    ),
     findByNormalizedEmail: vi.fn(async () => null),
     insert: vi.fn(async () => undefined),
     insertWithinLimit: vi.fn(async () => true),
@@ -59,8 +65,13 @@ describe("identity session resolution", () => {
       userId: "user-a",
       email: "person@example.test",
     });
-    expect(deps.sessions.findByTokenHash).toHaveBeenCalledWith(await sha256Hex(token));
-    expect(deps.sessions.touch).toHaveBeenCalledWith("session-a", now.toISOString());
+    expect(deps.sessions.findByTokenHash).toHaveBeenCalledWith(
+      await sha256Hex(token),
+    );
+    expect(deps.sessions.touch).toHaveBeenCalledWith(
+      "session-a",
+      now.toISOString(),
+    );
   });
 
   it("rejects malformed tokens without querying persistence", async () => {
@@ -71,28 +82,40 @@ describe("identity session resolution", () => {
 
   it("revokes expired absolute sessions", async () => {
     const deps = setup({
-      session: { ...session, expiresAt: new Date(now.getTime() - 1).toISOString() },
+      session: {
+        ...session,
+        expiresAt: new Date(now.getTime() - 1).toISOString(),
+      },
     });
     await expect(deps.resolve(token)).resolves.toBeNull();
     expect(deps.sessions.revokeForUser).toHaveBeenCalledWith(
-      "session-a", "user-a", now.toISOString(),
+      "session-a",
+      "user-a",
+      now.toISOString(),
     );
   });
 
   it("revokes sessions idle for 24 hours", async () => {
     const deps = setup({
-      session: { ...session, lastSeenAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString() },
+      session: {
+        ...session,
+        lastSeenAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      },
     });
     await expect(deps.resolve(token)).resolves.toBeNull();
     expect(deps.sessions.revokeForUser).toHaveBeenCalled();
   });
 
   it("rejects revoked sessions and disabled users", async () => {
-    const revoked = setup({ session: { ...session, revokedAt: now.toISOString() } });
+    const revoked = setup({
+      session: { ...session, revokedAt: now.toISOString() },
+    });
     await expect(revoked.resolve(token)).resolves.toBeNull();
     expect(revoked.users.findById).not.toHaveBeenCalled();
 
-    const disabled = setup({ user: { ...user, disabledAt: now.toISOString() } });
+    const disabled = setup({
+      user: { ...user, disabledAt: now.toISOString() },
+    });
     await expect(disabled.resolve(token)).resolves.toBeNull();
     expect(disabled.sessions.revokeForUser).toHaveBeenCalled();
   });

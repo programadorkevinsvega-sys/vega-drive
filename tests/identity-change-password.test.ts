@@ -33,17 +33,24 @@ describe("identity change-password use case", () => {
       findByNormalizedEmail: vi.fn(async () => null),
       insert: vi.fn(async () => undefined),
       insertWithinLimit: vi.fn(async () => true),
-      updatePassword: vi.fn(async (_id, passwordHash, passwordSalt, updatedAt) => {
-        stored = { ...stored, passwordHash, passwordSalt, updatedAt };
-        return true;
-      }),
+      updatePassword: vi.fn(
+        async (_id, passwordHash, passwordSalt, updatedAt) => {
+          stored = { ...stored, passwordHash, passwordSalt, updatedAt };
+          return true;
+        },
+      ),
     };
     const inserted: Array<{ tokenHash: string; id: string }> = [];
     const revoked: string[] = [];
     const sessions: IdentitySessionRepository = {
       findByTokenHash: vi.fn(async () => null),
-      insert: vi.fn(async (session) => { inserted.push(session); }),
-      revokeForUser: vi.fn(async (sessionId) => { revoked.push(sessionId); return true; }),
+      insert: vi.fn(async (session) => {
+        inserted.push(session);
+      }),
+      revokeForUser: vi.fn(async (sessionId) => {
+        revoked.push(sessionId);
+        return true;
+      }),
       revokeOtherSessions: vi.fn(async () => undefined),
       touch: vi.fn(async () => undefined),
     };
@@ -53,10 +60,18 @@ describe("identity change-password use case", () => {
       markPublished: vi.fn(async () => true),
     };
     const changePassword = createChangePassword({
-      users, sessions, outbox, now: () => now,
+      users,
+      sessions,
+      outbox,
+      now: () => now,
     });
 
-    const result = await changePassword(actor, "Old passphrase 42!", "New passphrase 84!", "203.0.113.10");
+    const result = await changePassword(
+      actor,
+      "Old passphrase 42!",
+      "New passphrase 84!",
+      "203.0.113.10",
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(stored.passwordHash).not.toBe(oldCredentials.passwordHash);
@@ -64,15 +79,26 @@ describe("identity change-password use case", () => {
     expect(inserted).toHaveLength(1);
     expect(inserted[0]?.tokenHash).toBe(await sha256Hex(result.token));
     expect(sessions.revokeOtherSessions).toHaveBeenCalledWith(
-      actor.userId, inserted[0]?.id, now.toISOString(),
+      actor.userId,
+      inserted[0]?.id,
+      now.toISOString(),
     );
     expect(revoked).toContain(actor.sessionId);
-    expect(outbox.append).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: "identity.password.changed",
-      payloadJson: JSON.stringify({ userId: actor.userId, ip: "203.0.113.10" }),
-    }));
-    expect(JSON.stringify(outbox.append.mock.calls)).not.toContain("Old passphrase");
-    expect(JSON.stringify(outbox.append.mock.calls)).not.toContain("New passphrase");
+    expect(outbox.append).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "identity.password.changed",
+        payloadJson: JSON.stringify({
+          userId: actor.userId,
+          ip: "203.0.113.10",
+        }),
+      }),
+    );
+    expect(JSON.stringify(outbox.append.mock.calls)).not.toContain(
+      "Old passphrase",
+    );
+    expect(JSON.stringify(outbox.append.mock.calls)).not.toContain(
+      "New passphrase",
+    );
   });
 
   it("rejects an incorrect current password and audits the failed attempt", async () => {
@@ -104,12 +130,26 @@ describe("identity change-password use case", () => {
       listUnpublished: vi.fn(async () => []),
       markPublished: vi.fn(async () => true),
     };
-    const changePassword = createChangePassword({ users, sessions, outbox, now: () => now });
+    const changePassword = createChangePassword({
+      users,
+      sessions,
+      outbox,
+      now: () => now,
+    });
 
-    await expect(changePassword(actor, "Wrong current password!", "New passphrase 84!", null)).resolves.toEqual({ ok: false });
+    await expect(
+      changePassword(
+        actor,
+        "Wrong current password!",
+        "New passphrase 84!",
+        null,
+      ),
+    ).resolves.toEqual({ ok: false });
     expect(sessions.insert).not.toHaveBeenCalled();
-    expect(outbox.append).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: "identity.password.change.failed",
-    }));
+    expect(outbox.append).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "identity.password.change.failed",
+      }),
+    );
   });
 });

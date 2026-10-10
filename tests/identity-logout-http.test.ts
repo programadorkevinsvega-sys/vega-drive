@@ -14,7 +14,10 @@ describe("identity logout HTTP integration", () => {
       prepare(sql: string) {
         let bindings: unknown[] = [];
         return {
-          bind(...values: unknown[]) { bindings = values; return this; },
+          bind(...values: unknown[]) {
+            bindings = values;
+            return this;
+          },
           async first<T>() {
             calls.push({ sql, bindings: [...bindings] });
             if (sql.includes("FROM identity_sessions")) {
@@ -45,13 +48,16 @@ describe("identity logout HTTP integration", () => {
       TURNSTILE_SITE_KEY: "",
       MAX_USERS: "10",
     } as unknown as Env;
-    const response = await app.fetch(new Request("https://vega-drive.test/api/auth/logout", {
-      method: "POST",
-      headers: {
-        Origin: "https://vega-drive.test",
-        Cookie: "__Host-session=" + token,
-      },
-    }), env);
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/api/auth/logout", {
+        method: "POST",
+        headers: {
+          Origin: "https://vega-drive.test",
+          Cookie: "__Host-session=" + token,
+        },
+      }),
+      env,
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
@@ -62,10 +68,17 @@ describe("identity logout HTTP integration", () => {
     expect(cookie).toContain("SameSite=Lax");
     expect(cookie).toContain("Max-Age=0");
     expect(cookie).not.toContain("Domain=");
-    const revoke = calls.find((call) => call.sql.startsWith("UPDATE identity_sessions SET revoked_at"));
+    const revoke = calls.find((call) =>
+      call.sql.startsWith("UPDATE identity_sessions SET revoked_at"),
+    );
     expect(revoke?.bindings).toEqual([
-      expect.any(String), "session-a", "user-a",
+      expect.any(String),
+      "session-a",
+      "user-a",
     ]);
-    expect(calls.find((call) => call.sql.includes("FROM identity_sessions"))?.bindings).toEqual([tokenHash]);
+    expect(
+      calls.find((call) => call.sql.includes("FROM identity_sessions"))
+        ?.bindings,
+    ).toEqual([tokenHash]);
   });
 });

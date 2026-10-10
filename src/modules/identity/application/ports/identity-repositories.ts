@@ -32,9 +32,7 @@ export interface IdentitySessionRecord {
   revokedAt: string | null;
 }
 export interface IdentitySessionRepository {
-  findByTokenHash(
-    tokenHash: string,
-  ): Promise<IdentitySessionRecord | null>;
+  findByTokenHash(tokenHash: string): Promise<IdentitySessionRecord | null>;
   insert(session: IdentitySessionRecord): Promise<void>;
   revokeForUser(
     sessionId: string,

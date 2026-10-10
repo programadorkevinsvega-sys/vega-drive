@@ -36,12 +36,20 @@ export interface RegisterUserDependencies {
 function normalizeEmail(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const email = value.trim().toLowerCase();
-  return email.length >= 3 && email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+  return email.length >= 3 &&
+    email.length <= 254 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ? email
+    : null;
 }
 export function createRegisterUser(deps: RegisterUserDependencies) {
   const now = deps.now ?? (() => new Date());
   const createId = deps.createId ?? (() => crypto.randomUUID());
-  async function audit(eventType: string, userId: string | null, ip: string | null) {
+  async function audit(
+    eventType: string,
+    userId: string | null,
+    ip: string | null,
+  ) {
     if (!deps.outbox) return;
     try {
       await deps.outbox.append({
@@ -90,7 +98,10 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
     }
     let captchaValid = false;
     try {
-      captchaValid = await deps.turnstile.verify(input.turnstileToken, clientIp);
+      captchaValid = await deps.turnstile.verify(
+        input.turnstileToken,
+        clientIp,
+      );
     } catch {
       captchaValid = false;
     }

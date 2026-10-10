@@ -8,14 +8,14 @@ Esta fase implementa el registro cerrado, login, logout, consulta de sesión, ca
 
 Todas las rutas están bajo el mismo origen y prefijo /api/auth.
 
-| Método y ruta | Requiere sesión | Comportamiento |
-| --- | --- | --- |
-| GET /config | No | Devuelve la site key pública de Turnstile y si el módulo está listo. |
-| POST /register | No | Acepta email, password y turnstileToken. Registro cerrado mediante MAX_USERS. |
-| POST /login | No | Verifica Turnstile y credenciales; al éxito emite cookie de sesión. |
-| POST /logout | Cookie opcional | Revoca la sesión presentada y elimina la cookie. |
-| GET /session | No | Devuelve solo estado autenticado y correo público, nunca el token. |
-| POST /password | Sí | Comprueba contraseña actual, rota sesión y revoca las demás sesiones. |
+| Método y ruta  | Requiere sesión | Comportamiento                                                                |
+| -------------- | --------------- | ----------------------------------------------------------------------------- |
+| GET /config    | No              | Devuelve la site key pública de Turnstile y si el módulo está listo.          |
+| POST /register | No              | Acepta email, password y turnstileToken. Registro cerrado mediante MAX_USERS. |
+| POST /login    | No              | Verifica Turnstile y credenciales; al éxito emite cookie de sesión.           |
+| POST /logout   | Cookie opcional | Revoca la sesión presentada y elimina la cookie.                              |
+| GET /session   | No              | Devuelve solo estado autenticado y correo público, nunca el token.            |
+| POST /password | Sí              | Comprueba contraseña actual, rota sesión y revoca las demás sesiones.         |
 
 Las mutaciones exigen Origin exactamente igual al origen de la solicitud. Los cuerpos JSON rechazan campos desconocidos y se limitan a 64 KiB durante la lectura del stream. Los errores de login no distinguen correo inexistente, contraseña incorrecta o cuenta deshabilitada.
 
@@ -27,7 +27,7 @@ Las mutaciones exigen Origin exactamente igual al origen de la solicitud. Los cu
 - Límite de registro MAX_USERS validado en servidor y aplicado dentro del mismo INSERT.
 - Verificación server-side de Turnstile; errores, respuestas HTTP no exitosas y excepciones fallan de forma cerrada.
 - Token de sesión aleatorio de 32 bytes; solo SHA-256 se persiste en D1.
-- Cookie __Host-session, HttpOnly, Secure, SameSite=Lax, Path=/, Max-Age=604800 y sin Domain.
+- Cookie \_\_Host-session, HttpOnly, Secure, SameSite=Lax, Path=/, Max-Age=604800 y sin Domain.
 - Expiración absoluta de 7 días e inactividad máxima de 24 horas.
 - Logout revoca la sesión en D1. Login rota la sesión anterior únicamente si pertenece al mismo usuario. Cambio de contraseña rota la sesión y revoca las demás.
 - Limitación persistente por clave de correo/IP hasheada, con ventana de 15 minutos y bloqueo progresivo (1, 5, 15 y 30 minutos).

@@ -13,7 +13,9 @@ describe("identity auth-attempt repository", () => {
       windowStartedAt: 1000,
       lockedUntil: 301000,
     });
-    expect(fake.calls[0]?.sql).toContain("FROM identity_auth_attempts WHERE key_hash = ?");
+    expect(fake.calls[0]?.sql).toContain(
+      "FROM identity_auth_attempts WHERE key_hash = ?",
+    );
     expect(fake.calls[0]?.bindings).toEqual(["sha256-key"]);
     expect(fake.calls[0]?.sql).not.toContain("sha256-key");
   });
@@ -23,27 +25,52 @@ describe("identity auth-attempt repository", () => {
       first: { failedAttempts: 6, windowStartedAt: 1000, lockedUntil: 301000 },
     });
     const repository = new D1IdentityAuthAttemptRepository(fake.db);
-    await expect(repository.recordFailure("sha256-key", 2000, 900000)).resolves.toEqual({
+    await expect(
+      repository.recordFailure("sha256-key", 2000, 900000),
+    ).resolves.toEqual({
       failedAttempts: 6,
       windowStartedAt: 1000,
       lockedUntil: 301000,
     });
     expect(fake.calls).toHaveLength(2);
     expect(fake.calls[0]?.sql).toContain("ON CONFLICT(key_hash) DO UPDATE");
-    expect(fake.calls[0]?.sql.match(/window_started_at <= \?/g)).toHaveLength(3);
-    expect(fake.calls[0]?.bindings).toEqual(["sha256-key", 2000, 2000, -898000, -898000, -898000]);
-    expect(fake.calls[1]?.sql).toContain("failed_attempts >= 10 THEN ? + 1800000");
-    expect(fake.calls[1]?.sql).toContain("failed_attempts >= 8 THEN ? + 900000");
-    expect(fake.calls[1]?.sql).toContain("failed_attempts >= 6 THEN ? + 300000");
+    expect(fake.calls[0]?.sql.match(/window_started_at <= \?/g)).toHaveLength(
+      3,
+    );
+    expect(fake.calls[0]?.bindings).toEqual([
+      "sha256-key",
+      2000,
+      2000,
+      -898000,
+      -898000,
+      -898000,
+    ]);
+    expect(fake.calls[1]?.sql).toContain(
+      "failed_attempts >= 10 THEN ? + 1800000",
+    );
+    expect(fake.calls[1]?.sql).toContain(
+      "failed_attempts >= 8 THEN ? + 900000",
+    );
+    expect(fake.calls[1]?.sql).toContain(
+      "failed_attempts >= 6 THEN ? + 300000",
+    );
     expect(fake.calls[1]?.sql).toContain("failed_attempts >= 5 THEN ? + 60000");
-    expect(fake.calls[1]?.bindings).toEqual([2000, 2000, 2000, 2000, "sha256-key"]);
+    expect(fake.calls[1]?.bindings).toEqual([
+      2000,
+      2000,
+      2000,
+      2000,
+      "sha256-key",
+    ]);
   });
 
   it("clears an attempt key with a parameterized delete", async () => {
     const fake = createFakeD1();
     const repository = new D1IdentityAuthAttemptRepository(fake.db);
     await repository.clear("sha256-key");
-    expect(fake.calls[0]?.sql).toBe("DELETE FROM identity_auth_attempts WHERE key_hash = ?");
+    expect(fake.calls[0]?.sql).toBe(
+      "DELETE FROM identity_auth_attempts WHERE key_hash = ?",
+    );
     expect(fake.calls[0]?.bindings).toEqual(["sha256-key"]);
   });
 });
