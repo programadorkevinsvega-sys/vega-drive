@@ -144,15 +144,16 @@ if (result.status !== 0) {
 }
 
 const rows = parseWranglerJson(result.stdout);
-// Cloudflare/Wrangler-managed tables are not part of the application schema.
-const internalTables = new Set(["_cf_KV", "d1_migrations"]);
+// Cloudflare/Wrangler owns the `_cf_*` namespace and migration bookkeeping.
+const isInternalD1Object = (name) =>
+  /^_cf_/i.test(name) || name === "d1_migrations";
 const actual = new Map(
   rows
     .filter(
       (row) =>
         (row.type === "table" || row.type === "index") &&
         typeof row.name === "string" &&
-        !internalTables.has(row.name) &&
+        !isInternalD1Object(row.name) &&
         typeof row.sql === "string",
     )
     .map((row) => [`${row.type}:${row.name}`, normalizeSql(row.sql)]),
