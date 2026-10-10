@@ -52,11 +52,10 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
   ) {
     if (!deps.outbox) return;
     try {
-      const ipHash = ip ? await hashRateKey("audit-ip:" + ip) : null;
       await deps.outbox.append({
         id: crypto.randomUUID(),
         eventType,
-        payloadJson: JSON.stringify({ userId, ipHash }),
+        payloadJson: JSON.stringify({ userId, ip }),
         createdAt: now().toISOString(),
         publishedAt: null,
       });
