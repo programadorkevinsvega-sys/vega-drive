@@ -55,6 +55,7 @@ Ante un fallo de aplicación que no requiera revertir datos:
    ```
 
    No ejecutar el segundo comando a ciegas: confirmar el deployment objetivo y la sintaxis/interacción que presenta Wrangler antes de confirmar.
+
 5. Verificar salud, logs y flujos críticos; registrar resultado y decisión de recuperación.
 
 El rollback del Worker no deshace las migraciones D1, no restaura R2 y no revierte mensajes ya publicados en una Queue.
