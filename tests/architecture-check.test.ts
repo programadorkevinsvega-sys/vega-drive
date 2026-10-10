@@ -148,6 +148,16 @@ describe("architecture guard", () => {
     expectRejected(result, "prefijo de otro módulo");
   });
 
+  it("allows D1 adapter factories only from the Worker composition root", async () => {
+    const result = await runGuard({
+      "src/worker/composition-root.ts":
+        'import { createIdentityModuleFromD1 } from "../modules/identity/infrastructure/persistence/d1/create-identity-module.js";',
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Fronteras arquitectónicas OK");
+  });
+
   it("allows imports through another module's public API", async () => {
     const publicImport =
       "import type { IdentityPublicApi } from " +
