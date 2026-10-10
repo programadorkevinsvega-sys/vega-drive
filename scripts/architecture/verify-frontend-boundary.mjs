@@ -13,7 +13,7 @@ await runGuard("Frontera del frontend", async (failures, notes) => {
     const fetchPattern = /\bfetch\s*\(\s*([`'\"])(.*?)\1/gs;
     for (const match of source.matchAll(fetchPattern)) {
       const target = match[2] ?? "";
-      if (/^(?:https?:)?\/\//i.test(target) || !target.startsWith("/api/") && !target.startsWith("/api?")) {
+      if (/^(?:https?:)?\/\//i.test(target) || !target.startsWith("/api/") && !target.startsWith("/api?") && target !== "/api") {
         failures.push(rel + ": fetch() debe apuntar a una ruta del mismo origen bajo /api (encontrado: " + target.slice(0, 80) + ").");
       }
     }
