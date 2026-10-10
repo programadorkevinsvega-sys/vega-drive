@@ -23,7 +23,7 @@ El contrato arquitectónico está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md]
 
 La política de rollback del Worker, compatibilidad de D1/R2, staging y evidencia operativa está en [Rollback.md](./Rollback.md), y su implementación planificada en la [Fase 9 del roadmap](./roadmap.md#fase-9--despliegue-operación-y-rollback).
 
-**El rollback aún no está certificado.** El flujo actual `pnpm run deploy` aplica migraciones remotas antes de desplegar el Worker y solo verifica `/api/health) después. Revertir el Worker no deshace migraciones D1 ni restaura objetos R2. No ejecutar un rollback de producción sin identificar el deployment objetivo y comprobar compatibilidad del esquema.
+**El rollback aún no está certificado.** El flujo actual `pnpm run deploy` aplica migraciones remotas antes de desplegar el Worker y solo verifica `/api/health` después. Revertir el Worker no deshace migraciones D1 ni restaura objetos R2. No ejecutar un rollback de producción sin identificar el deployment objetivo y comprobar compatibilidad del esquema.
 
 ## Estado de seguridad y certificación
 
