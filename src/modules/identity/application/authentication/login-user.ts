@@ -41,14 +41,13 @@ export function createLoginUser(deps: {
     eventType: string,
     emailKey: string,
     ipKey: string | null,
-    ip: string | null,
     userId: string | null,
   ) {
     try {
       await deps.outbox.append({
         id: crypto.randomUUID(),
         eventType,
-        payloadJson: JSON.stringify({ emailKey, ipKey, ip, userId }),
+        payloadJson: JSON.stringify({ emailKey, ipKey, userId }),
         createdAt: now().toISOString(),
         publishedAt: null,
       });
@@ -93,7 +92,7 @@ export function createLoginUser(deps: {
     }
     if (!captchaValid) {
       if (ipKey) await deps.attempts.recordFailure(ipKey, timestamp, WINDOW_MS);
-      await audit("identity.login.captcha-failed", emailKey, ipKey, ip, null);
+      await audit("identity.login.captcha-failed", emailKey, ipKey, null);
       return { ok: false, reason: "captcha-failed" };
     }
     const user = email ? await deps.users.findByNormalizedEmail(email) : null;
@@ -109,7 +108,6 @@ export function createLoginUser(deps: {
         "identity.login.failed",
         emailKey,
         ipKey,
-        ip,
         user?.id ?? null,
       );
       return { ok: false, reason: "invalid-credentials" };
@@ -128,7 +126,7 @@ export function createLoginUser(deps: {
       }
     }
     await deps.attempts.clear(emailKey);
-    await audit("identity.login.succeeded", emailKey, ipKey, ip, user.id);
+    await audit("identity.login.succeeded", emailKey, ipKey, user.id);
     return {
       ok: true,
       token: created.token,
