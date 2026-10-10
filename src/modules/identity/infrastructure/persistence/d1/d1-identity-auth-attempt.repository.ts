@@ -41,7 +41,7 @@ export class D1IdentityAuthAttemptRepository
     const cutoff = now - windowMs;
     await this.db
       .prepare(
-        "INSERT INTO identity_auth_attempts (key_hash, failed_attempts, window_started_at, locked_until, updated_at) VALUES (?, 1, ?, NULL, ?) ON CONFLICT(key_hash) DO UPDATE SET failed_attempts = CASE WHEN identity_auth_attempts.window_started_at < ? THEN 1 ELSE identity_auth_attempts.failed_attempts + 1 END, window_started_at = CASE WHEN identity_auth_attempts.window_started_at < ? THEN excluded.window_started_at ELSE identity_auth_attempts.window_started_at END, locked_until = CASE WHEN identity_auth_attempts.window_started_at < ? THEN NULL ELSE identity_auth_attempts.locked_until END, updated_at = excluded.updated_at",
+        "INSERT INTO identity_auth_attempts (key_hash, failed_attempts, window_started_at, locked_until, updated_at) VALUES (?, 1, ?, NULL, ?) ON CONFLICT(key_hash) DO UPDATE SET failed_attempts = CASE WHEN identity_auth_attempts.window_started_at <= ? THEN 1 ELSE identity_auth_attempts.failed_attempts + 1 END, window_started_at = CASE WHEN identity_auth_attempts.window_started_at <= ? THEN excluded.window_started_at ELSE identity_auth_attempts.window_started_at END, locked_until = CASE WHEN identity_auth_attempts.window_started_at <= ? THEN NULL ELSE identity_auth_attempts.locked_until END, updated_at = excluded.updated_at",
       )
       .bind(keyHash, now, now, cutoff, cutoff, cutoff)
       .run();
