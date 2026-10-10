@@ -84,31 +84,31 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 1 — D1 única y límites de datos
 
-**Estado de implementación (2026-10-10):** ya se añadieron migraciones activas separadas para `files` e `identity`, puertos de aplicación, repositorios D1 y pruebas de fronteras/parametrización. Las casillas siguen pendientes hasta ejecutar formato, `pnpm run check`, `pnpm run cloudflare:build` y validar el esquema en D1 local con el patrón de Wrangler actualizado. No se han aplicado migraciones remotas ni se ha desplegado este trabajo. Las pruebas de repositorio que inspeccionan SQL enlazado no sustituyen todavía pruebas end-to-end de autorización con sesiones reales, que se incorporarán cuando exista el flujo de autenticación.
+**Estado de implementación (2026-10-10; verificación registrada):** las migraciones modulares de `files` e `identity`, el manifest, los puertos/repositorios D1 y la guardia arquitectónica están implementados. La validación local completó formato, lint, TypeScript, `pnpm test` (8 archivos, 32 pruebas), `pnpm run cloudflare:build`, auditoría sin vulnerabilidades conocidas y aplicación de ambas migraciones locales; `pnpm run db:verify:schema:local` confirmó que los 17 objetos esperados coinciden. GitHub Actions para el commit `cced6b395f0cebd9386be9a3df0b546b070b323f` quedó en verde (8 archivos, 32 pruebas, Gitleaks sin fugas). El pipeline de Cloudflare también ejecutó `pnpm run deploy`: no había migraciones remotas pendientes, la verificación estructural remota confirmó los 17 objetos y `/api/health` respondió HTTP 200. Versión de Worker reportada: `59053a71-ff24-4d8e-b032-1a985899ed14`. Este despliegue de producción ocurrió mediante la configuración automática de Cloudflare; se registra como evidencia, no como autorización para adelantar fases. Las casillas que siguen pendientes representan trabajo funcional/aislamiento todavía no demostrado: el ownerId está preparado para proceder de un actor/sesión validados, pero el flujo de autenticación aún no existe, y las pruebas actuales inspeccionan SQL enlazado en dobles D1, no accesos cruzados end-to-end contra D1 real y casos de uso. No cerrar la Fase 1 hasta resolver las pruebas de aislamiento que pertenecen a su alcance; la autorización con sesiones reales se completará cuando se implemente identity en Fase 2.
 
 ### 1.1 Tablas y migraciones por módulo
 
-- [ ] Crear migraciones independientes en cada módulo con numeración propia.
-- [ ] Mantener un manifest central que documente el orden de aplicación contra VEGA_DRIVE_DB.
-- [ ] Crear inicialmente identity_users, identity_sessions, identity_invites e identity_outbox.
-- [ ] Preparar files_items, files_folders, files_uploads y files_outbox; quota_usage y sharing_links se completan en sus fases.
-- [ ] Usar valores entre módulos, nunca claves foráneas; por ejemplo files_items.owner_id no referencia mediante FK a identity_users.
+- [x] Crear migraciones independientes en cada módulo con numeración propia.
+- [x] Mantener un manifest central que documente el orden de aplicación contra VEGA_DRIVE_DB.
+- [x] Crear inicialmente identity_users, identity_sessions, identity_invites e identity_outbox.
+- [x] Preparar files_items, files_folders, files_uploads y files_outbox; quota_usage y sharing_links se completan en sus fases.
+- [x] Usar valores entre módulos, nunca claves foráneas; por ejemplo files_items.owner_id no referencia mediante FK a identity_users.
 - **Aceptación:** cada tabla e índice tiene un módulo dueño; no existe una tabla genérica compartida.
 - 🔒 SEC-MOD-02, SEC-ISO-02.
 
 ### 1.2 Repositorios por módulo
 
-- [ ] Implementar repositorios solo bajo infrastructure/persistence/d1 de su módulo.
-- [ ] Definir puertos en application y no exponer D1Database fuera de infraestructura.
+- [x] Implementar repositorios solo bajo infrastructure/persistence/d1 de su módulo.
+- [x] Definir puertos en application y no exponer D1Database fuera de infraestructura.
 - [ ] Usar SQL parametrizado y filtros de usuario derivados de la sesión.
-- [ ] Prohibir un módulo global db/ que concentre la lógica de todos los dominios.
+- [x] Prohibir un módulo global db/ que concentre la lógica de todos los dominios.
 - **Aceptación:** domain y application no importan D1Database; un repositorio no menciona tablas ajenas.
 - 🔒 SEC-ISO-01, SEC-ISO-02, SEC-VAL-02, SEC-MOD-01.
 
 ### 1.3 Pruebas de frontera y aislamiento
 
 - [ ] Probar acceso cruzado entre usuarios para cada repositorio y caso de uso.
-- [ ] Probar que el lint arquitectónico bloquea import, SQL, JOIN, FK y batch cruzados.
+- [x] Probar que el lint arquitectónico bloquea import, SQL, JOIN, FK y batch cruzados.
 - **Aceptación:** las pruebas se ejecutan en CI y fallan ante una violación insertada a propósito.
 - 🔒 SEC-ISO-06, SEC-MOD-03.
 
