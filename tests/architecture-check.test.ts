@@ -88,6 +88,23 @@ describe("architecture guard", () => {
     expectRejected(result, "db.batch() requiere revisión explícita");
   });
 
+  it("rejects D1 binding access outside module persistence infrastructure", async () => {
+    const result = await runGuard({
+      "src/bff/app.ts": "const database = env.VEGA_DRIVE_DB;",
+    });
+
+    expectRejected(result, "acceso a VEGA_DRIVE_DB fuera de infraestructura D1");
+  });
+
+  it("rejects D1 database types outside module persistence infrastructure", async () => {
+    const result = await runGuard({
+      "src/modules/files/application/repository-port.ts":
+        "export interface BadPort { db: D1Database; }",
+    });
+
+    expectRejected(result, "tipo D1 expuesto fuera de infraestructura");
+  });
+
   it("rejects R2 access outside the files module", async () => {
     const result = await runGuard({
       "src/bff/app.ts": "const bucket = env.FILES_BUCKET;",

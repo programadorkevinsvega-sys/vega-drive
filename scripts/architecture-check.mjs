@@ -59,6 +59,27 @@ for (const file of sourceFiles) {
     }
   }
 
+  const isD1Infrastructure =
+    /^src\/modules\/(?:identity|files|quota|sharing)\/infrastructure\/persistence\/d1\//.test(
+      rel,
+    );
+
+  // Worker env owns the binding declaration; module adapters own D1 access and types.
+  if (
+    /\bVEGA_DRIVE_DB\b/.test(source) &&
+    rel !== "src/worker/env.ts" &&
+    !isD1Infrastructure
+  ) {
+    failures.push(rel + ": acceso a VEGA_DRIVE_DB fuera de infraestructura D1");
+  }
+  if (
+    /\bD1(?:Database|PreparedStatement|Result|Meta)\b/.test(source) &&
+    rel !== "src/worker/env.ts" &&
+    !isD1Infrastructure
+  ) {
+    failures.push(rel + ": tipo D1 expuesto fuera de infraestructura");
+  }
+
   // R2 belongs to files. The central Worker type declaration is the only exception.
   if (
     /\bFILES_BUCKET\b/.test(source) &&
