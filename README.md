@@ -4,7 +4,7 @@
 
 Sistema de almacenamiento de archivos en la nube (tipo Drive / Mega) construido **100 % sobre Cloudflare**, sin Cloudflare Containers. Producto propio para un máximo de **10 clientes**, con aislamiento total entre cuentas: ningún cliente puede ver, editar ni eliminar los archivos de otro.
 
-> Estado del proyecto: en planificación. Consulta el [ROADMAP](./ROADMAP.md) para las fases y el [SECURITY](./SECURITY.md) para las reglas de seguridad obligatorias.
+> Estado del proyecto: en planificación. Consulta el [roadmap](./roadmap.md) para las fases y el [Security](./Security.md) para las reglas de seguridad obligatorias.
 
 ---
 
@@ -12,7 +12,7 @@ Sistema de almacenamiento de archivos en la nube (tipo Drive / Mega) construido 
 
 - Registro, login, página de inicio y dashboard.
 - Carpetas y archivos por usuario (crear, renombrar, mover, eliminar, papelera).
-- Subida de archivos grandes (más de 300 MB) mediante **multipart upload con la API compatible con S3 de R2** y URLs prefirmadas.
+- Subida y descarga de archivos exclusivamente mediante la API del Worker; el navegador nunca se conecta a R2.
 - Descargas con soporte de `Range` (reanudación y streaming).
 - Cuotas de almacenamiento por usuario.
 - Enlaces compartidos con expiración (opcional, fase posterior).
@@ -22,7 +22,7 @@ Sistema de almacenamiento de archivos en la nube (tipo Drive / Mega) construido 
 
 | Necesidad | Servicio |
 |---|---|
-| Archivos | Cloudflare **R2** (acceso por API S3) |
+| Archivos | Cloudflare **R2** (acceso exclusivo del Worker/backend) |
 | Metadatos, usuarios, sesiones | Cloudflare **D1** |
 | Backend / API | Cloudflare **Workers** |
 | Frontend | Workers con assets estáticos |
@@ -39,19 +39,18 @@ Lenguaje: TypeScript. Librería de firma S3: [`aws4fetch`](https://github.com/mh
 flowchart LR
     B[Navegador] -- HTML/JS --> W[Worker: API + assets]
     W -- consultas --> D[(D1: usuarios, nodos, sesiones)]
-    W -- firma URLs / orquesta multipart --> R[(R2 vía API S3)]
-    B -- PUT de partes / GET con URL prefirmada --> R
+    W -- valida, procesa y transmite --> R[(R2 privado)]
 ```
 
-Idea clave: **los archivos nunca pasan por el Worker**. El Worker autentica, valida propiedad y cuota, y entrega URLs prefirmadas de corta duración. El navegador sube y descarga directo contra R2.
+Idea clave: **todo acceso a R2 pasa por el Worker**. El Worker autentica, autoriza, valida propiedad y cuota, y transmite los bytes entre el navegador y el bucket. El navegador no recibe URLs prefirmadas, ni conoce el endpoint de R2, ni usa credenciales, SDKs o APIs de S3.
 
-### Flujo de subida grande
+### Flujo de subida
 
-1. `POST /api/uploads/init` → valida sesión y cuota, crea la clave `u/{userId}/{uuid}` y el `uploadId` (CreateMultipartUpload).
-2. `POST /api/uploads/part-url` → verifica que el `uploadId` es del usuario y devuelve una URL prefirmada para esa parte.
-3. El navegador hace `PUT` de cada parte (en paralelo) y guarda el `ETag`.
-4. `POST /api/uploads/complete` → verifica tamaño real, completa el multipart y registra el archivo en D1.
-5. `POST /api/uploads/abort` → cancela y limpia.
+1. El navegador envía el archivo a `POST /api/files` del Worker, sin lógica de negocio ni comunicación con R2.
+2. El Worker valida sesión, autorización, nombre, tipo, tamaño y cuota; crea internamente la clave `u/{userId}/{uuid}`.
+3. El Worker transmite el contenido a R2 con sus bindings o credenciales privadas y verifica el tamaño real.
+4. Solo tras completar la operación, el Worker registra el archivo en D1 y devuelve un resultado seguro al navegador.
+5. Si falla, el Worker limpia los recursos internos; el navegador nunca opera subidas multipart ni claves de R2.
 
 ## Estructura del repositorio (propuesta)
 
@@ -112,21 +111,9 @@ npx wrangler dev
 npx wrangler deploy
 ```
 
-### Configuración de CORS del bucket R2
+### Aislamiento de R2
 
-Necesaria para subir desde el navegador. Sustituye el origen por tu dominio real:
-
-```json
-[{
-  "AllowedOrigins": ["https://app.tudominio.com"],
-  "AllowedMethods": ["GET", "PUT", "HEAD"],
-  "AllowedHeaders": ["*"],
-  "ExposeHeaders": ["ETag"],
-  "MaxAgeSeconds": 3600
-}]
-```
-
-`ExposeHeaders: ETag` es obligatorio: sin él el navegador no puede leer el ETag de cada parte y no se puede completar la subida.
+No se configura CORS para el navegador en el bucket R2: R2 no recibe peticiones desde el cliente. El bucket permanece privado y solo el Worker/backend utiliza sus bindings o credenciales privadas. Cualquier necesidad de descarga o subida se implementa como una ruta autenticada de `/api`.
 
 ## Variables y secretos
 
@@ -145,7 +132,7 @@ Necesaria para subir desde el navegador. Sustituye el origen por tu dominio real
 Resumen de los principios (detalle completo en [SECURITY.md](./SECURITY.md)):
 
 1. **Aislamiento por usuario en cada consulta y cada clave de R2.** El `userId` sale siempre de la sesión, nunca del cliente.
-2. **Bucket privado.** Todo acceso a objetos es mediante URLs prefirmadas de corta duración.
+2. **Bucket privado.** Todo acceso a objetos es efectuado por el Worker/backend; no se emiten URLs prefirmadas al navegador.
 3. **Registro cerrado** (invitación o tope de 10 usuarios).
 4. **Secretos solo en `wrangler secret`**, jamás en el código ni en el repositorio.
 5. **Cada implementación del roadmap debe cumplir el checklist de seguridad** antes de fusionarse.
@@ -153,7 +140,7 @@ Resumen de los principios (detalle completo en [SECURITY.md](./SECURITY.md)):
 ## Contribución
 
 - Trabaja en ramas `feature/<fase>-<descripcion>` y abre PR hacia `main`.
-- Cada PR debe incluir el checklist de seguridad de [SECURITY.md](./SECURITY.md#checklist-de-pull-request) completado.
+- Cada PR debe incluir el checklist de seguridad de [Security.md](./Security.md#checklist-de-pull-request) completado.
 - Commits en formato convencional (`feat:`, `fix:`, `chore:`, `docs:`, `security:`).
 
 ## Licencia

@@ -11,8 +11,8 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 - **SEC-ISO-01** El `userId` se obtiene **únicamente de la sesión validada en el servidor**. Nunca de la URL, el body, headers ni cookies no firmadas.
 - **SEC-ISO-02** Toda consulta a D1 sobre datos de usuario incluye `WHERE user_id = ?` con el ID de la sesión. Se centraliza en una capa de acceso a datos; prohibido SQL suelto en las rutas.
 - **SEC-ISO-03** Un recurso ajeno responde **404** (no 403), para no revelar que existe.
-- **SEC-ISO-04** Las claves de R2 las genera el servidor con el formato `u/{userId}/{uuid}`. El cliente nunca envía ni elige una clave.
-- **SEC-ISO-05** Antes de firmar cualquier URL (parte de subida, descarga) se verifica en D1 que el `uploadId` o el archivo pertenece al usuario de la sesión.
+- **SEC-ISO-04** Las claves de R2 las genera el servidor con el formato `u/{userId}/{uuid}`. El cliente nunca envía, elige, conoce ni recibe una clave o URL de R2.
+- **SEC-ISO-05** Antes de cada operación de subida, descarga, lectura o borrado en R2, el Worker verifica en D1 que el recurso pertenece al usuario de la sesión. El navegador nunca contacta R2.
 - **SEC-ISO-06** Toda funcionalidad nueva debe incluir al menos una **prueba automatizada de acceso cruzado** (usuario A intenta leer/modificar/borrar recursos de usuario B y falla).
 
 ## 2. Autenticación y contraseñas (AUTH)
@@ -45,47 +45,52 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 
 - **SEC-R2-01** Bucket **privado**: sin acceso público ni dominio público ni `r2.dev` habilitado.
 - **SEC-R2-02** Token S3 de R2 con permisos mínimos (Object Read & Write) limitado a **este bucket**. Rotación periódica.
-- **SEC-R2-03** URLs prefirmadas de corta duración: partes de subida ≤ 1 h; descargas ≤ 5 min.
-- **SEC-R2-04** El servidor declara el tamaño total al iniciar la subida, calcula el número de partes y **rechaza** números de parte fuera de rango.
+- **SEC-R2-03** Está prohibido emitir URLs prefirmadas, endpoints, credenciales o tokens de R2 al navegador. Toda transferencia pasa por una ruta autenticada del Worker/backend.
+- **SEC-R2-04** El Worker valida el tamaño total y transmite a R2 solo después de autorizar la operación. Cualquier multipart interno queda encapsulado en el backend y no expone partes ni identificadores al navegador.
 - **SEC-R2-05** Al completar, verificar con `HEAD` el **tamaño real** del objeto frente a la cuota y al tamaño declarado; si excede, borrar el objeto y rechazar.
-- **SEC-R2-06** Descargas siempre con `Content-Disposition: attachment` y `X-Content-Type-Options: nosniff` para evitar XSS almacenado por archivos HTML/SVG subidos.
+- **SEC-R2-06** El Worker transmite las descargas con `Content-Disposition: attachment` y `X-Content-Type-Options: nosniff` para evitar XSS almacenado por archivos HTML/SVG subidos.
 - **SEC-R2-07** Regla de ciclo de vida para abortar subidas multipart incompletas y cron de limpieza de subidas huérfanas.
-- **SEC-R2-08** CORS del bucket limitado al origen exacto de la app; `ExposeHeaders: ETag`; sin `*` en `AllowedOrigins` en producción.
+- **SEC-R2-08** El bucket no acepta CORS ni peticiones del navegador: sin `AllowedOrigins`, sin dominio público, sin `r2.dev` y sin `ExposeHeaders` para clientes. Solo el Worker/backend puede acceder a R2.
 
-## 6. CORS, cabeceras y transporte (WEB)
+## 6. Frontend sin lógica de negocio (FE)
+
+- **SEC-FE-01** El frontend solo presenta interfaz y envía solicitudes al mismo origen `/api`. No toma decisiones de autorización, cuotas, propiedad, claves de almacenamiento ni reglas de negocio; el servidor siempre es la fuente de verdad.
+- **SEC-FE-02** Los assets del frontend no importan SDKs de R2/S3 ni contienen endpoint, bucket, configuración, URL prefirmada, token o credencial de R2.
+
+## 7. CORS, cabeceras y transporte (WEB)
 
 - **SEC-WEB-01** Servir frontend y API desde el **mismo origen**; sin CORS abierto en la API. Si hace falta CORS, lista blanca exacta, nunca `*` con credenciales.
 - **SEC-WEB-02** Cabeceras en todas las respuestas: `Content-Security-Policy` estricta (sin `unsafe-inline` si es posible), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` (o `frame-ancestors 'none'`).
 - **SEC-WEB-03** Solo HTTPS; redirección forzada y "Always Use HTTPS" activo.
 - **SEC-WEB-04** Respuestas de la API con `Cache-Control: no-store` en datos autenticados.
 
-## 7. Límite de peticiones y abuso (RATE)
+## 8. Límite de peticiones y abuso (RATE)
 
-- **SEC-RATE-01** Rate limiting en login, registro, solicitud de URLs prefirmadas y creación de subidas (por IP y por usuario).
+- **SEC-RATE-01** Rate limiting en login, registro, transferencias de archivos por `/api` y creación de subidas (por IP y por usuario).
 - **SEC-RATE-02** Bloqueo temporal progresivo tras intentos fallidos de login.
-- **SEC-RATE-03** Tope de subidas multipart activas simultáneas por usuario.
+- **SEC-RATE-03** Tope de transferencias y subidas internas activas simultáneas por usuario.
 - **SEC-RATE-04** Reglas WAF de Cloudflare activas sobre el dominio.
 
-## 8. Secretos y configuración (SEC)
+## 9. Secretos y configuración (SEC)
 
-- **SEC-SEC-01** Ningún secreto en el repositorio, en `wrangler.toml`, en logs ni en el frontend. Solo `wrangler secret` / variables de entorno.
+- **SEC-SEC-01** Ningún secreto en el repositorio, en `wrangler.toml`, en logs ni en el frontend. El frontend tampoco contiene endpoint, bucket, SDK, URL prefirmada, token ni configuración de R2. Solo el Worker usa `wrangler secret` / variables de entorno.
 - **SEC-SEC-02** `.gitignore` incluye `.dev.vars`, `.env*`, `node_modules`, `.wrangler`.
 - **SEC-SEC-03** Escaneo de secretos en CI (p. ej. gitleaks) y protección de rama `main`.
 - **SEC-SEC-04** Si un secreto se filtra: rotar de inmediato y revisar logs de acceso.
 
-## 9. Registro, auditoría y privacidad (LOG)
+## 10. Registro, auditoría y privacidad (LOG)
 
 - **SEC-LOG-01** Registrar eventos de seguridad (login correcto/fallido, registro, cambio de contraseña, subida, borrado, compartición) con `userId`, IP y fecha.
 - **SEC-LOG-02** Nunca registrar contraseñas, tokens, URLs prefirmadas completas ni cuerpos de petición sensibles.
 - **SEC-LOG-03** Los errores al cliente son genéricos; el detalle va solo a logs internos.
 
-## 10. Dependencias y cadena de suministro (DEP)
+## 11. Dependencias y cadena de suministro (DEP)
 
 - **SEC-DEP-01** Mínimo de dependencias; versiones fijadas con lockfile.
 - **SEC-DEP-02** `npm audit` / Dependabot activos; revisar antes de actualizar.
 - **SEC-DEP-03** Preferir APIs nativas de Workers/Web Crypto antes que librerías de terceros.
 
-## 11. Compartición de enlaces (SHARE)
+## 12. Compartición de enlaces (SHARE)
 
 - **SEC-SHARE-01** Token aleatorio de ≥ 32 bytes, guardado con hash; con expiración obligatoria y revocable por el dueño.
 - **SEC-SHARE-02** Solo permiso de lectura por defecto; contraseña opcional.
@@ -100,8 +105,9 @@ Marca cada punto en el PR (si no aplica, indica "N/A" y por qué):
 - [ ] El `userId` proviene solo de la sesión (SEC-ISO-01) y las consultas filtran por él (SEC-ISO-02).
 - [ ] Añadí pruebas de acceso cruzado entre usuarios (SEC-ISO-06).
 - [ ] Toda entrada nueva está validada con esquema (SEC-VAL-01) y el SQL usa parámetros (SEC-VAL-02).
-- [ ] Ninguna clave de R2 o ruta proviene del cliente (SEC-ISO-04).
-- [ ] Las URLs prefirmadas nuevas verifican propiedad y tienen expiración corta (SEC-ISO-05, SEC-R2-03).
+- [ ] El frontend no incorpora lógica de negocio y solo llama al mismo origen `/api` (SEC-FE-01).
+- [ ] Ninguna clave, endpoint, SDK, URL, token, configuración ni ruta de R2 llega al cliente; el Worker es el único acceso a R2 (SEC-FE-02, SEC-ISO-04, SEC-R2-03, SEC-R2-08).
+- [ ] Cada operación de R2 se autoriza en el Worker y no se emiten URLs prefirmadas (SEC-ISO-05, SEC-R2-03).
 - [ ] Los endpoints nuevos tienen rate limiting (SEC-RATE-01).
 - [ ] No hay secretos, tokens ni datos sensibles en código, logs ni respuestas (SEC-SEC-01, SEC-LOG-02).
 - [ ] Cabeceras de seguridad y CORS siguen cumpliéndose (SEC-WEB-01, SEC-WEB-02).

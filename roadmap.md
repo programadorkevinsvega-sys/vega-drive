@@ -1,6 +1,6 @@
 # Roadmap de Vega Drive
 
-Plan paso a paso por **fases** y **subfases**. Cada subfase incluye tareas, criterio de aceptación y las **reglas de seguridad** (IDs de [SECURITY.md](./SECURITY.md)) que deben cumplirse antes de darla por terminada.
+Plan paso a paso por **fases** y **subfases**. Cada subfase incluye tareas, criterio de aceptación y las **reglas de seguridad** (IDs de [Security.md](./Security.md)) que deben cumplirse antes de darla por terminada.
 
 Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 
@@ -20,7 +20,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 | 1 | Base de datos | Esquema D1 y capa de acceso con aislamiento |
 | 2 | Autenticación | Registro cerrado, login, sesiones |
 | 3 | Carpetas y archivos (metadatos) | Árbol de carpetas por usuario |
-| 4 | Almacenamiento y subidas | Subida multipart a R2 por S3 y descargas |
+| 4 | Almacenamiento y subidas | Acceso a R2 exclusivamente desde el Worker/backend |
 | 5 | Frontend | Inicio, registro, login, dashboard |
 | 6 | Cuotas y administración | Límites por usuario y panel mínimo |
 | 7 | Compartir enlaces | Enlaces con expiración (opcional) |
@@ -152,43 +152,36 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 
 ## Fase 4 — Almacenamiento y subidas
 
-### 4.1 Cliente S3 para R2
-- [ ] Módulo `lib/r2.ts` con `aws4fetch` (firmar y llamar al endpoint S3).
+### 4.1 Cliente privado de R2
+- [ ] Módulo `lib/r2.ts` usado exclusivamente por el Worker/backend, mediante binding de R2 o credenciales privadas.
 - [ ] Función de generación de clave `u/{userId}/{uuid}`.
-- [ ] Configurar CORS del bucket con el origen exacto y `ExposeHeaders: ETag`.
-- **Aceptación:** el Worker crea/consulta objetos de prueba en R2 por S3.
+- [ ] Mantener el bucket sin CORS para el navegador, sin dominio público ni URLs prefirmadas.
+- **Aceptación:** el Worker crea, consulta y elimina objetos de prueba sin que el navegador pueda contactar R2.
 - 🔒 SEC-ISO-04, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
 
-### 4.2 Iniciar subida multipart
-- [ ] `POST /api/uploads/init`: valida sesión, nombre, tamaño y cuota; crea `uploadId`; guarda en `uploads`.
-- [ ] Cálculo del tamaño de parte (p. ej. 50 MB) y número de partes.
-- **Aceptación:** devuelve `uploadId`, tamaño de parte y número de partes.
+### 4.2 Subir mediante la API del backend
+- [ ] `POST /api/files`: recibe el archivo en el Worker; valida sesión, nombre, tamaño y cuota antes de almacenarlo.
+- [ ] El Worker transmite el contenido a R2 y crea internamente cualquier operación multipart necesaria; ningún identificador interno se expone al navegador.
+- **Aceptación:** la API devuelve únicamente el metadato del archivo y R2 no registra ninguna petición originada por el navegador.
 - 🔒 SEC-ISO-01, SEC-ISO-04, SEC-R2-04, SEC-VAL-01, SEC-VAL-03, SEC-RATE-01, SEC-RATE-03.
 
-### 4.3 URLs prefirmadas por parte
-- [ ] `POST /api/uploads/part-url`: verifica propiedad del `uploadId` y que `partNumber` esté en rango.
-- [ ] URL prefirmada `PUT` con expiración ≤ 1 h.
-- **Aceptación:** un `uploadId` ajeno devuelve 404.
-- 🔒 SEC-ISO-05, SEC-R2-03, SEC-R2-04, SEC-RATE-01.
-
-### 4.4 Completar y abortar
-- [ ] `POST /api/uploads/complete`: envía partes a R2, verifica tamaño real con `HEAD`, registra el archivo en `nodes`.
-- [ ] `POST /api/uploads/abort`: cancela y limpia.
-- [ ] Si el tamaño real excede la cuota o lo declarado, borrar y rechazar.
-- **Aceptación:** subida de un archivo > 300 MB completada con éxito.
+### 4.3 Finalizar y limpiar en backend
+- [ ] El Worker verifica el tamaño real con `HEAD`, registra el archivo en `nodes` y limpia operaciones internas fallidas.
+- [ ] Si el tamaño real excede la cuota o lo declarado, el Worker borra el objeto y rechaza la operación.
+- **Aceptación:** una subida de un archivo > 300 MB completada a través de `/api/files`, sin URL, SDK ni llamada directa a R2 desde el navegador.
 - 🔒 SEC-R2-05, SEC-ISO-05, SEC-LOG-01.
 
-### 4.5 Limpieza de subidas huérfanas
+### 4.4 Limpieza de subidas huérfanas
 - [ ] Regla de ciclo de vida de R2 para abortar multipart incompletas.
 - [ ] Cron que cancela registros `uploads` vencidos.
 - **Aceptación:** no quedan partes huérfanas tras el plazo.
 - 🔒 SEC-R2-07.
 
-### 4.6 Descargas
-- [ ] `GET /api/files/:id/download`: verifica propiedad y devuelve URL prefirmada `GET` (≤ 5 min).
+### 4.5 Descargas
+- [ ] `GET /api/files/:id/download`: verifica propiedad y transmite la respuesta de R2 a través del Worker; nunca devuelve una URL de R2.
 - [ ] `Content-Disposition: attachment` y `nosniff`.
-- [ ] Soporte de `Range` (lo gestiona R2).
-- **Aceptación:** el archivo se descarga y se puede reanudar.
+- [ ] Soporte de `Range` gestionado y autorizado por el backend.
+- **Aceptación:** el archivo se descarga y se puede reanudar sin petición del navegador a R2.
 - 🔒 SEC-ISO-05, SEC-R2-03, SEC-R2-06, SEC-WEB-04.
 
 ---
@@ -208,7 +201,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 - 🔒 SEC-WEB-02.
 
 ### 5.3 Registro y login
-- [ ] Formularios con validación en cliente y servidor.
+- [ ] Formularios que solo presentan la interfaz; cualquier validación de seguridad, autenticación y decisión de negocio se hace en el servidor.
 - [ ] Widget de Turnstile.
 - [ ] Mensajes de error genéricos.
 - **Aceptación:** flujo completo registro → login → dashboard.
@@ -221,11 +214,11 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 - **Aceptación:** un usuario solo ve sus propios datos.
 - 🔒 SEC-ISO-01, SEC-VAL-05, SEC-WEB-04.
 
-### 5.5 Uploader de archivos grandes
-- [ ] Partir el archivo en trozos y subir varias partes en paralelo.
-- [ ] Barra de progreso, reintentos por parte, pausar/reanudar y cancelar.
-- [ ] Leer `ETag` de cada parte y completar la subida.
-- **Aceptación:** subida estable de archivos de varios GB con reintentos.
+### 5.5 Formulario de subida
+- [ ] Enviar el archivo únicamente a la ruta autenticada `/api/files`.
+- [ ] Mostrar el estado y el resultado devuelto por la API, sin implementar reglas de cuota, autorización, fragmentación multipart ni reintentos contra R2.
+- [ ] Prohibir en los assets del frontend referencias a endpoint, bucket, SDK, credenciales o URLs de R2.
+- **Aceptación:** la red del navegador muestra peticiones solo al origen de la aplicación; no hay peticiones directas a R2.
 - 🔒 SEC-R2-03, SEC-R2-08, SEC-RATE-03.
 
 ---
@@ -234,7 +227,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 
 ### 6.1 Cuotas por usuario
 - [ ] Campo `quota_bytes` y contador de uso.
-- [ ] Comprobación al iniciar y al completar subidas (tamaño real).
+- [ ] Comprobación en el Worker antes y después de guardar el archivo (tamaño real).
 - [ ] Durable Object por usuario si hay condiciones de carrera.
 - **Aceptación:** no se puede superar la cuota ni con subidas paralelas.
 - 🔒 SEC-R2-05, SEC-ISO-01.
@@ -258,7 +251,7 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 ### 7.1 Enlaces compartidos
 - [ ] Crear, listar y revocar enlaces por archivo.
 - [ ] Token de ≥ 32 bytes (hash en D1), expiración obligatoria, contraseña opcional.
-- [ ] Descarga pública mediante URL prefirmada tras validar el token.
+- [ ] Descarga pública transmitida por el Worker tras validar el token; nunca devuelve una URL de R2.
 - **Aceptación:** un enlace expirado o revocado no funciona.
 - 🔒 SEC-SHARE-01, SEC-SHARE-02, SEC-SHARE-03, SEC-RATE-01.
 
@@ -268,13 +261,13 @@ Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
 
 ### 8.1 Pruebas de seguridad
 - [ ] Batería de pruebas de acceso cruzado en todos los endpoints.
-- [ ] Pruebas de fuerza bruta, subidas con tamaños falsos y partes fuera de rango.
+- [ ] Pruebas de fuerza bruta, subidas con tamaños falsos y ausencia total de acceso directo del navegador a R2.
 - [ ] Revisión de inyección y XSS (nombres de archivo con caracteres especiales).
 - **Aceptación:** sin hallazgos críticos abiertos.
-- 🔒 SEC-ISO-06, SEC-VAL-01…05, SEC-R2-04, SEC-R2-05.
+- 🔒 SEC-ISO-06, SEC-VAL-01…05, SEC-R2-04, SEC-R2-05, SEC-R2-08.
 
 ### 8.2 Revisión de configuración
-- [ ] Revisar CORS (bucket y API), CSP, HSTS y cookies.
+- [ ] Verificar que R2 no permite CORS del navegador y revisar CSP, HSTS y cookies.
 - [ ] Revisar permisos del token S3 y rotarlo.
 - [ ] Auditar dependencias.
 - **Aceptación:** checklist completo sin excepciones.
