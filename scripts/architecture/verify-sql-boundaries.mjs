@@ -1,21 +1,24 @@
-import { relative, sep } from "node:path";
-import { moduleNames, relativePath, runGuard, sourceFiles, walk } from "./guard-utils.mjs";
+import { readFile } from "node:fs/promises";
+import { absolute, moduleNames, relativePath, runGuard, sourceFiles, walk } from "./guard-utils.mjs";
 
 await runGuard("Límites SQL e imports entre módulos", async (failures) => {
   const files = await sourceFiles();
-  const migrations = await walk(process.env.VEGA_DRIVE_ROOT ? process.env.VEGA_DRIVE_ROOT + "/src/modules" : "src/modules", /\.sql$/i);
+  const migrations = await walk(absolute("src/modules"), /\.sql$/i);
   const allFiles = [...new Set([...files, ...migrations])];
 
   for (const file of allFiles) {
     const rel = relativePath(file);
     const owner = moduleNames.find((name) => rel.startsWith("src/modules/" + name + "/"));
     if (!owner) continue;
-    const source = await (await import("node:fs/promises")).readFile(file, "utf8");
+    const source = await readFile(file, "utf8");
     const importPattern = /(?:\bfrom\s*|\bimport\s*(?:\(\s*)?)[\"']([^\"']+)[\"']/g;
     for (const match of source.matchAll(importPattern)) {
       const specifier = match[1] ?? "";
-      if (!specifier.includes("/modules/")) continue;
-      const target = moduleNames.find((name) => specifier.includes("/modules/" + name + "/") || specifier.startsWith("../" + name + "/"));
+      const target = moduleNames.find((name) =>
+        specifier.includes("/modules/" + name + "/") ||
+        specifier.startsWith("../" + name + "/") ||
+        specifier.startsWith("../../" + name + "/")
+      );
       if (target && target !== owner && !specifier.endsWith("/module.public-api.js") && !specifier.endsWith("/module.public-api.ts")) {
         failures.push(rel + ": import interno prohibido de " + target + " (" + specifier + ").");
       }
