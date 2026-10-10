@@ -198,6 +198,7 @@ identityRoutes.post("/password", async (c) => {
     actor,
     body.currentPassword,
     body.newPassword,
+    ip(c.req.raw),
   );
   if (!result.ok) {
     return c.json({ error: "Unable to change password" }, 400);
