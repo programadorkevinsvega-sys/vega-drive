@@ -18,7 +18,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 | Fase | Resultado                                           |
 | ---- | --------------------------------------------------- |
-| 0    | Contrato, estructura del Worker y verificaciones de build/despliegue |
+| 0    | Contrato, estructura del Worker y CI                |
 | 1    | D1 única con límites verificables por módulo        |
 | 2    | Módulo identity: registro, sesiones y autenticación |
 | 3    | Módulo files: catálogo de carpetas y archivos       |
