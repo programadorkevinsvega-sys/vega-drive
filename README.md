@@ -62,7 +62,7 @@ Los puertos y adaptadores de persistencia preparan la capa de datos de `identity
 - Archivos: R2 privado mediante `FILES_BUCKET`.
 - Anti-bots: Turnstile, pendiente de configuración.
 
-El ID D1 y el nombre del bucket en `wrangler.toml` corresponden a recursos de la cuenta conectada al despliegue. La existencia de un binding no demuestra que exista el esquema de tablas ni que el bucket sea privado. Verifica en Cloudflare que R2 no tenga acceso público, dominio público, `r2.dev` ni CORS de navegador.
+El esquema de D1 para `identity` y `files` está versionado en migraciones independientes por módulo y se comprueba con `pnpm run db:verify:schema:local` o `pnpm run db:verify:schema:production`. La existencia de un binding, por sí sola, no prueba que el esquema real coincida con las migraciones ni que el bucket R2 sea privado. Verifica en Cloudflare que R2 no tenga acceso público, dominio público, `r2.dev` ni CORS de navegador.
 
 ## Desarrollo
 
@@ -84,10 +84,13 @@ La clave de sitio de Turnstile es pública; la clave secreta nunca debe incluirs
 
 ## Comprobaciones, migraciones y CI
 
-`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. `pnpm run cloudflare:build` ejecuta primero `predeploy`, después todas las comprobaciones y finalmente `pnpm audit --audit-level=high`; debe usarse como comando de build de Cloudflare Workers Builds, junto con la instalación reproducible `pnpm install --frozen-lockfile`.
+`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. `pnpm run cloudflare:build` ejecuta primero `pnpm run deploy:preflight`, después todas las comprobaciones y finalmente `pnpm audit --audit-level=high`; debe usarse como comando de build de Cloudflare Workers Builds, junto con la instalación reproducible `pnpm install --frozen-lockfile`.
+
+`pnpm run deploy:preflight` comprueba la configuración de Cloudflare, la propiedad y ubicación de cada migración con `scripts/check-module-migrations.mjs`, y las fronteras entre módulos con `scripts/architecture-check.mjs`. Si falla cualquiera de las guardias, termina antes de consultar o mutar la D1 remota. El comando `pnpm run deploy` ejecuta explícitamente ese gate antes de `db:migrate:production`; no uses `pnpm exec wrangler deploy` como comando de publicación.
 
 El comando de despliegue de producción de Cloudflare Workers Builds debe ser **`pnpm run deploy`**, no `pnpm exec wrangler deploy`. El script ejecuta, en orden:
 
+0. `pnpm run deploy:preflight` valida los bindings, la ubicación y prefijos de tablas/índices de las migraciones y las reglas arquitectónicas. Cualquier infracción bloquea los pasos remotos posteriores.
 1. `wrangler d1 migrations apply vega_drive_db --remote` para aplicar migraciones pendientes.
 2. `wrangler d1 migrations list vega_drive_db --remote` para comprobar el historial registrado.
 3. `scripts/verify-d1-schema.mjs` inspecciona `sqlite_schema` en la D1 remota y compara tablas e índices con las definiciones SQL versionadas; detecta objetos ausentes, definiciones incompatibles y objetos inesperados. Si hay diferencias, termina con error y bloquea el despliegue.

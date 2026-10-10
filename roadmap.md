@@ -84,7 +84,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 1 — D1 única y límites de datos
 
-**Estado de implementación (2026-10-10; verificación registrada):** las migraciones modulares de `files` e `identity`, el manifest, los puertos/repositorios D1 y la guardia arquitectónica están implementados. La validación local completó formato, lint, TypeScript, `pnpm test` (8 archivos, 32 pruebas), `pnpm run cloudflare:build`, auditoría sin vulnerabilidades conocidas y aplicación de ambas migraciones locales; `pnpm run db:verify:schema:local` confirmó que los 17 objetos esperados coinciden. GitHub Actions para el commit `cced6b395f0cebd9386be9a3df0b546b070b323f` quedó en verde (8 archivos, 32 pruebas, Gitleaks sin fugas). El pipeline de Cloudflare también ejecutó `pnpm run deploy`: no había migraciones remotas pendientes, la verificación estructural remota confirmó los 17 objetos y `/api/health` respondió HTTP 200. Versión de Worker reportada: `59053a71-ff24-4d8e-b032-1a985899ed14`. Este despliegue de producción ocurrió mediante la configuración automática de Cloudflare; se registra como evidencia, no como autorización para adelantar fases. Las casillas que siguen pendientes representan trabajo funcional/aislamiento todavía no demostrado: el ownerId está preparado para proceder de un actor/sesión validados, pero el flujo de autenticación aún no existe, y las pruebas actuales inspeccionan SQL enlazado en dobles D1, no accesos cruzados end-to-end contra D1 real y casos de uso. No cerrar la Fase 1 hasta resolver las pruebas de aislamiento que pertenecen a su alcance; la autorización con sesiones reales se completará cuando se implemente identity en Fase 2.
+**Estado de implementación (2026-10-10; validación y refuerzo de guardias):** las migraciones modulares de `files` e `identity`, el manifest, los puertos/repositorios D1 y la guardia arquitectónica están implementados. Ya se comprobó localmente formato, lint, TypeScript, 32 pruebas, `pnpm run cloudflare:build`, auditoría sin vulnerabilidades conocidas, aplicación de ambas migraciones locales y coincidencia de los 17 objetos locales. GitHub Actions quedó en verde con 32 pruebas y Gitleaks sin fugas. Cloudflare también publicó la versión `59053a71-ff24-4d8e-b032-1a985899ed14`: no había migraciones remotas pendientes, la comprobación estructural remota coincidió con los 17 objetos y `/api/health` respondió HTTP 200. Este cambio incorpora pruebas de aislamiento que ejecutan las migraciones versionadas en SQLite real para verificar lecturas y mutaciones de items, carpetas, uploads y revocación de sesiones entre propietarios; además añade una guardia de propiedad de migraciones al gate de despliegue. La nueva suite y los nuevos gates quedan pendientes de ejecución en CI para este commit. No se deben tratar como verificados hasta que pasen. Los casos de uso funcionales aún no existen; su aislamiento deberá probarse cuando se implementen, usando un actor autenticado por servidor en vez de aceptar `ownerId` de la petición.
 
 ### 1.1 Tablas y migraciones por módulo
 
@@ -107,7 +107,8 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ### 1.3 Pruebas de frontera y aislamiento
 
-- [ ] Probar acceso cruzado entre usuarios para cada repositorio y caso de uso.
+- [ ] Validar en CI las nuevas pruebas de aislamiento efectivas de los repositorios D1 con SQLite real.
+- [ ] Probar acceso cruzado en cada caso de uso cuando se implemente; no existen casos de uso funcionales todavía.
 - [x] Probar que el lint arquitectónico bloquea import, SQL, JOIN, FK y batch cruzados.
 - **Aceptación:** las pruebas se ejecutan en CI y fallan ante una violación insertada a propósito.
 - 🔒 SEC-ISO-06, SEC-MOD-03.

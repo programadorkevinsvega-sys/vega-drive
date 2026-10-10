@@ -43,6 +43,22 @@ describe("architecture guard", () => {
     expect(pkg.scripts.lint).toContain("architecture-check.mjs");
   });
 
+  it("runs migration ownership and architecture guards before remote deploy work", async () => {
+    const pkg = JSON.parse(await readFile(resolve("package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+    };
+
+    expect(pkg.scripts["deploy:preflight"]).toContain("verify:module-migrations");
+    expect(pkg.scripts["deploy:preflight"]).toContain("verify:architecture");
+    expect(pkg.scripts["verify:module-migrations"]).toContain(
+      "check-module-migrations.mjs",
+    );
+    expect(pkg.scripts.deploy).toMatch(/^pnpm run deploy:preflight &&/);
+    expect(pkg.scripts["cloudflare:build"]).toMatch(
+      /^pnpm run deploy:preflight &&/,
+    );
+  });
+
   it("rejects cross-module internal imports", async () => {
     const result = await runGuard({
       "src/modules/files/repository.ts": 'import "../identity/repository.js";',

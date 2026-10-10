@@ -24,6 +24,8 @@ El orden no establece dependencias entre módulos. Los IDs entre módulos son va
 
 ## Despliegue y verificación
 
+Antes de cualquier migración remota, `pnpm run deploy:preflight` ejecuta tres controles: configuración Cloudflare, `scripts/check-module-migrations.mjs` (ubicación, patrón Wrangler y prefijos propietarios de tablas/índices) y `scripts/architecture-check.mjs` (fronteras e imports entre módulos). Una infracción detiene `pnpm run deploy` antes de alterar D1 remota. El archivo histórico `migrations/0001_initial_schema.sql` permanece fuera del patrón activo y no es una fuente de migraciones nuevas.
+
 - `pnpm run db:migrate:local` aplica las migraciones modulares a la D1 local.
 - `pnpm run db:verify:schema:local` comprueba el esquema local sin conectarse a producción.
 - `pnpm run db:migrate:production` aplica las migraciones modulares a D1 remota; úsalo únicamente como parte del procedimiento de despliegue revisado.
