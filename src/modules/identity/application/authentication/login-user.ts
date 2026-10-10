@@ -100,7 +100,7 @@ export function createLoginUser(deps: {
       const previous = await deps.sessions.findByTokenHash(
         await sha256Hex(previousToken),
       );
-      if (previous && !previous.revokedAt) {
+      if (previous && previous.userId === user.id && !previous.revokedAt) {
         await deps.sessions.revokeForUser(
           previous.id,
           previous.userId,
