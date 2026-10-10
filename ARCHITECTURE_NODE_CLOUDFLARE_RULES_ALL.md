@@ -27,13 +27,12 @@ Cloudflare Worker único: Vega Drive
 ├── composición de dependencias
 └── módulos internos
     ├── identity
-    ├── drive-catalog
-    ├── file-storage
+    ├── files
     ├── quota
     └── sharing
          │
          ├── D1 única: VEGA_DRIVE_DB
-         └── R2 privado: solo file-storage
+         └── R2 privado: solo files
 ```
 
 El Worker atiende los assets estáticos y las rutas /api. El enrutador HTTP delega en los módulos; no incorpora reglas de negocio ni acceso directo a D1 o R2.
@@ -49,7 +48,7 @@ El frontend es una aplicación de presentación dentro del mismo despliegue, no 
 - No contacta R2. Las subidas y descargas atraviesan /api y el Worker.
 - Toda validación de seguridad y toda decisión de negocio se repite y se resuelve de forma autoritativa en el backend.
 
-Una subida normal sigue este flujo: navegador → POST /api/files → caso de uso de file-storage → adaptador R2. Una descarga sigue: navegador → GET /api/files/:id/download → autorización → streaming del Worker desde R2. Nunca se devuelve una URL de R2 al navegador.
+Una subida normal sigue este flujo: navegador → POST /api/files → caso de uso de files → adaptador R2. Una descarga sigue: navegador → GET /api/files/:id/download → autorización → streaming del Worker desde R2. Nunca se devuelve una URL de R2 al navegador.
 
 ## 4. Módulos y propiedad
 
@@ -58,8 +57,7 @@ Cada módulo posee su dominio, casos de uso, repositorios, tablas y eventos. Los
 | Módulo | Responsabilidad |
 |---|---|
 | identity | usuarios, invitaciones, credenciales y sesiones |
-| drive-catalog | carpetas, nodos, papelera y metadatos de archivos |
-| file-storage | transferencia privada y almacenamiento físico en R2 |
+| files | carpetas, archivos, papelera, metadatos, transferencias privadas y almacenamiento físico en R2 |
 | quota | límites y contabilización de capacidad |
 | sharing | enlaces compartidos, revocación y expiración |
 
@@ -77,7 +75,36 @@ Cada módulo expone una fachada estable en module.public-api.ts o un puerto equi
 
 Esta regla conserva la independencia de los módulos sin fingir que ya son microservicios.
 
-## 5. Capas internas y dependencias
+## 5. BFF interno y gateways
+
+El BFF está dentro del único Worker. Sus controladores Hono son adaptadores de transporte: validan la forma de la petición, resuelven la sesión y llaman a un gateway. No importan domain, application ni infrastructure de los módulos.
+
+El BFF solo conoce contratos de gateway y la API pública de cada módulo. El composition root conecta esos contratos con adaptadores en proceso:
+
+```typescript
+export interface FilesGateway {
+  initUpload(actor: AuthenticatedActor, input: InitUploadInput): Promise<InitUploadOutput>;
+  listFolder(actor: AuthenticatedActor, folderId: string): Promise<FolderListing>;
+}
+
+export class InProcessFilesGateway implements FilesGateway {
+  constructor(private readonly api: FilesPublicApi) {}
+
+  initUpload(actor: AuthenticatedActor, input: InitUploadInput) {
+    return this.api.initUpload(actor, input);
+  }
+
+  listFolder(actor: AuthenticatedActor, folderId: string) {
+    return this.api.listFolder(actor, folderId);
+  }
+}
+```
+
+AuthenticatedActor se crea exclusivamente a partir de la sesión validada en el backend. Ningún controller acepta ownerId, rol o permiso enviado por el navegador como fuente de verdad.
+
+Al extraer files, este gateway se sustituye por ServiceBindingFilesGateway que implementa el mismo contrato. El BFF, los controllers y los casos de uso consumidores no cambian.
+
+## 6. Capas internas y dependencias
 
 Todo módulo mantiene estas capas:
 
@@ -99,24 +126,26 @@ Las dependencias apuntan hacia adentro:
 
 Un archivo tiene una responsabilidad pública principal y no supera 200 líneas de código, salvo una excepción documentada y revisada.
 
-## 6. Una D1 con límites estrictos
+## 7. Una D1 con límites estrictos
 
 Vega Drive tiene una sola base de datos: VEGA_DRIVE_DB. Compartir el binding no elimina la propiedad modular.
 
 - Cada módulo es dueño exclusivo de sus tablas, índices y migraciones.
-- Las tablas llevan prefijo de módulo: identity_users, identity_sessions, drive_nodes, storage_uploads, quota_usage y sharing_links.
-- Las migraciones se guardan cerca del módulo dueño y se ejecutan en un orden central documentado contra la única D1.
+- Las tablas llevan prefijo de módulo: identity_users, identity_sessions, identity_outbox, files_items, files_folders, files_uploads, files_outbox, quota_usage y sharing_links.
+- Una referencia entre módulos es un valor, no una clave foránea. Por ejemplo, files_items.owner_id no tiene FK a identity_users.
+- Las migraciones se guardan cerca del módulo dueño, por ejemplo modules/identity/infrastructure/persistence/d1/migrations y modules/files/infrastructure/persistence/d1/migrations. Cada módulo mantiene su propia numeración; un manifest central documenta el orden de aplicación sobre la única D1.
 - Un repositorio solo consulta y modifica las tablas de su módulo.
-- Están prohibidos los JOINs, consultas SQL y modificaciones directas sobre tablas de otro módulo.
+- Están prohibidos los JOINs, claves foráneas, consultas SQL y modificaciones directas sobre tablas de otro módulo.
 - La comunicación de datos entre módulos usa la API pública o eventos, aunque físicamente compartan D1.
-- Las transacciones abarcan las tablas de un único módulo. Si una operación necesita coordinación entre módulos, se modela mediante caso de uso orquestador, contratos explícitos e idempotencia; no mediante SQL que atraviese límites.
+- Un db.batch() o transacción solo toca tablas de un módulo. Si una operación necesita coordinación entre módulos, se modela mediante caso de uso orquestador, contratos explícitos e idempotencia; no mediante SQL que atraviese límites.
+- Esta frontera se verifica automáticamente: una regla de lint o test de arquitectura debe fallar cuando SQL de files mencione identity_ o cuando SQL de identity mencione files_, y se extiende la misma regla a todos los prefijos.
 - Todo acceso a datos de usuario se filtra con el userId obtenido exclusivamente de la sesión validada.
 
-## 7. R2 y almacenamiento privado
+## 8. R2 y almacenamiento privado
 
-R2 pertenece funcionalmente a file-storage.
+R2 pertenece funcionalmente a files.
 
-- Solo infrastructure/storage/r2 de file-storage recibe o usa el binding o las credenciales de R2.
+- Solo infrastructure/storage/r2 de files recibe o usa el binding o las credenciales de R2.
 - La aplicación usa un puerto IFileStoragePort; el dominio nunca importa R2Bucket ni APIs S3.
 - El adaptador HTTP, los demás módulos y el frontend no acceden a R2.
 - El bucket no es público, no usa r2.dev, no tiene dominio público ni CORS para el navegador.
@@ -126,7 +155,7 @@ R2 pertenece funcionalmente a file-storage.
 - Las descargas se transmiten por el Worker con Content-Disposition: attachment y X-Content-Type-Options: nosniff.
 - Se verifican tamaños reales y se limpian operaciones de almacenamiento internas fallidas.
 
-## 8. Transporte HTTP y seguridad
+## 9. Transporte HTTP y seguridad
 
 - Las rutas públicas viven bajo /api y se sirven desde el mismo origen que el frontend.
 - El adaptador HTTP usa validación de esquema para body, query y parámetros; rechaza campos no esperados.
@@ -137,20 +166,20 @@ R2 pertenece funcionalmente a file-storage.
 - Los secretos se entregan solo al Worker mediante bindings o wrangler secret. Nunca se registran, se incluyen en assets o se devuelven en respuestas.
 - Todo cambio mantiene las reglas de Security.md; si este documento y Security.md discrepan sobre seguridad, prevalece la regla más restrictiva.
 
-## 9. Estructura orientativa
+## 10. Estructura orientativa
 
 ```text
 src/
   worker/
     fetch.ts
     composition-root.ts
-  http/
-    routes/
+  bff/
+    gateways/
+    controllers/
     middleware/
   modules/
     identity/
-    drive-catalog/
-    file-storage/
+    files/
     quota/
     sharing/
   platform/
@@ -167,7 +196,7 @@ wrangler.toml
 
 La estructura puede ajustarse, pero no se cambian las fronteras de dependencia, propiedad ni despliegue definidas aquí.
 
-## 10. Evolución futura a Workers separados
+## 11. Evolución futura a Workers separados
 
 Un módulo solo se extrae cuando exista una necesidad real de escala, despliegue, aislamiento operativo o equipo independiente.
 
@@ -176,26 +205,28 @@ Para extraerlo:
 1. Se mantiene su domain y application sin cambios.
 2. Se sustituye la fachada en memoria por un adaptador de Service Binding que respeta el mismo contrato.
 3. Sus eventos pasan al adaptador de Cloudflare Queues si requieren entrega asíncrona.
-4. Sus tablas se migran gradualmente desde la D1 única a su almacenamiento propio, con un plan de migración y reconciliación.
-5. El BFF/Worker principal deja de conocer su infraestructura y usa solo el contrato público.
+4. Se crea su D1 propia y se migran solo sus tablas con prefijo, por ejemplo files_*. Como no existen FKs ni JOINs cruzados, la copia no rompe a identity ni a los demás módulos.
+5. El composition root cambia InProcessFilesGateway por ServiceBindingFilesGateway(env.FILES_SERVICE).
+6. El BFF/Worker principal deja de conocer su infraestructura y usa solo el contrato público.
 
 No se anticipa esta separación con Workers ficticios ni con dependencias de red innecesarias en el monolito actual.
 
-## 11. Checklist obligatorio de pull request
+## 12. Checklist obligatorio de pull request
 
 - [ ] El cambio pertenece a un módulo con dueño claro.
 - [ ] No hay imports internos entre módulos; solo APIs públicas.
 - [ ] Domain y application no dependen de Cloudflare ni de HTTP.
 - [ ] D1 se usa solo desde repositorios de infraestructura del módulo dueño.
-- [ ] No hay consultas ni JOINs entre tablas de módulos distintos.
+- [ ] No hay consultas, JOINs, claves foráneas ni db.batch() entre tablas de módulos distintos.
+- [ ] Existe y pasa el lint/test que detecta referencias SQL a prefijos de otros módulos.
 - [ ] El frontend no contiene lógica de negocio y usa solo /api.
 - [ ] No existe acceso del navegador a R2, ni URLs prefirmadas, ni SDK/configuración de R2 en assets.
-- [ ] Solo file-storage accede a R2 mediante IFileStoragePort.
+- [ ] Solo files accede a R2 mediante IFileStoragePort.
 - [ ] Las rutas HTTP no contienen reglas de negocio ni SQL directo.
 - [ ] Se añadieron pruebas de aislamiento entre usuarios cuando aplica.
 - [ ] Los archivos de código respetan la responsabilidad única y el límite de 200 líneas.
 - [ ] Una excepción arquitectónica incluye un ADR aprobado.
 
-## 12. Prioridad
+## 13. Prioridad
 
 La arquitectura del monolito modular tiene prioridad sobre atajos de implementación. Si un requisito exige romper estas reglas, se detiene el cambio y se solicita una decisión explícita con ADR.
