@@ -16,19 +16,19 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 ## Resumen
 
-| Fase | Resultado |
-|---|---|
-| 0 | Contrato, estructura del Worker y CI |
-| 1 | D1 única con límites verificables por módulo |
-| 2 | Módulo identity: registro, sesiones y autenticación |
-| 3 | Módulo files: catálogo de carpetas y archivos |
-| 4 | Módulo files: transferencias privadas con R2 |
-| 5 | Frontend/BFF en el mismo Worker |
-| 6 | Módulo quota |
-| 7 | Módulo sharing |
-| 8 | Endurecimiento y pruebas de arquitectura |
-| 9 | Despliegue y operación |
-| 10 | Mejoras y posible extracción de módulos |
+| Fase | Resultado                                           |
+| ---- | --------------------------------------------------- |
+| 0    | Contrato, estructura del Worker y CI                |
+| 1    | D1 única con límites verificables por módulo        |
+| 2    | Módulo identity: registro, sesiones y autenticación |
+| 3    | Módulo files: catálogo de carpetas y archivos       |
+| 4    | Módulo files: transferencias privadas con R2        |
+| 5    | Frontend/BFF en el mismo Worker                     |
+| 6    | Módulo quota                                        |
+| 7    | Módulo sharing                                      |
+| 8    | Endurecimiento y pruebas de arquitectura            |
+| 9    | Despliegue y operación                              |
+| 10   | Mejoras y posible extracción de módulos             |
 
 ---
 
@@ -37,7 +37,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 ### 0.1 Contrato y convenciones
 
 - [ ] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
-- [ ] Añadir .gitignore para .dev.vars, .env*, .wrangler y node_modules.
+- [ ] Añadir .gitignore para .dev.vars, .env\*, .wrangler y node_modules.
 - [ ] Añadir plantilla de PR con checklist de seguridad y arquitectura.
 - [ ] Proteger main con PR y CI obligatoria.
 - **Aceptación:** no existe un documento que describa BFF/Service Bindings o D1 por módulo como el despliegue actual.
@@ -66,7 +66,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 - [ ] Ejecutar format, lint, typecheck y pruebas.
 - [ ] Añadir test/lint de fronteras: imports internos entre módulos, SQL con prefijos ajenos, JOIN/FK cruzados y db.batch() multímódulo deben fallar.
 - [ ] Añadir gitleaks y npm audit.
-- **Aceptación:** un SQL de files que mencione identity_ falla en CI.
+- **Aceptación:** un SQL de files que mencione identity\_ falla en CI.
 - 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
 ---
@@ -115,7 +115,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 ### 2.2 Login y sesiones
 
 - [ ] Implementar Login, Logout y SessionResolver dentro de identity.
-- [ ] Usar cookie __Host-session y guardar solo hash de token.
+- [ ] Usar cookie \_\_Host-session y guardar solo hash de token.
 - [ ] Crear AuthenticatedActor desde la sesión validada en middleware BFF.
 - [ ] Pasar AuthenticatedActor a gateways; nunca aceptar ownerId, rol o permisos del navegador como autoridad.
 - **Aceptación:** las rutas protegidas responden 401 sin sesión y un ownerId enviado por cliente no altera la autorización.
@@ -131,7 +131,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 - [ ] Crear, renombrar, mover, listar y eliminar carpetas/archivos de metadatos.
 - [ ] Prevenir ciclos y duplicados dentro del mismo padre.
 - [ ] Mantener el nombre de usuario separado de la clave física de R2.
-- **Aceptación:** files usa solo files_* y devuelve 404 para recursos ajenos.
+- **Aceptación:** files usa solo files\_\* y devuelve 404 para recursos ajenos.
 - 🔒 SEC-ISO-02…06, SEC-VAL-03, SEC-MOD-02.
 
 ### 3.2 Papelera y navegación
@@ -197,16 +197,16 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 - [ ] Crear quota_usage, migraciones y repositorios de quota.
 - [ ] Exponer QuotaPublicApi para verificar y reservar capacidad.
-- [ ] Usar contratos explícitos o eventos desde files; no leer files_* con SQL desde quota.
+- [ ] Usar contratos explícitos o eventos desde files; no leer files\_\* con SQL desde quota.
 - [ ] Usar Durable Object solo si la concurrencia requiere coordinación fuerte.
-- **Aceptación:** no se supera la cuota con transferencias paralelas y no hay SQL entre quota_* y files_*.
+- **Aceptación:** no se supera la cuota con transferencias paralelas y no hay SQL entre quota*\* y files*\*.
 - 🔒 SEC-R2-05, SEC-RATE-03, SEC-MOD-02.
 
 ## Fase 7 — Módulo sharing
 
 - [ ] Crear sharing_links, migraciones, SharePublicApi y SharingGateway.
 - [ ] Usar token con hash, expiración y revocación.
-- [ ] Obtener el recurso mediante contrato de files, no consultando files_* directamente.
+- [ ] Obtener el recurso mediante contrato de files, no consultando files\_\* directamente.
 - [ ] Transmitir descargas compartidas a través del Worker, sin URL de R2.
 - **Aceptación:** un enlace expirado/revocado falla y no permite navegación fuera de un único recurso.
 - 🔒 SEC-SHARE-01…03, SEC-R2-03, SEC-MOD-02.
@@ -233,5 +233,5 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 - [ ] Miniaturas, búsqueda, 2FA, versionado y sincronización se modelan en un módulo dueño antes de codificar.
 - [ ] Extraer un módulo solo con una necesidad real de escala, despliegue o aislamiento operativo.
-- [ ] Para extraer files: crear Worker y D1 propios, migrar solo files_*, sustituir InProcessFilesGateway por ServiceBindingFilesGateway y conservar sus contratos.
+- [ ] Para extraer files: crear Worker y D1 propios, migrar solo files\_\*, sustituir InProcessFilesGateway por ServiceBindingFilesGateway y conservar sus contratos.
 - **Aceptación:** la extracción no obliga a cambiar identity, controllers consumidores, dominio ni casos de uso.

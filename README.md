@@ -34,13 +34,13 @@ Las descargas atravesarán GET /api/files/:id/download y el Worker transmitirá 
 
 ## Servicios Cloudflare
 
-| Necesidad | Servicio |
-|---|---|
-| Backend, BFF y assets | Cloudflare Workers |
-| Metadatos, usuarios y sesiones | D1: VEGA_DRIVE_DB |
-| Archivos | R2 privado, solo módulo files |
-| Anti-bots | Turnstile |
-| Tareas futuras | Queues y Cron Triggers, solo cuando haya consumidores reales |
+| Necesidad                      | Servicio                                                     |
+| ------------------------------ | ------------------------------------------------------------ |
+| Backend, BFF y assets          | Cloudflare Workers                                           |
+| Metadatos, usuarios y sesiones | D1: VEGA_DRIVE_DB                                            |
+| Archivos                       | R2 privado, solo módulo files                                |
+| Anti-bots                      | Turnstile                                                    |
+| Tareas futuras                 | Queues y Cron Triggers, solo cuando haya consumidores reales |
 
 El userId deberá derivarse de la sesión validada, nunca de una entrada confiada al cliente. R2 no debe tener acceso público, r2.dev, dominio público ni CORS de navegador. Las claves de objeto se crearán en el backend.
 
@@ -59,15 +59,15 @@ Copia el ID real de D1 a wrangler.toml. npm run deploy se bloquea mientras el ID
 
 ## Comandos
 
-| Comando | Propósito |
-|---|---|
-| npm run dev | Worker local |
-| npm run format:check | Formato |
-| npm run lint | Guardia arquitectónica |
-| npm run typecheck | TypeScript estricto |
-| npm test | Pruebas |
-| npm run check | Formato, arquitectura, tipos y pruebas |
-| npm run deploy | Comprueba el ID D1 y después intenta desplegar |
+| Comando              | Propósito                                      |
+| -------------------- | ---------------------------------------------- |
+| npm run dev          | Worker local                                   |
+| npm run format:check | Formato                                        |
+| npm run lint         | Guardia arquitectónica                         |
+| npm run typecheck    | TypeScript estricto                            |
+| npm test             | Pruebas                                        |
+| npm run check        | Formato, arquitectura, tipos y pruebas         |
+| npm run deploy       | Comprueba el ID D1 y después intenta desplegar |
 
 ## CI y protección de rama
 
