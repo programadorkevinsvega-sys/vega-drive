@@ -73,11 +73,12 @@ La clave de sitio de Turnstile es pública; la clave secreta nunca debe incluirs
 El comando de despliegue de producción de Cloudflare Workers Builds debe ser **`pnpm run deploy`**, no `pnpm exec wrangler deploy`. El script ejecuta, en orden:
 
 1. `wrangler d1 migrations apply vega_drive_db --remote` para aplicar migraciones pendientes.
-2. `wrangler d1 migrations list vega_drive_db --remote` para mostrar y comprobar el historial registrado.
-3. `wrangler deploy` para publicar el Worker solo si los pasos anteriores terminan correctamente.
-4. `pnpm run verify:production` para verificar que `/api/health` responde con HTTP 200 y el JSON esperado.
+2. `wrangler d1 migrations list vega_drive_db --remote` para comprobar el historial registrado.
+3. `scripts/verify-d1-schema.mjs` inspecciona `sqlite_schema` en la D1 remota y compara tablas e índices con las definiciones SQL versionadas; detecta objetos ausentes, definiciones incompatibles y objetos inesperados. Si hay diferencias, termina con error y bloquea el despliegue.
+4. `wrangler deploy` publica el Worker solo si los pasos anteriores terminan correctamente.
+5. `pnpm run verify:production` comprueba que `/api/health` responde con HTTP 200 y el JSON esperado.
 
-`db:migrate:local` aplica migraciones al D1 local. La lista remota de Wrangler confirma el historial de migraciones, pero no compara automáticamente todas las columnas y restricciones con el esquema esperado por el código. Antes de la primera aplicación en una D1 que ya pueda contener tablas, inspecciona y reconcilia ese esquema.
+`db:migrate:local` aplica migraciones al D1 local. La verificación estructural compara las definiciones SQL creadas por las migraciones con `sqlite_schema`; por seguridad, si se añade una migración con `ALTER`, `DROP` u otro DDL no admitido por el verificador, el despliegue se detendrá hasta actualizar el verificador para modelar el esquema final esperado. Las tablas o índices creados manualmente también se reportan como inesperados y requieren reconciliación intencional. La comprobación no sustituye pruebas funcionales de la aplicación ni valida datos de negocio.
 
 GitHub Actions mantiene temporalmente las comprobaciones como respaldo hasta confirmar que Cloudflare ejecuta correctamente el comando en cada push. Gitleaks permanece en GitHub Actions para el escaneo de secretos; no se elimina ni se considera sustituido por las pruebas de build.
 
