@@ -96,6 +96,15 @@ describe("architecture guard", () => {
     expectRejected(result, "acceso a FILES_BUCKET fuera de files");
   });
 
+  it("rejects cross-module SQL inside an owned D1 migration", async () => {
+    const result = await runGuard({
+      "src/modules/files/infrastructure/persistence/d1/migrations/0002_bad.sql":
+        "CREATE INDEX files_bad_idx ON identity_users(id);",
+    });
+
+    expectRejected(result, "prefijo de otro módulo");
+  });
+
   it("allows imports through another module's public API", async () => {
     const publicImport =
       "import type { IdentityPublicApi } from " +

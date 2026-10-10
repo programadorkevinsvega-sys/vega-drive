@@ -2,7 +2,7 @@
 
 Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> **Estado real:** el esqueleto del Worker está desplegado en Cloudflare, pero la aplicación de archivos aún no está lista para producción con datos reales. No están implementados el registro/login, la autorización por usuario, el esquema de D1 ni las operaciones de subida y descarga de archivos. No habilites usuarios reales hasta cerrar esos puntos y las comprobaciones de seguridad.
+> **Estado real:** el esqueleto del Worker está desplegado en Cloudflare, pero la aplicación de archivos aún no está lista para producción con datos reales. No están implementados el registro/login, la autorización por usuario, los repositorios D1 ni las operaciones funcionales de subida y descarga. El esquema inicial de `identity` y `files` sí está versionado mediante migraciones propiedad de cada módulo. No habilites usuarios reales hasta cerrar esos puntos y las comprobaciones de seguridad.
 
 ## Arquitectura
 
@@ -90,7 +90,9 @@ El comando de despliegue de producción de Cloudflare Workers Builds debe ser **
 4. `wrangler deploy` publica el Worker solo si los pasos anteriores terminan correctamente.
 5. `pnpm run verify:production` comprueba que `/api/health` responde con HTTP 200 y el JSON esperado.
 
-`db:migrate:local` aplica migraciones al D1 local. La verificación estructural compara las definiciones SQL creadas por las migraciones con `sqlite_schema`; por seguridad, si se añade una migración con `ALTER`, `DROP` u otro DDL no admitido por el verificador, el despliegue se detendrá hasta actualizar el verificador para modelar el esquema final esperado. Las tablas o índices creados manualmente también se reportan como inesperados y requieren reconciliación intencional. La comprobación no sustituye pruebas funcionales de la aplicación ni valida datos de negocio.
+Las migraciones activas viven junto a su módulo en `src/modules/<módulo>/infrastructure/persistence/d1/migrations/`. Wrangler descubre `src/modules/*/infrastructure/persistence/d1/migrations/*.sql`; `migrations/manifest.md` documenta el orden de aplicación y cada módulo mantiene su propia numeración. `migrations/0001_initial_schema.sql` se conserva intacta como migración histórica conjunta, pero queda fuera del patrón activo.
+
+`db:migrate:local` aplica las migraciones activas al D1 local. La verificación estructural compara las definiciones SQL de las migraciones activas con `sqlite_schema`; por seguridad, si se añade una migración con `ALTER`, `DROP` u otro DDL no admitido por el verificador, el despliegue se detendrá hasta actualizar el verificador para modelar el esquema final esperado. Las tablas o índices creados manualmente también se reportan como inesperados y requieren reconciliación intencional. La comprobación no sustituye pruebas funcionales de la aplicación ni valida datos de negocio.
 
 GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecución del commit `23329baa646e38ecc816620c68eef8f861ae49b5` terminó correctamente, con 4 archivos/12 tests aprobados y sin secretos detectados. Cloudflare Workers Builds también ejecutó correctamente `pnpm run cloudflare:build` y `pnpm run deploy` el 2026-10-10, incluidas migraciones, verificación estructural D1 y smoke check de producción. Son ejecuciones separadas; no se asume que el commit de CI y el artefacto desplegado sean el mismo commit porque el log de despliegue aportado no incluye el SHA del commit.
 

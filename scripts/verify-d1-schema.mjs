@@ -1,12 +1,29 @@
 import { readFile, readdir } from "node:fs/promises";
-import { resolve } from "node:path";
+import { relative, resolve, sep } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 
 const databaseName = process.env.D1_DATABASE_NAME ?? "vega_drive_db";
-const migrationsDirectory = resolve(
-  process.env.D1_MIGRATIONS_DIR ?? "migrations",
-);
+const customMigrationsDirectory = process.env.D1_MIGRATIONS_DIR;
+const migrationsDirectory = resolve(customMigrationsDirectory ?? "src/modules");
+const moduleMigrationPattern =
+  /^(identity|files|quota|sharing)\/infrastructure\/persistence\/d1\/migrations\/\d+.*\.sql$/i;
+
+async function walk(directory) {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const files = [];
+  for (const entry of entries) {
+    const path = resolve(directory, entry.name);
+    if (entry.isDirectory()) files.push(...(await walk(path)));
+    else if (entry.isFile() && entry.name.endsWith(".sql")) files.push(path);
+  }
+  return files;
+}
 const wranglerCommand = process.env.WRANGLER_COMMAND ?? "pnpm";
 const wranglerArgs =
   wranglerCommand === "pnpm"
@@ -75,18 +92,30 @@ function parseWranglerJson(output) {
   );
 }
 
-const files = (await readdir(migrationsDirectory))
-  .filter((name) => /^\d+.*\.sql$/i.test(name))
-  .sort((a, b) => a.localeCompare(b, "en"));
+const files = (await walk(migrationsDirectory))
+  .map((absolutePath) => ({
+    absolutePath,
+    relativePath: relative(migrationsDirectory, absolutePath)
+      .split(sep)
+      .join("/"),
+  }))
+  .filter(({ absolutePath, relativePath }) => {
+    if (!/\.sql$/i.test(absolutePath)) return false;
+    if (customMigrationsDirectory) {
+      return /^\d+.*\.sql$/i.test(relativePath.split("/").at(-1) ?? "");
+    }
+    return moduleMigrationPattern.test(relativePath);
+  })
+  .sort((a, b) => a.relativePath.localeCompare(b.relativePath, "en"));
 
 if (files.length === 0) {
-  throw new Error(`No SQL migrations found in ${migrationsDirectory}`);
+  throw new Error(`No SQL module migrations found in ${migrationsDirectory}`);
 }
 
 const expected = new Map();
-for (const filename of files) {
-  const sql = await readFile(resolve(migrationsDirectory, filename), "utf8");
-  for (const [key, value] of parseExpectedSchema(sql, filename)) {
+for (const { absolutePath, relativePath } of files) {
+  const sql = await readFile(absolutePath, "utf8");
+  for (const [key, value] of parseExpectedSchema(sql, relativePath)) {
     expected.set(key, value);
   }
 }

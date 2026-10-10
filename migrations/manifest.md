@@ -1,31 +1,36 @@
-# D1 migration manifest
+# Manifest central de migraciones D1
 
-Database: `vega_drive_db` (binding `VEGA_DRIVE_DB`).
+Base de datos única: `vega_drive_db`, vinculada como `VEGA_DRIVE_DB`.
 
-The deployment workflow applies pending migrations before publishing the Worker, then lists the remote migration history to verify the recorded state. Wrangler applies migration files in lexicographic order from this directory and records applied migrations in D1's migration history.
+## Descubrimiento y orden activo
 
-## Migration inventory
+Wrangler lee `migrations_dir = "src/modules"` y aplica los archivos que coinciden con `migrations_pattern = "src/modules/*/infrastructure/persistence/d1/migrations/*.sql"`, configurado en `wrangler.toml`. El nombre registrado en `d1_migrations` es la ruta relativa a `src/modules`, por lo que cada módulo puede empezar su numeración en `0001` sin colisionar con la de otro módulo.
 
-### `0001_initial_schema.sql`
+Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
 
-- **Owner:** identity + files
-- **Purpose:** Initial tables and indexes for identity and files module boundaries
-- **Status:** Versioned; the deployment command applies it when Wrangler reports it as pending.
+| Orden | Propietario | Migración activa | Tablas propiedad del módulo |
+| ---: | --- | --- | --- |
+| 1 | `files` | `files/infrastructure/persistence/d1/migrations/0001_files_initial.sql` | `files_items`, `files_folders`, `files_uploads`, `files_outbox` |
+| 2 | `identity` | `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql` | `identity_users`, `identity_sessions`, `identity_invites`, `identity_outbox` |
 
-## Deployment safety
+El orden no establece dependencias entre módulos. Los IDs entre módulos son valores, nunca claves foráneas; no hay tablas genéricas compartidas, JOIN ni SQL cruzado. Los índices se definen en la migración del mismo propietario que la tabla indexada. `quota_usage` y `sharing_links` se crearán en las fases 6 y 7, respectivamente.
 
-- Use `pnpm run deploy` for production deployments. It applies pending remote migrations, lists the resulting migration history, deploys the Worker, and verifies `/api/health`.
-- A missing local Wrangler migrations directory does **not** prove the remote database has no tables.
-- `CREATE TABLE IF NOT EXISTS` does not reconcile existing tables with incompatible columns or constraints. Review existing production schema/history before first applying this initial migration to a database that may already contain application tables.
-- Migrations must be additive and compatible with the currently deployed Worker. Never use destructive SQL to make the schema match without a reviewed backup and rollback plan.
-- Each module owns only its prefixed tables. Cross-module IDs are values and do not use foreign keys.
-- The migration list confirms Wrangler's recorded migration status; it does not validate every table column or constraint against application expectations.
+## Migración histórica conservada
 
-## Rollback y compatibilidad
+`migrations/0001_initial_schema.sql` es la migración inicial conjunta que existía antes de separar la propiedad por módulo. Se conserva **sin modificar ni eliminar** para preservar el historial de código y despliegue, pero el patrón activo de Wrangler ya no la descubre. No se debe usar como destino de cambios nuevos. Las migraciones modulares actuales reproducen sus definiciones de `identity` y `files`; su DDL usa `CREATE ... IF NOT EXISTS` para ser compatible con una D1 que ya contenga esas tablas.
 
-- Un rollback del Worker no revierte el historial ni los cambios ya aplicados en D1.
-- Toda migración nueva debe evaluarse contra el código actualmente desplegado y la versión estable anterior.
-- Durante la ventana de rollback, preferir expansión/contracción: añadir primero estructuras compatibles, desplegar código compatible, hacer backfill idempotente y retirar estructuras antiguas en un release separado.
-- No editar migraciones aplicadas ni ejecutar `DROP` o cambios incompatibles como parte de una recuperación rutinaria.
-- Antes de una migración de riesgo, confirmar backup disponible y procedimiento de restauración ensayado; restaurar D1 puede perder escrituras posteriores al punto de recuperación y requiere decisión operativa explícita.
-- El proceso detallado está en [Rollback.md](../Rollback.md). Staging debe validar la migración y el rollback antes de aplicar cambios de riesgo en producción.
+## Despliegue y verificación
+
+- `pnpm run db:migrate:local` aplica las migraciones modulares al D1 local.
+- `pnpm run db:migrate:production` aplica las migraciones modulares a D1 remota; úsalo únicamente como parte del procedimiento de despliegue revisado.
+- `pnpm run db:migration:list` enumera migraciones pendientes según el patrón activo de Wrangler.
+- `pnpm run db:verify:schema:production` compara las tablas e índices reales de `sqlite_schema` con el resultado esperado de las migraciones modulares.
+- `pnpm run deploy` es el comando de despliegue documentado: migraciones remotas, historial, verificación estructural, publicación del Worker y comprobación de `/api/health`.
+
+Una migración nueva debe ser propiedad de un módulo, permanecer dentro de su directorio y ser aditiva y compatible con el Worker desplegado durante la ventana de rollback. Nunca edites una migración que ya se haya aplicado en un entorno compartido. No ejecutes migraciones remotas ni alteres datos de producción durante una validación local.
+
+El verificador estructural rechaza DDL que todavía no pueda modelar, objetos incompatibles u objetos inesperados. Si se necesita `ALTER`, `DROP` u otra operación no admitida, primero amplía y prueba el verificador para representar explícitamente el esquema final. La lista de Wrangler demuestra el historial de migraciones, no la compatibilidad de columnas y restricciones ni la seguridad funcional de la aplicación.
+
+## Compatibilidad y rollback
+
+Un rollback del Worker no revierte D1. Usa expansión/contracción: añade estructuras compatibles primero, despliega código compatible, realiza backfills idempotentes y retira estructuras obsoletas en otro release, cuando ninguna versión anterior las necesite. Antes de cambios de riesgo, revisa el esquema remoto, backups y el procedimiento de restauración según [`Rollback.md`](../Rollback.md).
