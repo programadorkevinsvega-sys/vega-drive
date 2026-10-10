@@ -66,14 +66,6 @@ export function createLoginUser(deps: {
     const password = typeof input.password === "string" ? input.password : "";
     const token =
       typeof input.turnstileToken === "string" ? input.turnstileToken : "";
-    if (
-      email.length > 254 ||
-      password.length > 128 ||
-      !token ||
-      token.length > 2048
-    ) {
-      return { ok: false, reason: "invalid-credentials" };
-    }
     const emailKey = await hashRateKey("email:" + (email || "invalid"));
     const ipKey = ip ? await hashRateKey("ip:" + ip) : null;
     const timestamp = now().getTime();
@@ -84,6 +76,16 @@ export function createLoginUser(deps: {
       if (state?.lockedUntil && state.lockedUntil > timestamp) {
         return { ok: false, reason: "rate-limited" };
       }
+    }
+    if (
+      email.length > 254 ||
+      password.length > 128 ||
+      !token ||
+      token.length > 2048
+    ) {
+      if (ipKey) await deps.attempts.recordFailure(ipKey, timestamp, WINDOW_MS);
+      await audit("identity.login.invalid-input", emailKey, ipKey, ip, null);
+      return { ok: false, reason: "invalid-credentials" };
     }
     let captchaValid = false;
     try {
