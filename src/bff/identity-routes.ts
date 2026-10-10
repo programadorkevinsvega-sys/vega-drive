@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../worker/env.js";
 import { createCompositionRoot } from "./composition-root.js";
-import type { AuthenticatedEnv } from "./authentication-middleware.js";
+import { requireAuthenticatedActor, type AuthenticatedEnv } from "./authentication-middleware.js";
 
 const COOKIE = "__Host-session";
 const MAX_BODY_BYTES = 64 * 1024;
@@ -183,15 +183,14 @@ identityRoutes.get("/session", async (c) => {
     : c.json({ authenticated: false });
 });
 
+identityRoutes.use("/password", requireAuthenticatedActor);
+
 identityRoutes.post("/password", async (c) => {
   if (!originAllowed(c.req.raw)) {
     return c.json({ error: "Invalid request origin" }, 403);
   }
   const gateway = createCompositionRoot(c.env).identity;
-  const actor = await gateway.resolveSession(
-    readCookie(c.req.header("Cookie")),
-  );
-  if (!actor) return c.json({ error: "Authentication required" }, 401);
+  const actor = c.get("actor");
   const body = await strictJson(c.req.raw, ["currentPassword", "newPassword"]);
   if (!body) return c.json({ error: "Invalid request" }, 400);
   const result = await gateway.changePassword(
