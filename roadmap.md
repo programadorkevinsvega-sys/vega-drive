@@ -245,14 +245,18 @@ Esta fase no se considera completada por tener un Worker desplegado o un endpoin
 
 **Aceptación de la fase:** pruebas aplicables aprobadas en el commit candidato, evidencias registradas sin datos sensibles, excepciones justificadas y ninguna vulnerabilidad crítica/alta abierta. Los flujos aún no implementados quedan identificados como pendientes; no se declaran aprobados por no poder probarlos.
 
-## Fase 9 — Despliegue y operación
+## Fase 9 — Despliegue, operación y rollback
 
-- [ ] Separar staging y producción por configuración, conservando un Worker y una D1 por entorno.
-- [ ] Configurar dominio, HTTPS, WAF, alertas y backups de D1.
-- [ ] Emitir logs JSON estructurados sin secretos ni datos sensibles.
-- [ ] Documentar rotación de secretos e incidentes.
-- **Aceptación:** restauración de D1 y despliegue staging se prueban al menos una vez.
-- 🔒 SEC-WEB-03, SEC-RATE-04, SEC-LOG-01…03, SEC-SEC-04.
+- [ ] Separar staging y producción por configuración, con Worker, D1, bucket R2 y secretos aislados por entorno.
+- [ ] Configurar dominio/HTTPS, controles de Cloudflare, alertas y backups de D1; documentar y ensayar restauración.
+- [ ] Emitir logs estructurados sin secretos ni datos sensibles y documentar rotación de secretos e incidentes.
+- [ ] Documentar el deployment estable anterior, comprobar compatibilidad del esquema D1 y seguir [Rollback.md](./Rollback.md) para rollback de Worker.
+- [ ] Validar en staging un ciclo release candidate → migración compatible → Worker → smoke/E2E → rollback controlado.
+- [ ] Demostrar que el rollback del Worker no depende de revertir migraciones ni borrar objetos R2; revisar consistencia D1/R2.
+- [ ] Configurar Queues/DLQ y pruebas de compatibilidad solo si el producto incorpora procesamiento asíncrono.
+- [ ] Implementar y probar endpoints `/api/health/live` y `/api/health/ready` solo si se necesitan; hasta entonces, documentar que la verificación actual usa `/api/health`.
+- **Aceptación:** staging aislado; despliegue y rollback ejecutados con evidencia; restauración de D1 ensayada; salud, smoke/E2E, logs y métricas revisados. Rollback no se declara completo por una reversión del Worker únicamente.
+- 🔒 SEC-WEB-03, SEC-RATE-04, SEC-LOG-01…03.
 
 ## Fase 10 — Mejoras y extracción futura
 
