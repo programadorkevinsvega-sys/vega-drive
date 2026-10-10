@@ -84,6 +84,8 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 1 — D1 única y límites de datos
 
+**Estado de implementación (2026-10-10):** ya se añadieron migraciones activas separadas para `files` e `identity`, puertos de aplicación, repositorios D1 y pruebas de fronteras/parametrización. Las casillas siguen pendientes hasta ejecutar formato, `pnpm run check`, `pnpm run cloudflare:build` y validar el esquema en D1 local con el patrón de Wrangler actualizado. No se han aplicado migraciones remotas ni se ha desplegado este trabajo. Las pruebas de repositorio que inspeccionan SQL enlazado no sustituyen todavía pruebas end-to-end de autorización con sesiones reales, que se incorporarán cuando exista el flujo de autenticación.
+
 ### 1.1 Tablas y migraciones por módulo
 
 - [ ] Crear migraciones independientes en cada módulo con numeración propia.

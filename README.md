@@ -2,7 +2,7 @@
 
 Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> **Estado real:** el esqueleto del Worker está desplegado en Cloudflare, pero la aplicación de archivos aún no está lista para producción con datos reales. No están implementados el registro/login, la autorización por usuario, los repositorios D1 ni las operaciones funcionales de subida y descarga. El esquema inicial de `identity` y `files` sí está versionado mediante migraciones propiedad de cada módulo. No habilites usuarios reales hasta cerrar esos puntos y las comprobaciones de seguridad.
+> **Estado real:** el esqueleto del Worker está desplegado en Cloudflare, pero la aplicación de archivos aún no está lista para producción con datos reales. No están implementados el registro/login, la autorización por usuario ni los flujos funcionales de archivos. El esquema inicial, los puertos de aplicación y los adaptadores de persistencia D1 de `identity` y `files` están en el código, pero la Fase 1 aún requiere completar su verificación antes de considerarse cerrada. No habilites usuarios reales hasta cerrar esos puntos y las comprobaciones de seguridad.
 
 ## Arquitectura
 
@@ -46,10 +46,14 @@ Las descargas se harán por `GET /api/files/:id/download`, tras autorizar el rec
 - `src/worker`: entrada del Worker.
 - `src/bff`: Hono y composition root.
 - `src/modules/identity`, `files`, `quota` y `sharing`: límites y APIs públicas de módulos.
+- `src/modules/identity/application/ports` y `src/modules/files/application/ports`: contratos de repositorios sin dependencias de Cloudflare.
+- `src/modules/{identity,files}/infrastructure/persistence/d1`: adaptadores y migraciones D1 propietarios del módulo.
 - `src/platform`: infraestructura técnica compartida.
 - `src/shared-kernel`: abstracciones compartidas mínimas.
 - `public`: assets estáticos.
-- `tests`: pruebas de salud, configuración y arquitectura.
+- `tests`: pruebas de salud, configuración, migraciones, repositorios y arquitectura.
+
+Los puertos y adaptadores de persistencia preparan la capa de datos de `identity` y `files`; no habilitan por sí solos APIs funcionales, registro/login, autorización de sesión ni transferencias. Las APIs públicas siguen siendo placeholders hasta las fases que implementan esos flujos.
 
 ## Servicios Cloudflare
 
