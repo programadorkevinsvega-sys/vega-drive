@@ -36,9 +36,9 @@ function expectRejected(
 
 describe("architecture guard", () => {
   it("is wired into lint", async () => {
-    const pkg = JSON.parse(await readFile(resolve("package.json"), "utf8")) as {
-      scripts: Record<string, string>;
-    };
+    const pkg = JSON.parse(
+      await readFile(resolve("package.json"), "utf8"),
+    ) as { scripts: Record<string, string> };
 
     expect(pkg.scripts.lint).toContain("architecture-check.mjs");
   });
