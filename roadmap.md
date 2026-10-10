@@ -48,7 +48,8 @@ Estado de cierre: **implementación fundacional y pipeline verificados; cierre o
 
 - [x] Configurar el binding `VEGA_DRIVE_DB` y verificar remotamente que las 17 tablas/índices coinciden con la migración versionada.
 - [x] Configurar el binding `FILES_BUCKET` al bucket `vega-drive-files`.
-- [x] Confirmar en el panel de Cloudflare que el bucket `vega-drive-files` es privado (confirmación del usuario, 2026-10-10).\n- [ ] Verificar por separado que no tiene dominio público ni `r2.dev` habilitado y que no existe configuración CORS para navegador; la confirmación de privacidad no demuestra por sí sola esos tres ajustes.
+- [x] Confirmar en el panel de Cloudflare que el bucket `vega-drive-files` es privado (confirmación del usuario, 2026-10-10).
+- [ ] Verificar por separado que no tiene dominio público ni `r2.dev` habilitado y que no existe configuración CORS para navegador; la confirmación de privacidad no demuestra por sí sola esos tres ajustes.
 - [ ] Confirmar permisos mínimos del recurso/credenciales de R2 y revisar la configuración de secretos del Worker en Cloudflare; el build y el escaneo Gitleaks no demuestran los permisos efectivos de producción.
 - [ ] Configurar Turnstile solo cuando se habilite registro/login; actualmente `TURNSTILE_SITE_KEY` está vacío y no hay flujo de autenticación en Fase 0.
 - [x] Ejecutar `pnpm audit --audit-level=high` dentro de `pnpm run cloudflare:build`.
