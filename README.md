@@ -17,6 +17,14 @@ Vega Drive se diseña como un monolito modular serverless:
 
 El contrato arquitectónico está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), los controles de seguridad en [Security.md](./Security.md) y el plan por fases en [roadmap.md](./roadmap.md).
 
+
+
+## Estado de seguridad y certificación
+
+Las reglas obligatorias, los headers esperados para Workers/Hono y la matriz de regresión están en [Security.md](./Security.md). El roadmap detalla el trabajo de certificación en la [Fase 8](./roadmap.md#fase-8--endurecimiento-y-pruebas-de-seguridad).
+
+**La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban autenticación, autorización, aislamiento entre cuentas ni transferencias seguras. No habilites usuarios reales hasta implementar y probar los flujos correspondientes.
+
 El adaptador real de almacenamiento, autenticación, autorización por usuario y flujo de archivos siguen pendientes. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
 ## Flujo de archivos previsto
