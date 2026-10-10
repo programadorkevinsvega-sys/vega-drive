@@ -38,7 +38,7 @@ for (const file of sourceFiles) {
   );
 
   // Code may depend on another module's public API, never its internals.
-  const importPattern = /(?:from\s*|import\s*\(\s*)["']([^"']+)["']/g;
+  const importPattern = /(?:from\s*|import\s*(?:\(\s*)?)["']([^"']+)["']/g;
   for (const match of source.matchAll(importPattern)) {
     const specifier = match[1];
     if (!specifier) continue;
