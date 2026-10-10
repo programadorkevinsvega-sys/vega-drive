@@ -128,25 +128,27 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 2 — Módulo identity
 
-**Estado: IMPLEMENTACIÓN EN CURSO.** El código funcional inicial ya está añadido; el cierre queda pendiente de build, pruebas, migración remota verificada y configuración válida de Turnstile.
+**Estado: IMPLEMENTACIÓN EN CURSO (2026-10-10).** El flujo inicial de identidad está implementado en código. La fase sigue abierta hasta que CI/build y las pruebas productivas pasen; la configuración observada aún tiene TURNSTILE_SITE_KEY vacía.
+
+**Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main` y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
 
 ### 2.1 Registro cerrado
-- [x] Exponer registro a través de IdentityPublicApi e IdentityGateway.
-- [x] Aplicar MAX_USERS validado en servidor y límite atómico en D1.
-- [x] Normalizar correo, aplicar PBKDF2-SHA-256 con 100.000 iteraciones y sal aleatoria de 16 bytes.
-- [x] Verificar Turnstile en backend y fallar de forma cerrada.
-- [ ] Configurar site key y secreto reales en Cloudflare; la site key estaba vacía en el despliegue revisado.
+
+- [x] Exponer Register a través de IdentityPublicApi y IdentityGateway.
+- [x] Aplicar MAX_USERS validado en servidor con inserción atómica.
+- [x] Normalizar correo, aplicar política de contraseña y almacenar hashes seguros.
+- [x] Verificar Turnstile en el backend y fallar de forma cerrada.
+- **Aceptación:** el controller no llama repositorios ni maneja reglas de registro.
+- 🔒 SEC-AUTH-01, SEC-AUTH-03, SEC-AUTH-05, SEC-AUTH-06, SEC-AUTH-07.
 
 ### 2.2 Login y sesiones
-- [x] Implementar login, logout, resolución de sesión y cambio de contraseña.
-- [x] Cookie __Host-session, hash SHA-256 del token de 32 bytes, expiración absoluta de 7 días e inactividad de 24 horas.
-- [x] Revocación server-side, rotación de sesión, validación de Origin, validación estricta del body y límite de tamaño.
-- [x] Middleware BFF que deriva AuthenticatedActor desde la sesión validada.
-- [x] Bloqueo progresivo de intentos por email/IP mediante tabla identity_auth_attempts.
-- [ ] Ejecutar y corregir pnpm run check, build y despliegue.
-- [ ] Verificar los flujos críticos en producción antes del cierre.
 
-**Criterio de cierre:** build y pruebas verdes, esquema D1 verificado, Turnstile operativo y pruebas productivas de registro, login, sesión, logout y cambio de contraseña. El endpoint /api/health no basta para cerrar la fase.
+- [x] Implementar Login, Logout y SessionResolver dentro de identity.
+- [x] Usar cookie `__Host-session` y guardar solo hash de token.
+- [x] Crear AuthenticatedActor desde la sesión validada en middleware BFF.
+- [ ] Pasar AuthenticatedActor a gateways; nunca aceptar ownerId, rol o permisos del navegador como autoridad.
+- **Aceptación:** las rutas protegidas responden 401 sin sesión y un ownerId enviado por cliente no altera la autorización.
+- 🔒 SEC-SES-01…05, SEC-ISO-01, SEC-AUTH-02, SEC-AUTH-04.
 
 ---
 
