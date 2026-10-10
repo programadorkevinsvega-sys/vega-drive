@@ -51,6 +51,12 @@ async function strictJson(
   request: Request,
   allowed: string[],
 ): Promise<Record<string, unknown> | null> {
+  const contentType = request.headers
+    .get("Content-Type")
+    ?.split(";")[0]
+    ?.trim()
+    .toLowerCase();
+  if (contentType !== "application/json") return null;
   const declared = Number(request.headers.get("Content-Length") ?? "0");
   if (declared > MAX_BODY_BYTES) return null;
   const reader = request.body?.getReader();
