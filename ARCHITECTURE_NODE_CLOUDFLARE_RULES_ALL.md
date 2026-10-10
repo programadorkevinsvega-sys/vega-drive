@@ -251,3 +251,15 @@ Los controles HTTP se configuran en el middleware Hono o en la capa de respuesta
 - La certificación requiere pruebas negativas de sesiones, autorización, IDOR/BOLA, concurrencia, entradas malformadas, rate limiting, privacidad R2 y comprobaciones productivas. El éxito de `/api/health` no sustituye estas pruebas.
 
 La matriz y el estado de cada control se mantienen en [Security.md](./Security.md); el seguimiento por fases está en [roadmap.md](./roadmap.md).
+
+## 15. Rollback y compatibilidad de despliegues
+
+El procedimiento operativo canónico está en [Rollback.md](./Rollback.md). Todo cambio de aplicación, esquema D1, formato de metadatos u objeto R2 debe evaluar cómo se recuperará la versión anterior.
+
+- Un rollback del Worker no revierte migraciones D1, objetos R2 ni eventos ya publicados.
+- Las migraciones D1 deben ser backward-compatible durante la ventana de rollback; aplicar expansión/contracción y reservar los cambios destructivos para un release posterior al período de compatibilidad.
+- No borrar objetos R2 como efecto automático de un rollback. Mantener claves/formato compatibles hasta que ninguna versión anterior pueda necesitarlos.
+- Si se incorporan Queues, versionar contratos incompatibles y mantener consumidores compatibles durante la transición; no documentar Queue/DLQ como existente hasta que esté configurada.
+- Staging debe tener Worker, D1, R2 y secretos aislados de producción y debe validar despliegue, smoke/E2E y rollback antes de certificar el procedimiento.
+- El rollback debe seleccionar explícitamente un deployment estable de Wrangler; confirmar el objetivo y la sintaxis interactiva antes de confirmar. No automatizar un rollback ciego.
+- La evidencia, el estado de backups y los criterios de recuperación se mantienen en [Rollback.md](./Rollback.md). Un health check aislado no demuestra recuperación de D1/R2 ni de los flujos funcionales.
