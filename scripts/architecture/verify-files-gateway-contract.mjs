@@ -15,7 +15,8 @@ await runGuard(
       contents.set(relativePath(file), await readFile(file, "utf8"));
     const composition =
       contents.get("src/worker/composition-root.ts") ??
-      contents.get("src/bff/composition-root.ts") ?? "";
+      contents.get("src/bff/composition-root.ts") ??
+      "";
     const api = contents.get("src/modules/files/module.public-api.ts") ?? "";
     const gatewayMatch = composition.match(
       /export\s+interface\s+FilesGateway\s*\{([\s\S]*?)\n\}/,
