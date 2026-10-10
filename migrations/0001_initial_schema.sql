@@ -1,6 +1,7 @@
 -- Initial D1 schema for Vega Drive.
 -- Each module owns its prefixed tables. Cross-module identifiers are values, not foreign keys.
--- Do not apply this migration to production until the existing remote schema has been inspected.
+-- The production deploy applies this migration when Wrangler reports it as pending.
+-- Reconcile any pre-existing remote schema before the first production application.
 
 CREATE TABLE IF NOT EXISTS identity_users (
   id TEXT PRIMARY KEY NOT NULL,
