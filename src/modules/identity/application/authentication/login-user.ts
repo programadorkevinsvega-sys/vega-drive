@@ -79,7 +79,13 @@ export function createLoginUser(deps: {
         return { ok: false, reason: "rate-limited" };
       }
     }
-    if (!(await deps.turnstile.verify(token, ip))) {
+    let captchaValid = false;
+    try {
+      captchaValid = await deps.turnstile.verify(token, ip);
+    } catch {
+      captchaValid = false;
+    }
+    if (!captchaValid) {
       if (ipKey) await deps.attempts.recordFailure(ipKey, timestamp, WINDOW_MS);
       return { ok: false, reason: "captcha-failed" };
     }
