@@ -12,7 +12,10 @@ export interface IdentityUserRepository {
   findById(id: string): Promise<IdentityUserRecord | null>;
   findByNormalizedEmail(email: string): Promise<IdentityUserRecord | null>;
   insert(user: IdentityUserRecord): Promise<void>;
-  insertWithinLimit(user: IdentityUserRecord, maxUsers: number): Promise<boolean>;
+  insertWithinLimit(
+    user: IdentityUserRecord,
+    maxUsers: number,
+  ): Promise<boolean>;
 }
 
 /** Session ownership comes from trusted server-side identity resolution. */

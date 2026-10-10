@@ -11,14 +11,22 @@ const COMMON_PASSWORDS = new Set([
 ]);
 
 export function validatePassword(password: unknown): password is string {
-  if (typeof password !== "string" || password.length < 12 || password.length > 128) {
+  if (
+    typeof password !== "string" ||
+    password.length < 12 ||
+    password.length > 128
+  ) {
     return false;
   }
 
   const normalized = password.trim().toLowerCase();
   if (COMMON_PASSWORDS.has(normalized)) return false;
   if (/^(.)\1{11,}$/.test(password)) return false;
-  if (/^(?:0123456789|1234567890|abcdefghijklmnopqrstuvwxyz){1,}$/.test(normalized)) {
+  if (
+    /^(?:0123456789|1234567890|abcdefghijklmnopqrstuvwxyz){1,}$/.test(
+      normalized,
+    )
+  ) {
     return false;
   }
   return true;
