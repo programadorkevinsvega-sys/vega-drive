@@ -25,7 +25,9 @@ describe("files D1 repositories", () => {
 
     await repository.listByOwnerAndFolder("user-a", null, 10000);
 
-    expect(fake.calls[0]?.sql).toContain("WHERE owner_id = ? AND folder_id IS ?");
+    expect(fake.calls[0]?.sql).toContain(
+      "WHERE owner_id = ? AND folder_id IS ?",
+    );
     expect(fake.calls[0]?.sql).toContain("AND deleted_at IS NULL");
     expect(fake.calls[0]?.sql).toContain("LIMIT ?");
     expect(fake.calls[0]?.bindings).toEqual(["user-a", null, 100]);
@@ -104,9 +106,7 @@ describe("files D1 repositories", () => {
       "FROM files_uploads WHERE id = ? AND owner_id = ?",
     );
     expect(fake.calls[0]?.bindings).toEqual(["upload-b", "user-a"]);
-    expect(fake.calls[1]?.sql).toContain(
-      "WHERE id = ? AND owner_id = ?",
-    );
+    expect(fake.calls[1]?.sql).toContain("WHERE id = ? AND owner_id = ?");
     expect(fake.calls[1]?.bindings).toEqual([
       "failed",
       "2026-10-10T00:00:00Z",

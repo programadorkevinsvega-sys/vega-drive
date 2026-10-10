@@ -13,9 +13,7 @@ describe("identity D1 repositories", () => {
     await repository.findByNormalizedEmail("owner@example.test");
 
     expect(fake.calls).toHaveLength(1);
-    expect(fake.calls[0]?.sql).toContain(
-      "FROM identity_users WHERE email = ?",
-    );
+    expect(fake.calls[0]?.sql).toContain("FROM identity_users WHERE email = ?");
     expect(fake.calls[0]?.sql).not.toContain("owner@example.test");
     expect(fake.calls[0]?.bindings).toEqual(["owner@example.test"]);
   });

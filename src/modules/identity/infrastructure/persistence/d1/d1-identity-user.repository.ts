@@ -12,7 +12,9 @@ export class D1IdentityUserRepository implements IdentityUserRepository {
 
   findById(id: string): Promise<IdentityUserRecord | null> {
     return this.db
-      .prepare("SELECT " + USER_COLUMNS + " FROM identity_users WHERE id = ? LIMIT 1")
+      .prepare(
+        "SELECT " + USER_COLUMNS + " FROM identity_users WHERE id = ? LIMIT 1",
+      )
       .bind(id)
       .first<IdentityUserRecord>();
   }
@@ -20,7 +22,9 @@ export class D1IdentityUserRepository implements IdentityUserRepository {
   findByNormalizedEmail(email: string): Promise<IdentityUserRecord | null> {
     return this.db
       .prepare(
-        "SELECT " + USER_COLUMNS + " FROM identity_users WHERE email = ? LIMIT 1",
+        "SELECT " +
+          USER_COLUMNS +
+          " FROM identity_users WHERE email = ? LIMIT 1",
       )
       .bind(email)
       .first<IdentityUserRecord>();

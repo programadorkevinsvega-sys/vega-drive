@@ -36,7 +36,8 @@ export class D1FilesFolderRepository implements FilesFolderRepository {
   ): Promise<FilesFolderRecord[]> {
     const result = await this.db
       .prepare(
-        "SELECT " + FOLDER_COLUMNS +
+        "SELECT " +
+          FOLDER_COLUMNS +
           " FROM files_folders WHERE owner_id = ? AND parent_folder_id IS ? " +
           "AND deleted_at IS NULL ORDER BY name ASC LIMIT ?",
       )

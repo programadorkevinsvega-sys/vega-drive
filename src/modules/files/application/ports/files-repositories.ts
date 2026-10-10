@@ -30,11 +30,7 @@ export interface FilesItemRepository {
     name: string,
     updatedAt: string,
   ): Promise<boolean>;
-  markDeleted(
-    id: string,
-    ownerId: string,
-    deletedAt: string,
-  ): Promise<boolean>;
+  markDeleted(id: string, ownerId: string, deletedAt: string): Promise<boolean>;
 }
 
 export interface FilesFolderRecord {

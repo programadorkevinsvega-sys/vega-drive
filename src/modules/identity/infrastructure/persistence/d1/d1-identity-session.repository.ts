@@ -13,7 +13,8 @@ export class D1IdentitySessionRepository implements IdentitySessionRepository {
   findByTokenHash(tokenHash: string): Promise<IdentitySessionRecord | null> {
     return this.db
       .prepare(
-        "SELECT " + SESSION_COLUMNS +
+        "SELECT " +
+          SESSION_COLUMNS +
           " FROM identity_sessions WHERE token_hash = ? LIMIT 1",
       )
       .bind(tokenHash)

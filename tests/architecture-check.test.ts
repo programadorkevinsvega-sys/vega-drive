@@ -93,7 +93,10 @@ describe("architecture guard", () => {
       "src/bff/app.ts": "const database = env.VEGA_DRIVE_DB;",
     });
 
-    expectRejected(result, "acceso a VEGA_DRIVE_DB fuera de infraestructura D1");
+    expectRejected(
+      result,
+      "acceso a VEGA_DRIVE_DB fuera de infraestructura D1",
+    );
   });
 
   it("rejects D1 database types outside module persistence infrastructure", async () => {

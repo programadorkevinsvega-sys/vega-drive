@@ -35,7 +35,8 @@ export class D1IdentityOutboxRepository implements IdentityOutboxRepository {
   async listUnpublished(limit: number): Promise<IdentityOutboxRecord[]> {
     const result = await this.db
       .prepare(
-        "SELECT " + OUTBOX_COLUMNS +
+        "SELECT " +
+          OUTBOX_COLUMNS +
           " FROM identity_outbox WHERE published_at IS NULL " +
           "ORDER BY created_at ASC LIMIT ?",
       )

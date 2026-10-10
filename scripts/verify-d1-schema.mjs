@@ -2,7 +2,10 @@ import { readFile, readdir } from "node:fs/promises";
 import { relative, resolve, sep } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
-import { buildWranglerD1ExecuteArgs, resolveD1Target } from "./d1-schema-verifier-args.mjs";
+import {
+  buildWranglerD1ExecuteArgs,
+  resolveD1Target,
+} from "./d1-schema-verifier-args.mjs";
 
 const databaseName = process.env.D1_DATABASE_NAME ?? "vega_drive_db";
 const target = resolveD1Target(process.argv.slice(2));

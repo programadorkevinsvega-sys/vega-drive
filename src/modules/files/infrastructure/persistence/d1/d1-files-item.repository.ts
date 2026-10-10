@@ -37,7 +37,8 @@ export class D1FilesItemRepository implements FilesItemRepository {
   ): Promise<FilesItemRecord[]> {
     const result = await this.db
       .prepare(
-        "SELECT " + ITEM_COLUMNS +
+        "SELECT " +
+          ITEM_COLUMNS +
           " FROM files_items WHERE owner_id = ? AND folder_id IS ? " +
           "AND deleted_at IS NULL ORDER BY created_at DESC LIMIT ?",
       )

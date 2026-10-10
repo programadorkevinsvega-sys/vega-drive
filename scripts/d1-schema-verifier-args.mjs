@@ -1,5 +1,7 @@
 export function resolveD1Target(args) {
-  if (args.some((argument) => argument !== "--local" && argument !== "--remote")) {
+  if (
+    args.some((argument) => argument !== "--local" && argument !== "--remote")
+  ) {
     throw new Error("Usage: verify-d1-schema.mjs [--local|--remote]");
   }
   if (args.includes("--local") && args.includes("--remote")) {
@@ -8,7 +10,11 @@ export function resolveD1Target(args) {
   return args.includes("--local") ? "local" : "remote";
 }
 
-export function buildWranglerD1ExecuteArgs({ wranglerCommand, databaseName, target }) {
+export function buildWranglerD1ExecuteArgs({
+  wranglerCommand,
+  databaseName,
+  target,
+}) {
   const commandPrefix =
     wranglerCommand === "pnpm"
       ? ["exec", "wrangler", "d1", "execute"]
