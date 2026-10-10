@@ -94,15 +94,10 @@ El comando de despliegue de producción de Cloudflare Workers Builds debe ser **
 
 GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecución del commit `0d1c145904f20678ea9397f114f551ce18e01cee` terminó correctamente, con 4 archivos/12 tests aprobados y sin secretos detectados. Cloudflare Workers Builds también ejecutó correctamente `pnpm run cloudflare:build` y `pnpm run deploy` el 2026-10-10, incluidas migraciones, verificación estructural D1 y smoke check de producción. Son ejecuciones separadas; no se asume que el commit de CI y el artefacto desplegado sean el mismo commit porque el log de despliegue aportado no incluye el SHA del commit.
 
-## Cierre de Fase 0 y preparación para producción
+## Estado de Fase 0 y preparación para producción
 
-No declarar la Fase 0 ni la preparación para producción como completadas hasta verificar:
+**Fase 0: fundación, build y despliegue verificados; la certificación de seguridad y la preparación para usuarios reales siguen pendientes.** Evidencia del 2026-10-10: Cloudflare completó `pnpm run cloudflare:build` y `pnpm run deploy`; los 4 archivos de pruebas (12 tests), el typecheck, el control arquitectónico y `pnpm audit --audit-level=high` pasaron. D1 no tenía migraciones pendientes y la verificación remota confirmó 17 tablas/índices. La versión Worker desplegada fue `a13aa208-2f9c-4da3-a4e5-318b933738ae`, y `/api/health` respondió HTTP 200. GitHub Actions para el commit `0d1c145904f20678ea9397f114f551ce18e01cee` también quedó verde; Gitleaks no detectó secretos. El usuario confirmó en el panel que el bucket R2 es privado.
 
-- CI verde en el commit actual y protección de `main` con los checks obligatorios.
-- `/api/health` desplegado y respondiendo.
-- D1 con migraciones/esquema aplicados y comprobados.
-- R2 privado, sin exposición pública/CORS, y operaciones reales probadas a través del Worker.
-- Secretos y variables de entorno configurados; Turnstile listo si se exige para registro/login.
-- Autenticación, autorización por usuario, aislamiento entre clientes y flujos de archivos implementados y probados antes de admitir usuarios reales.
+Quedan verificaciones operativas explícitas: confirmar que R2 no tenga dominio público ni `r2.dev` ni CORS para navegador, y revisar los permisos efectivos de R2 y la configuración de secretos del Worker. No se deben inferir esos ajustes de un binding o de un escaneo de repositorio.
 
-La estructura actual es un andamiaje inicial. La arquitectura y el roadmap describen las fases posteriores; no son evidencia de funcionalidades implementadas.
+El despliegue no certifica que Vega Drive esté lista para usuarios reales. Antes de admitirlos aún deben implementarse y probarse autenticación, autorización por usuario, aislamiento entre clientes y flujos de archivos; Turnstile se configura cuando se habilite registro/login. La certificación global de seguridad y el rollback permanecen pendientes según [Security.md](./Security.md) y [Rollback.md](./Rollback.md). La estructura actual es un andamiaje inicial: las fases posteriores describen trabajo futuro, no funcionalidades implementadas.
