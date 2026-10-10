@@ -5,13 +5,14 @@ import type { Env } from "../src/worker/env.js";
 import { sha256Hex } from "../src/modules/identity/application/sessions/session-tokens.js";
 
 const token = "a".repeat(43);
+const tokenHash = await sha256Hex(token);
 const now = new Date("2026-10-10T12:00:00.000Z");
 
 function envWithSession(options: { revokedAt?: string | null; expiresAt?: string; lastSeenAt?: string } = {}) {
   const session = {
     id: "session-a",
     userId: "user-a",
-    tokenHash: "",
+    tokenHash,
     createdAt: now.toISOString(),
     lastSeenAt: options.lastSeenAt ?? now.toISOString(),
     expiresAt: options.expiresAt ?? new Date(now.getTime() + 60_000).toISOString(),
@@ -33,8 +34,7 @@ function envWithSession(options: { revokedAt?: string | null; expiresAt?: string
         bind(...values: unknown[]) { bindings = values; return this; },
         async first<T>() {
           if (sql.includes("FROM identity_sessions")) {
-            session.tokenHash = String(bindings[0]);
-            return session as T;
+            return bindings[0] === tokenHash ? session as T : null;
           }
           if (sql.includes("FROM identity_users")) return user as T;
           return null;
