@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from "../worker/env.js";
-import { createCompositionRoot } from "./composition-root.js";
+import { createCompositionRoot } from "../worker/composition-root.js";
 import {
   requireAuthenticatedActor,
   type AuthenticatedEnv,
