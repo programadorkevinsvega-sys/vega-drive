@@ -26,6 +26,14 @@ async function runGuard(files: Record<string, string>) {
   }
 }
 
+function expectRejected(
+  result: ReturnType<typeof spawnSync>,
+  expectedError: string,
+) {
+  expect(result.status).not.toBe(0);
+  expect(result.stderr).toContain(expectedError);
+}
+
 describe("architecture guard", () => {
   it("is wired into lint", async () => {
     const pkg = JSON.parse(
@@ -35,62 +43,67 @@ describe("architecture guard", () => {
     expect(pkg.scripts.lint).toContain("architecture-check.mjs");
   });
 
-  it.each([
-    {
-      name: "cross-module internal imports",
-      path: "src/modules/files/repository.ts",
-      source: 'import "../identity/repository.js";',
-      expectedError: "importa interior de identity",
-    },
-    {
-      name: "foreign module SQL tables",
-      path: "src/modules/files/repository.ts",
-      source: 'const query = "SELECT * FROM identity_users";',
-      expectedError: "prefijo de otro módulo",
-    },
-    {
-      name: "JOIN statements",
-      path: "src/modules/files/repository.ts",
-      source: [
-        "const query = ",
-        JSON.stringify("SELECT * FROM files_items JOIN files_folders"),
-        ";",
-      ].join(""),
-      expectedError: "JOIN no permitido",
-    },
-    {
-      name: "foreign keys",
-      path: "src/modules/files/repository.ts",
-      source: [
-        "const query = ",
-        JSON.stringify("FOREIGN KEY (owner_id) REFERENCES identity_users(id)"),
-        ";",
-      ].join(""),
-      expectedError: "FOREIGN KEY no permitida",
-    },
-    {
-      name: "database batch calls",
-      path: "src/modules/files/repository.ts",
-      source: "await db.batch(statements);",
-      expectedError: "db.batch() requiere revisión explícita",
-    },
-    {
-      name: "R2 binding outside files",
-      path: "src/bff/app.ts",
-      source: "const bucket = env.FILES_BUCKET;",
-      expectedError: "acceso a FILES_BUCKET fuera de files",
-    },
-  ])("rejects $name", async ({ path, source, expectedError }) => {
-    const result = await runGuard({ [path]: source });
+  it("rejects cross-module internal imports", async () => {
+    const result = await runGuard({
+      "src/modules/files/repository.ts":
+        'import "../identity/repository.js";',
+    });
 
-    expect(result.status).not.toBe(0);
-    expect(result.stderr).toContain(expectedError);
+    expectRejected(result, "importa interior de identity");
+  });
+
+  it("rejects SQL that references another module's tables", async () => {
+    const result = await runGuard({
+      "src/modules/files/repository.ts":
+        'const query = "SELECT * FROM identity_users";',
+    });
+
+    expectRejected(result, "prefijo de otro módulo");
+  });
+
+  it("rejects JOIN statements in modules", async () => {
+    const query = "SELECT * FROM files_items JOIN files_folders";
+    const source = "const query = " + JSON.stringify(query) + ";";
+    const result = await runGuard({
+      "src/modules/files/repository.ts": source,
+    });
+
+    expectRejected(result, "JOIN no permitido");
+  });
+
+  it("rejects foreign keys in modules", async () => {
+    const query = "FOREIGN KEY (owner_id) REFERENCES identity_users(id)";
+    const source = "const query = " + JSON.stringify(query) + ";";
+    const result = await runGuard({
+      "src/modules/files/repository.ts": source,
+    });
+
+    expectRejected(result, "FOREIGN KEY no permitida");
+  });
+
+  it("rejects db.batch calls in modules", async () => {
+    const result = await runGuard({
+      "src/modules/files/repository.ts": "await db.batch(statements);",
+    });
+
+    expectRejected(result, "db.batch() requiere revisión explícita");
+  });
+
+  it("rejects R2 access outside the files module", async () => {
+    const result = await runGuard({
+      "src/bff/app.ts": "const bucket = env.FILES_BUCKET;",
+    });
+
+    expectRejected(result, "acceso a FILES_BUCKET fuera de files");
   });
 
   it("allows imports through another module's public API", async () => {
+    const publicImport =
+      "import type { IdentityPublicApi } from " +
+      JSON.stringify("../identity/module.public-api.js") +
+      ";";
     const result = await runGuard({
-      "src/modules/files/service.ts":
-        'import type { IdentityPublicApi } from "../identity/module.public-api.js";',
+      "src/modules/files/service.ts": publicImport,
       "src/modules/identity/module.public-api.ts":
         "export interface IdentityPublicApi {}",
     });
