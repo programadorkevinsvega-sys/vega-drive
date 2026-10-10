@@ -1,0 +1,117 @@
+/* Restablecimiento mínimo y reglas globales. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--vd-bg);
+  color: var(--vd-text);
+  font-family: var(--vd-font-sans);
+  font-size: var(--vd-text-base);
+  line-height: var(--vd-leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+figure {
+  margin: 0;
+}
+
+ol,
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: var(--vd-weight-semibold);
+  line-height: var(--vd-leading-tight);
+  letter-spacing: -0.015em;
+}
+
+a {
+  color: var(--vd-accent-text);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+code {
+  font-family: var(--vd-font-mono);
+  font-size: 0.85em;
+}
+
+svg {
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--vd-focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--vd-accent-soft);
+  color: var(--vd-text);
+}
+
+.vd-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid Highlight;
+  }
+}

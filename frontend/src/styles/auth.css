@@ -1,0 +1,39 @@
+/* Marco de las pantallas de acceso (esqueleto de la Entrega 2). */
+.vd-auth {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--vd-space-6);
+}
+
+.vd-auth__tools {
+  position: absolute;
+  inset-block-start: var(--vd-space-4);
+  inset-inline-end: var(--vd-space-4);
+}
+
+.vd-auth__panel {
+  display: grid;
+  gap: var(--vd-space-4);
+  width: min(26rem, 100%);
+  padding: var(--vd-space-8);
+  border: 1px solid var(--vd-border);
+  border-radius: var(--vd-radius-modal);
+  background: var(--vd-surface);
+  box-shadow: var(--vd-shadow-2);
+}
+
+.vd-auth__brand {
+  justify-self: start;
+  color: var(--vd-text);
+  text-decoration: none;
+}
+
+.vd-auth__title {
+  font-size: var(--vd-text-2xl);
+}
+
+.vd-auth__text {
+  color: var(--vd-text-muted);
+}

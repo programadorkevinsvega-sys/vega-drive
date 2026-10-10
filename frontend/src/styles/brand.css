@@ -1,0 +1,54 @@
+/* Marca: símbolo y logotipo tipográfico. */
+.vd-mark {
+  display: block;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+}
+
+.vd-mark__star {
+  fill: var(--vd-mark-star);
+}
+
+.vd-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vd-space-3);
+  color: inherit;
+}
+
+.vd-logo__word {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28em;
+  font-size: var(--vd-text-xl);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.vd-logo__vega {
+  font-weight: var(--vd-weight-bold);
+}
+
+.vd-logo__drive {
+  font-weight: 400;
+  opacity: 0.82;
+}
+
+.vd-skip {
+  position: fixed;
+  inset-block-start: var(--vd-space-3);
+  inset-inline-start: var(--vd-space-3);
+  z-index: calc(var(--vd-z-toast) + 1);
+  padding: var(--vd-space-2) var(--vd-space-4);
+  border: 0;
+  border-radius: var(--vd-radius-control);
+  background: var(--vd-text);
+  color: var(--vd-bg);
+  font-weight: var(--vd-weight-semibold);
+  transform: translateY(-300%);
+}
+
+.vd-skip:focus-visible {
+  transform: none;
+}

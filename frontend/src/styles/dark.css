@@ -1,0 +1,45 @@
+/* Vega Drive · tema oscuro: solo sobrescribe tokens semánticos. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --vd-bg: var(--vd-ink-950);
+  --vd-surface: var(--vd-ink-900);
+  --vd-surface-sunken: #121a2e;
+  --vd-surface-raised: var(--vd-ink-800);
+  --vd-text: #e8ecf4;
+  --vd-text-muted: #a3adc2;
+  --vd-text-on-accent: var(--vd-ink-950);
+  --vd-border: var(--vd-ink-700);
+  --vd-border-strong: #66759a;
+  --vd-scrim: rgb(5 8 16 / 0.7);
+
+  --vd-accent: var(--vd-vega-300);
+  --vd-accent-hover: #9fe3e5;
+  --vd-accent-active: #bdeff0;
+  --vd-accent-soft: #123a44;
+  --vd-accent-text: var(--vd-vega-300);
+  --vd-focus: var(--vd-vega-300);
+
+  --vd-danger-solid: #ff9990;
+  --vd-danger-solid-hover: #ffb3ac;
+  --vd-danger-on-solid: var(--vd-ink-950);
+  --vd-danger-text: #ff9990;
+  --vd-danger-soft: #3a1b1d;
+  --vd-success-text: #6fd6a0;
+  --vd-success-soft: #14301f;
+  --vd-warning-text: #f2c66d;
+  --vd-warning-soft: #33280f;
+  --vd-warning-line: #8a6a22;
+
+  --vd-sidebar-bg: #0a111e;
+  --vd-sidebar-fg: #e8ecf4;
+  --vd-sidebar-muted: #a3adc2;
+  --vd-sidebar-hover: #141d33;
+  --vd-sidebar-active: #1d2a49;
+  --vd-sidebar-line: #1d2a49;
+  --vd-mark-star: var(--vd-vega-300);
+
+  --vd-shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --vd-shadow-2: 0 6px 18px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.4);
+  --vd-shadow-3: 0 24px 48px rgb(0 0 0 / 0.6), 0 4px 12px rgb(0 0 0 / 0.4);
+}

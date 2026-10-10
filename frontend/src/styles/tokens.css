@@ -1,0 +1,128 @@
+/* Vega Drive · tokens de diseño: tema claro y valores compartidos. */
+:root {
+  color-scheme: light;
+
+  /* Paleta primitiva */
+  --vd-ink-950: #0e1626;
+  --vd-ink-900: #17203a;
+  --vd-ink-800: #212c4b;
+  --vd-ink-700: #2c3857;
+  --vd-slate-500: #5b6577;
+  --vd-slate-400: #7b8598;
+  --vd-slate-200: #d5dbe3;
+  --vd-slate-100: #e9edf2;
+  --vd-paper: #f4f6f8;
+  --vd-white: #ffffff;
+  --vd-vega-800: #08545b;
+  --vd-vega-700: #08626a;
+  --vd-vega-600: #0a7c86;
+  --vd-vega-300: #7fd6d9;
+  --vd-vega-100: #d5f0f1;
+  --vd-red-800: #8f1d17;
+  --vd-red-700: #b3261e;
+  --vd-red-100: #fbe9e7;
+  --vd-green-700: #1f7a4d;
+  --vd-green-100: #e3f4ea;
+  --vd-amber-800: #7a4f00;
+  --vd-amber-100: #fff1d6;
+
+  /* Superficies y texto */
+  --vd-bg: var(--vd-paper);
+  --vd-surface: var(--vd-white);
+  --vd-surface-sunken: var(--vd-slate-100);
+  --vd-surface-raised: var(--vd-white);
+  --vd-text: var(--vd-ink-900);
+  --vd-text-muted: var(--vd-slate-500);
+  --vd-text-on-accent: var(--vd-white);
+  --vd-border: var(--vd-slate-200);
+  --vd-border-strong: var(--vd-slate-400);
+  --vd-scrim: rgb(14 22 38 / 0.55);
+
+  /* Acento (Vega) y foco */
+  --vd-accent: var(--vd-vega-600);
+  --vd-accent-hover: var(--vd-vega-700);
+  --vd-accent-active: var(--vd-vega-800);
+  --vd-accent-soft: var(--vd-vega-100);
+  --vd-accent-text: var(--vd-vega-700);
+  --vd-focus: var(--vd-vega-600);
+
+  /* Semanticos */
+  --vd-danger-solid: var(--vd-red-700);
+  --vd-danger-solid-hover: var(--vd-red-800);
+  --vd-danger-on-solid: var(--vd-white);
+  --vd-danger-text: var(--vd-red-700);
+  --vd-danger-soft: var(--vd-red-100);
+  --vd-success-text: var(--vd-green-700);
+  --vd-success-soft: var(--vd-green-100);
+  --vd-warning-text: var(--vd-amber-800);
+  --vd-warning-soft: var(--vd-amber-100);
+  --vd-warning-line: #e3b55c;
+
+  /* Barra lateral */
+  --vd-sidebar-bg: var(--vd-ink-900);
+  --vd-sidebar-fg: #e8ecf4;
+  --vd-sidebar-muted: #a9b3c9;
+  --vd-sidebar-hover: var(--vd-ink-800);
+  --vd-sidebar-active: var(--vd-ink-700);
+  --vd-sidebar-active-fg: var(--vd-white);
+  --vd-sidebar-marker: var(--vd-vega-300);
+  --vd-sidebar-line: var(--vd-ink-700);
+  --vd-mark-star: var(--vd-vega-600);
+
+  /* Tipografía */
+  --vd-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --vd-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --vd-text-xs: 0.75rem;
+  --vd-text-sm: 0.875rem;
+  --vd-text-base: 1rem;
+  --vd-text-lg: 1.125rem;
+  --vd-text-xl: 1.375rem;
+  --vd-text-2xl: 1.75rem;
+  --vd-text-3xl: 2.25rem;
+  --vd-leading-tight: 1.2;
+  --vd-leading-snug: 1.35;
+  --vd-leading-normal: 1.5;
+  --vd-weight-medium: 500;
+  --vd-weight-semibold: 600;
+  --vd-weight-bold: 700;
+
+  /* Espaciado (base de 4 px) */
+  --vd-space-1: 0.25rem;
+  --vd-space-2: 0.5rem;
+  --vd-space-3: 0.75rem;
+  --vd-space-4: 1rem;
+  --vd-space-5: 1.25rem;
+  --vd-space-6: 1.5rem;
+  --vd-space-8: 2rem;
+  --vd-space-10: 2.5rem;
+  --vd-space-12: 3rem;
+
+  /* Radios: controles, superficies, diálogos */
+  --vd-radius-xs: 0.25rem;
+  --vd-radius-control: 0.5rem;
+  --vd-radius-surface: 0.75rem;
+  --vd-radius-modal: 1rem;
+  --vd-radius-pill: 999px;
+
+  /* Sombras con matiz de la tinta de marca */
+  --vd-shadow-1: 0 1px 2px rgb(23 32 58 / 0.08);
+  --vd-shadow-2: 0 6px 18px rgb(23 32 58 / 0.14), 0 1px 3px rgb(23 32 58 / 0.1);
+  --vd-shadow-3: 0 24px 48px rgb(23 32 58 / 0.28), 0 4px 12px rgb(23 32 58 / 0.14);
+
+  /* Movimiento */
+  --vd-dur-fast: 120ms;
+  --vd-dur-base: 180ms;
+  --vd-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Capas */
+  --vd-z-sticky: 20;
+  --vd-z-drawer: 40;
+  --vd-z-menu: 50;
+  --vd-z-toast: 70;
+
+  /* Maquetación */
+  --vd-sidebar-w: 16.5rem;
+  --vd-topbar-h: 3.5rem;
+  --vd-content-max: 80rem;
+}
