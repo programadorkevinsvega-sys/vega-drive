@@ -38,22 +38,42 @@ describe("architecture guard", () => {
   it.each([
     [
       "cross-module internal imports",
+      "src/modules/files/repository.ts",
       'import "../identity/repository.js";',
       "importa interior de identity",
     ],
     [
       "foreign module SQL tables",
+      "src/modules/files/repository.ts",
       'const query = "SELECT * FROM identity_users";',
       "prefijo de otro módulo",
     ],
-    ["JOIN statements", 'const query = "SELECT * FROM files_items JOIN files_folders";', "JOIN no permitido"],
-    ["foreign keys", 'const query = "FOREIGN KEY (owner_id) REFERENCES identity_users(id)";', "FOREIGN KEY no permitida"],
-    ["database batch calls", "await db.batch(statements);", "db.batch() requiere revisión explícita"],
-    ["R2 binding outside files", "const bucket = env.FILES_BUCKET;", "acceso a FILES_BUCKET fuera de files"],
-  ])("rejects %s", async (_name, source, expectedError) => {
-    const result = await runGuard({
-      "src/modules/files/repository.ts": source,
-    });
+    [
+      "JOIN statements",
+      "src/modules/files/repository.ts",
+      'const query = "SELECT * FROM files_items JOIN files_folders";',
+      "JOIN no permitido",
+    ],
+    [
+      "foreign keys",
+      "src/modules/files/repository.ts",
+      'const query = "FOREIGN KEY (owner_id) REFERENCES identity_users(id)";',
+      "FOREIGN KEY no permitida",
+    ],
+    [
+      "database batch calls",
+      "src/modules/files/repository.ts",
+      "await db.batch(statements);",
+      "db.batch() requiere revisión explícita",
+    ],
+    [
+      "R2 binding outside files",
+      "src/bff/app.ts",
+      "const bucket = env.FILES_BUCKET;",
+      "acceso a FILES_BUCKET fuera de files",
+    ],
+  ])("rejects %s", async (_name, path, source, expectedError) => {
+    const result = await runGuard({ [path]: source });
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain(expectedError);
