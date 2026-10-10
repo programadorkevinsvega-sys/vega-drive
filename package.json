@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "predeploy": "node scripts/check-cloudflare-config.mjs",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler d1 migrations apply vega_drive_db --remote && wrangler deploy",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "node scripts/architecture-check.mjs",
