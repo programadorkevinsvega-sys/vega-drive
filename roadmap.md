@@ -36,9 +36,9 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 ### 0.1 Contrato y convenciones
 
-- [ ] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
-- [ ] Añadir .gitignore para .dev.vars, .env\*, .wrangler y node_modules.
-- [ ] Añadir plantilla de PR con checklist de seguridad y arquitectura.
+- [x] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
+- [x] Añadir .gitignore para .dev.vars, .env*, .wrangler y node_modules.
+- [x] Añadir plantilla de PR con checklist de seguridad y arquitectura.
 - [ ] Proteger main con PR y CI obligatoria.
 - **Aceptación:** no existe un documento que describa BFF/Service Bindings o D1 por módulo como el despliegue actual.
 
@@ -65,7 +65,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 - [ ] Ejecutar format, lint, typecheck y pruebas.
 - [ ] Añadir test/lint de fronteras: imports internos entre módulos, SQL con prefijos ajenos, JOIN/FK cruzados y db.batch() multímódulo deben fallar.
-- [ ] Añadir gitleaks y npm audit.
+- [ ] Añadir Gitleaks y pnpm audit.
 - **Aceptación:** un SQL de files que mencione identity\_ falla en CI.
 - 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
