@@ -216,23 +216,27 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 Esta fase no se considera completada por tener un Worker desplegado o un endpoint de salud operativo. La certificación global permanece pendiente hasta obtener evidencia reproducible para cada control aplicable de [Security.md, sección 14](./Security.md#14-endurecimiento-transversal-y-certificación).
 
 ### 8.1 Arquitectura y entradas
+
 - [ ] Probar que las rutas no acceden directamente a D1/R2 ni saltan gateways, APIs públicas o casos de uso.
 - [ ] Probar entradas malformadas, identificadores inválidos, campos desconocidos, límites de cuerpo y paginación.
 - [ ] Comprobar que errores públicos no filtran secretos, tokens, SQL ni trazas internas.
 
 ### 8.2 Autenticación y autorización
+
 - [ ] Probar sesiones ausentes, inválidas, expiradas y revocadas; verificar que logout invalida la sesión.
 - [ ] Probar autorización server-side para cada operación sensible.
 - [ ] Ejecutar regresiones IDOR/BOLA entre cuentas para lectura, modificación, movimiento y borrado.
 - [ ] Ejecutar pruebas concurrentes sobre propiedad, permisos, cuotas y límites.
 
 ### 8.3 Archivos y privacidad
+
 - [ ] Probar que no se pueden leer, sobrescribir, mover o eliminar recursos ajenos.
 - [ ] Verificar que claves y operaciones R2 están controladas por el servidor y que el bucket no es público.
 - [ ] Probar límites y expiración de enlaces temporales si se introducen; no exponer URLs de R2 por defecto.
 - [ ] Revisar respuestas, URLs y logs para detectar tokens, secretos, claves internas o datos sensibles.
 
 ### 8.4 Abuso, cabeceras y producción
+
 - [ ] Probar rate limiting de Cloudflare y aplicación para autenticación y operaciones costosas.
 - [ ] Probar Origin/CSRF para mutaciones autenticadas mediante cookies.
 - [ ] Verificar CSP, HSTS, nosniff, defensa contra framing, Referrer-Policy, Permissions-Policy y Cache-Control.
