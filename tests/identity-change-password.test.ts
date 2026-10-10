@@ -8,7 +8,7 @@ import type {
   IdentityUserRepository,
 } from "../src/modules/identity/application/ports/identity-repositories.js";
 import type { ResolvedIdentitySession } from "../src/modules/identity/application/sessions/resolve-session.js";
-import { hashRateKey, sha256Hex } from "../src/modules/identity/application/sessions/session-tokens.js";
+import { sha256Hex } from "../src/modules/identity/application/sessions/session-tokens.js";
 
 const now = new Date("2026-10-10T12:00:00.000Z");
 const actor: ResolvedIdentitySession = {
@@ -89,7 +89,7 @@ describe("identity change-password use case", () => {
         eventType: "identity.password.changed",
         payloadJson: JSON.stringify({
           userId: actor.userId,
-          ipHash: await hashRateKey("audit-ip:203.0.113.10"),
+          ip: "203.0.113.10",
         }),
       }),
     );
