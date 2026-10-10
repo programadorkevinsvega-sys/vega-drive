@@ -150,7 +150,7 @@ Esta sección concreta los requisitos de seguridad para la arquitectura real de 
 
 La configuración debe implementarse en la capa Hono/Worker adecuada para este repositorio, no en `next.config.ts`. Debe comprobarse en respuestas normales, errores, rutas de API y assets según corresponda.
 
-- `Content-Security-Policy`: limitar scripts, estilos, imágenes, conexiones y `frame-ancestors) a lo que la aplicación realmente necesita; evitar `unsafe-inline` cuando sea viable.
+- `Content-Security-Policy`: limitar scripts, estilos, imágenes, conexiones y `frame-ancestors` a lo que la aplicación realmente necesita; evitar `unsafe-inline` cuando sea viable.
 - `Strict-Transport-Security`: habilitar solo para dominios servidos exclusivamente por HTTPS y con un alcance deliberado.
 - `X-Content-Type-Options: nosniff`.
 - `X-Frame-Options: DENY` o una política CSP equivalente con `frame-ancestors 'none'`, salvo necesidad de incrustación aprobada.
