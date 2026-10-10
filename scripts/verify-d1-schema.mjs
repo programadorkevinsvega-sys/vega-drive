@@ -25,13 +25,13 @@ function normalizeSql(sql) {
 
 function parseExpectedSchema(sql, filename) {
   const statements = sql
+    .replace(/^\\s*--.*$/gm, "")
     .split(";")
     .map((statement) => statement.trim())
-    .filter((statement) => statement && !statement.startsWith("--"));
+    .filter(Boolean);
   const expected = new Map();
 
   for (const statement of statements) {
-    if (/^--/.test(statement)) continue;
     const match = statement.match(
       /^CREATE\s+(TABLE|(?:UNIQUE\s+)?INDEX)\s+(?:IF\s+NOT\s+EXISTS\s+)?(["'\x60]?)([\w]+)\2/i,
     );
