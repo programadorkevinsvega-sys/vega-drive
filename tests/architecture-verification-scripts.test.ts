@@ -108,7 +108,7 @@ describe("independent architecture verification scripts", () => {
   it("rejects a gateway adapter that omits contract methods", async () => {
     const result = await runFixture("gateway", {
       "src/bff/composition-root.ts":
-        "export interface FilesGateway { status(): void; list(): void; }\nexport class InProcessFilesGateway implements FilesGateway { status() {} }",
+        "export interface FilesGateway {\n status(): void;\n list(): void;\n}\nexport class InProcessFilesGateway implements FilesGateway {\n status() {}\n}",
       "src/modules/files/module.public-api.ts": "export interface FilesPublicApi {}",
     });
     expect(result.status).not.toBe(0);
