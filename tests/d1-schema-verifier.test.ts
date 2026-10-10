@@ -33,7 +33,7 @@ async function runVerifier(target?: "--local" | "--remote") {
     const mockPnpm = join(bin, "pnpm");
     const mockScript = `#!/bin/sh
 printf '%s\\n' "$@" > "$D1_ARGS_OUTPUT"
-printf '%s\\n' '[{"success":true,"results":[{"type":"table","name":"identity_users","sql":"CREATE TABLE identity_users (id TEXT PRIMARY KEY NOT NULL)"}]}]'
+printf '%s\\n' '[{"success":true,"results":[{"type":"table","name":"identity_users","sql":"CREATE TABLE identity_users (id TEXT PRIMARY KEY NOT NULL)"},{"type":"table","name":"_cf_METADATA","sql":"CREATE TABLE _cf_METADATA (key TEXT PRIMARY KEY)"}]}]'
 `;
     await writeFile(mockPnpm, mockScript);
     await chmod(mockPnpm, 0o755);
