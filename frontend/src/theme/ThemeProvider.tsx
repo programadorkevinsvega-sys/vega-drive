@@ -6,7 +6,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { resolveTheme, type ResolvedTheme, type ThemePreference } from "./theme";
+import {
+  resolveTheme,
+  type ResolvedTheme,
+  type ThemePreference,
+} from "./theme";
 import {
   applyTheme,
   readStoredPreference,
@@ -43,7 +47,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [preference, resolved],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

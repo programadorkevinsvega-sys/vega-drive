@@ -34,7 +34,13 @@ export function renderScreen(route: Route): ReactNode {
     case "trash":
       return (
         <ScreenPlaceholder
-          icon={route.name === "recent" ? "clock" : route.name === "trash" ? "trash" : "star"}
+          icon={
+            route.name === "recent"
+              ? "clock"
+              : route.name === "trash"
+                ? "trash"
+                : "star"
+          }
           title={title}
           crumbs={[DRIVE_HOME, { label: title }]}
           delivery="Entrega 3"

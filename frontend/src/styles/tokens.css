@@ -70,7 +70,8 @@
   --vd-mark-star: var(--vd-vega-600);
 
   /* Tipografía */
-  --vd-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --vd-font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --vd-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --vd-text-xs: 0.75rem;
@@ -108,7 +109,8 @@
   /* Sombras con matiz de la tinta de marca */
   --vd-shadow-1: 0 1px 2px rgb(23 32 58 / 0.08);
   --vd-shadow-2: 0 6px 18px rgb(23 32 58 / 0.14), 0 1px 3px rgb(23 32 58 / 0.1);
-  --vd-shadow-3: 0 24px 48px rgb(23 32 58 / 0.28), 0 4px 12px rgb(23 32 58 / 0.14);
+  --vd-shadow-3:
+    0 24px 48px rgb(23 32 58 / 0.28), 0 4px 12px rgb(23 32 58 / 0.14);
 
   /* Movimiento */
   --vd-dur-fast: 120ms;

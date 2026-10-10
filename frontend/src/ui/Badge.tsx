@@ -9,7 +9,9 @@ export interface BadgeProps {
 }
 
 export function Badge({ tone = "neutral", children }: BadgeProps) {
-  return <span className={cx("vd-badge", `vd-badge--${tone}`)}>{children}</span>;
+  return (
+    <span className={cx("vd-badge", `vd-badge--${tone}`)}>{children}</span>
+  );
 }
 
 /** Marca de todo lo que NO es real: acciones y datos de demostracion. */

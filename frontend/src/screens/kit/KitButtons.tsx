@@ -23,20 +23,42 @@ export function KitButtons() {
         ))}
       </div>
       <div className="vd-kit__row">
-        <Button size="sm" variant="secondary">Pequeño</Button>
-        <Button size="md" variant="secondary">Mediano</Button>
-        <Button size="lg" variant="secondary">Grande</Button>
-        <Button icon="plus" variant="secondary">Con icono</Button>
+        <Button size="sm" variant="secondary">
+          Pequeño
+        </Button>
+        <Button size="md" variant="secondary">
+          Mediano
+        </Button>
+        <Button size="lg" variant="secondary">
+          Grande
+        </Button>
+        <Button icon="plus" variant="secondary">
+          Con icono
+        </Button>
       </div>
       <div className="vd-kit__row">
         <Button disabled>Deshabilitado</Button>
         <Button loading>Cargando</Button>
-        <Button variant="secondary" loading>Cargando</Button>
-        <Button variant="danger" disabled>Eliminar</Button>
+        <Button variant="secondary" loading>
+          Cargando
+        </Button>
+        <Button variant="danger" disabled>
+          Eliminar
+        </Button>
       </div>
       <div className="vd-kit__row">
-        <IconButton label="Cuadrícula" icon="grid" variant="secondary" pressed />
-        <IconButton label="Lista" icon="list" variant="secondary" pressed={false} />
+        <IconButton
+          label="Cuadrícula"
+          icon="grid"
+          variant="secondary"
+          pressed
+        />
+        <IconButton
+          label="Lista"
+          icon="list"
+          variant="secondary"
+          pressed={false}
+        />
         <IconButton label="Favorito" icon="star" />
         <IconButton label="Más acciones" icon="more" size="sm" />
       </div>

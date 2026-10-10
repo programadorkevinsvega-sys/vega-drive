@@ -33,7 +33,9 @@ export interface MenuButtonProps {
 const ENABLED_ITEMS = '[role^="menuitem"]:not([aria-disabled="true"])';
 
 function enabledItems(list: HTMLElement | null): HTMLElement[] {
-  return list ? Array.from(list.querySelectorAll<HTMLElement>(ENABLED_ITEMS)) : [];
+  return list
+    ? Array.from(list.querySelectorAll<HTMLElement>(ENABLED_ITEMS))
+    : [];
 }
 
 /** Menu desplegable con el patron ARIA "menu button" y teclado completo. */
@@ -129,7 +131,10 @@ export function MenuButton({
               role={item.checked === undefined ? "menuitem" : "menuitemradio"}
               aria-checked={item.checked}
               aria-disabled={item.disabled || undefined}
-              className={cx("vd-menu__item", item.danger && "vd-menu__item--danger")}
+              className={cx(
+                "vd-menu__item",
+                item.danger && "vd-menu__item--danger",
+              )}
               onClick={() => {
                 if (item.disabled) return;
                 close(true);

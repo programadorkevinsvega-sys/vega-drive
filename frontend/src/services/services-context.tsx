@@ -8,7 +8,10 @@ export interface ServicesProviderProps {
   children: ReactNode;
 }
 
-export function ServicesProvider({ services, children }: ServicesProviderProps) {
+export function ServicesProvider({
+  services,
+  children,
+}: ServicesProviderProps) {
   return (
     <ServicesContext.Provider value={services}>
       {children}

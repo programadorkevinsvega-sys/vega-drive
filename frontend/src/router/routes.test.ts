@@ -57,7 +57,10 @@ describe("parseHash", () => {
     });
     expect(parseHash("#/search")).toEqual({ name: "search", query: "" });
     const long = parseHash(`#/search?q=${"x".repeat(500)}`);
-    expect(long).toEqual({ name: "search", query: "x".repeat(MAX_QUERY_LENGTH) });
+    expect(long).toEqual({
+      name: "search",
+      query: "x".repeat(MAX_QUERY_LENGTH),
+    });
   });
 
   it("no falla con codificaciones mal formadas", () => {
@@ -65,7 +68,12 @@ describe("parseHash", () => {
   });
 
   it("devuelve not-found para rutas desconocidas o con tramos extra", () => {
-    for (const hash of ["#/nada", "#/login/extra", "#/__proto__", "#/constructor"]) {
+    for (const hash of [
+      "#/nada",
+      "#/login/extra",
+      "#/__proto__",
+      "#/constructor",
+    ]) {
       expect(parseHash(hash)).toEqual({ name: "not-found" });
     }
   });

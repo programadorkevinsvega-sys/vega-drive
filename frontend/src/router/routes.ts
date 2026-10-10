@@ -60,9 +60,7 @@ export function parseHash(hash: string): Route {
 export function buildHash(route: Route): string {
   switch (route.name) {
     case "drive":
-      return route.folderId
-        ? `#/drive/folder/${route.folderId}`
-        : DEFAULT_HASH;
+      return route.folderId ? `#/drive/folder/${route.folderId}` : DEFAULT_HASH;
     case "search":
       return route.query
         ? `#/search?q=${encodeURIComponent(route.query)}`

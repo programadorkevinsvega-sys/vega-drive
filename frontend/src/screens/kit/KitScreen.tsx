@@ -18,8 +18,8 @@ export function KitScreen() {
         <VegaLogo />
         <h1 className="vd-page__title">Guía visual</h1>
         <p className="vd-kit__desc">
-          Base de diseño de la Entrega 2. Página de revisión: no es una
-          pantalla del producto y no usa datos reales.
+          Base de diseño de la Entrega 2. Página de revisión: no es una pantalla
+          del producto y no usa datos reales.
         </p>
       </header>
       <KitColors />

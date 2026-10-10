@@ -29,7 +29,10 @@ export const MAX_TOASTS = 4;
 
 export const initialToastState: ToastState = { toasts: [], nextId: 1 };
 
-export function toastReducer(state: ToastState, action: ToastAction): ToastState {
+export function toastReducer(
+  state: ToastState,
+  action: ToastAction,
+): ToastState {
   switch (action.type) {
     case "add": {
       const toast: Toast = {
@@ -46,7 +49,9 @@ export function toastReducer(state: ToastState, action: ToastAction): ToastState
     }
     case "dismiss": {
       const toasts = state.toasts.filter((toast) => toast.id !== action.id);
-      return toasts.length === state.toasts.length ? state : { ...state, toasts };
+      return toasts.length === state.toasts.length
+        ? state
+        : { ...state, toasts };
     }
   }
 }

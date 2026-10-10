@@ -32,7 +32,11 @@ export function KitFeedback() {
           headingLevel={3}
           title="Esta carpeta está vacía"
           description="Aquí aparecerán los archivos y carpetas que añadas."
-          action={<Button icon="upload" variant="secondary">Subir archivos</Button>}
+          action={
+            <Button icon="upload" variant="secondary">
+              Subir archivos
+            </Button>
+          }
         />
       </div>
     </KitSection>

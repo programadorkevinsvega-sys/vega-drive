@@ -21,12 +21,20 @@ export function KitFields() {
           defaultValue="informe/final"
           error="El nombre no puede contener «/»."
         />
-        <TextField label="Campo deshabilitado" disabled defaultValue="Solo lectura" />
+        <TextField
+          label="Campo deshabilitado"
+          disabled
+          defaultValue="Solo lectura"
+        />
         <TextField
           label="Con acción al final"
           type="password"
           defaultValue="ejemplo"
-          trailing={<Button size="sm" variant="ghost">Mostrar</Button>}
+          trailing={
+            <Button size="sm" variant="ghost">
+              Mostrar
+            </Button>
+          }
         />
       </div>
     </KitSection>

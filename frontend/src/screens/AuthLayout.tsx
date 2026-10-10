@@ -29,8 +29,8 @@ export function AuthLayout({ route }: AuthLayoutProps) {
         </a>
         <h1 className="vd-auth__title">{title}</h1>
         <p className="vd-auth__text">
-          El formulario se construye en la Entrega 4. Esta pantalla no
-          autentica a nadie ni envía datos.
+          El formulario se construye en la Entrega 4. Esta pantalla no autentica
+          a nadie ni envía datos.
         </p>
         <p className="vd-modal__note">
           <Icon name="info" size="sm" />

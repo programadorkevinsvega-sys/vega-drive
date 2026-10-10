@@ -15,7 +15,9 @@ export function KitTypography() {
           Texto base: legible, con interlineado cómodo y líneas de menos de 80
           caracteres para lectura prolongada.
         </p>
-        <p className="vd-t-sm">Texto pequeño para metadatos y ayudas de campo.</p>
+        <p className="vd-t-sm">
+          Texto pequeño para metadatos y ayudas de campo.
+        </p>
         <p className="vd-t-xs">Texto mínimo para etiquetas de estado.</p>
       </div>
     </KitSection>

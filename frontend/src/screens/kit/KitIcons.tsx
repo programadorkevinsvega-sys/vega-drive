@@ -4,7 +4,10 @@ import { KitSection } from "./KitSection";
 
 export function KitIcons() {
   return (
-    <KitSection title="Iconos" description="Conjunto propio de trazo uniforme; decorativos por defecto.">
+    <KitSection
+      title="Iconos"
+      description="Conjunto propio de trazo uniforme; decorativos por defecto."
+    >
       <ul className="vd-kit__icons">
         {ICON_NAMES.map((name) => (
           <li key={name}>

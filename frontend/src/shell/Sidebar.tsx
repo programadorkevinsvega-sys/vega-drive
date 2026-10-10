@@ -29,7 +29,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       aria-label="Barra lateral"
     >
       <div className="vd-sidebar__brand">
-        <a href="#/drive" className="vd-sidebar__home" aria-label="Vega Drive, ir a Mi unidad">
+        <a
+          href="#/drive"
+          className="vd-sidebar__home"
+          aria-label="Vega Drive, ir a Mi unidad"
+        >
           <VegaLogo />
         </a>
         <IconButton
@@ -48,7 +52,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           notifySimulated({
             tone: "info",
             title: "Subida simulada",
-            description: "No se subió ningún archivo: es solo una vista previa.",
+            description:
+              "No se subió ningún archivo: es solo una vista previa.",
           })
         }
       >

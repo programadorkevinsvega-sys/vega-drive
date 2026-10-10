@@ -87,7 +87,9 @@ const PATHS = {
       <circle cx="12" cy="18.5" r="1.4" fill="currentColor" stroke="none" />
     </>
   ),
-  grid: <path d="M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z" />,
+  grid: (
+    <path d="M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z" />
+  ),
   list: (
     <>
       <path d="M8.5 6.5H20M8.5 12H20M8.5 17.5H20" />

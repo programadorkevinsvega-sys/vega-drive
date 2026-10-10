@@ -39,7 +39,10 @@ const FORBIDDEN: ReadonlyArray<[string, RegExp]> = [
   ["peticiones XHR", new RegExp(XHR)],
   ["sockets / eventos de servidor", new RegExp(`\\b(${SOCKETS})\\b`)],
   ["sendBeacon", /sendBeacon/],
-  ["HTML dinamico", /innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML/],
+  [
+    "HTML dinamico",
+    /innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML/,
+  ],
   ["eval / Function", /\beval\s*\(|new Function\s*\(/],
   ["URL absoluta", /https?:\/\//],
   ["cookies", /document\.cookie/],
@@ -75,7 +78,9 @@ describe("politica del frontend", () => {
 
   it("los estilos no cargan recursos externos ni datos incrustados", () => {
     const offenders = sourceFiles(/\.css$/)
-      .filter((file) => /https?:\/\/|url\(\s*["']?data:|@font-face/.test(file.text))
+      .filter((file) =>
+        /https?:\/\/|url\(\s*["']?data:|@font-face/.test(file.text),
+      )
       .map((file) => file.path);
     expect(offenders).toEqual([]);
   });

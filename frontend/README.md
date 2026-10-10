@@ -6,13 +6,13 @@ descartar borrando la carpeta `frontend/`.
 
 ## Estado
 
-| Incluido en la Entrega 2                                          | Fuera de alcance (entregas posteriores)         |
-| ----------------------------------------------------------------- | ----------------------------------------------- |
-| Identidad visual (símbolo, logotipo, favicon)                     | Dashboard, carpetas, búsqueda y ajustes reales  |
-| Tokens CSS, tema claro y oscuro                                   | Formularios de login y registro                 |
-| Componentes base: botón, campo, menú, diálogo, avisos, etc.       | Cualquier llamada de red                        |
-| Esqueleto de navegación con enrutado por hash                     | Autenticación, sesiones, autorización, Fase 2   |
-| Guía visual temporal en `#/kit`                                   | Servicios HTTP reales                           |
+| Incluido en la Entrega 2                                    | Fuera de alcance (entregas posteriores)        |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| Identidad visual (símbolo, logotipo, favicon)               | Dashboard, carpetas, búsqueda y ajustes reales |
+| Tokens CSS, tema claro y oscuro                             | Formularios de login y registro                |
+| Componentes base: botón, campo, menú, diálogo, avisos, etc. | Cualquier llamada de red                       |
+| Esqueleto de navegación con enrutado por hash               | Autenticación, sesiones, autorización, Fase 2  |
+| Guía visual temporal en `#/kit`                             | Servicios HTTP reales                          |
 
 Las pantallas del producto existen en la navegación como **marcadores
 honestos** ("Pantalla en preparación · Entrega N"). Todo dato visible es
@@ -118,14 +118,14 @@ frontend/
 
 ## Verificación realizada (comandos reales)
 
-| Comprobación                                                         | Resultado                                       |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| `pnpm run typecheck` (TS 5.9.3, estricto)                            | Sin errores                                     |
-| `pnpm run test` (Vitest 5.0.2)                                       | 103 pruebas en 7 archivos, todas correctas      |
-| `pnpm run build`                                                     | JS 252 kB (78 kB gzip), CSS 22 kB (5 kB gzip)   |
-| 9 guardias `scripts/architecture/verify-*.mjs` del repo, en una copia | Todas OK, incluida "Frontera del frontend"      |
-| Chromium headless 153 sobre `vite preview` con la CSP del Worker     | 29/29 comprobaciones; 0 errores de consola/CSP  |
-| Revisión visual (claro, oscuro, móvil 390 px) y desbordamiento a 360 px | Sin desbordamiento en las 5 rutas medidas       |
+| Comprobación                                                            | Resultado                                      |
+| ----------------------------------------------------------------------- | ---------------------------------------------- |
+| `pnpm run typecheck` (TS 5.9.3, estricto)                               | Sin errores                                    |
+| `pnpm run test` (Vitest 5.0.2)                                          | 103 pruebas en 7 archivos, todas correctas     |
+| `pnpm run build`                                                        | JS 252 kB (78 kB gzip), CSS 22 kB (5 kB gzip)  |
+| 9 guardias `scripts/architecture/verify-*.mjs` del repo, en una copia   | Todas OK, incluida "Frontera del frontend"     |
+| Chromium headless 153 sobre `vite preview` con la CSP del Worker        | 29/29 comprobaciones; 0 errores de consola/CSP |
+| Revisión visual (claro, oscuro, móvil 390 px) y desbordamiento a 360 px | Sin desbordamiento en las 5 rutas medidas      |
 
 Las pruebas incluyen contraste WCAG (33 pares en cada tema) y se comprobó que
 **fallan** al introducir a propósito un error de contraste, un `fetch` o

@@ -41,7 +41,10 @@ export function TextField({
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={cx("vd-field__input", trailing ? "vd-field__input--pad" : null)}
+          className={cx(
+            "vd-field__input",
+            trailing ? "vd-field__input--pad" : null,
+          )}
         />
         {trailing ? <div className="vd-field__trailing">{trailing}</div> : null}
       </div>
