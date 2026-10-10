@@ -1,19 +1,75 @@
+import { spawnSync } from "node:child_process";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+
+const guardPath = fileURLToPath(
+  new URL("../scripts/architecture-check.mjs", import.meta.url),
+);
+
+async function runGuard(files: Record<string, string>) {
+  const root = await mkdtemp(join(tmpdir(), "vega-drive-architecture-"));
+  try {
+    for (const [path, content] of Object.entries(files)) {
+      const target = join(root, path);
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, content);
+    }
+    return spawnSync(process.execPath, [guardPath], {
+      cwd: root,
+      encoding: "utf8",
+    });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}
+
 describe("architecture guard", () => {
-  it("is wired into lint and checks cross-module boundaries", async () => {
-    const pkg = JSON.parse(await readFile(resolve("package.json"), "utf8")) as {
-      scripts: Record<string, string>;
-    };
-    const guard = await readFile(
-      resolve("scripts/architecture-check.mjs"),
-      "utf8",
-    );
+  it("is wired into lint", async () => {
+    const pkg = JSON.parse(
+      await (
+        await import("node:fs/promises")
+      ).readFile(resolve("package.json"), "utf8"),
+    ) as { scripts: Record<string, string> };
+
     expect(pkg.scripts.lint).toContain("architecture-check.mjs");
-    expect(guard).toContain("JOIN");
-    expect(guard).toContain("FOREIGN");
-    expect(guard).toContain("batch");
-    expect(guard).toContain("modules/");
+  });
+
+  it.each([
+    [
+      "cross-module internal imports",
+      'import "../identity/repository.js";',
+      "importa interior de identity",
+    ],
+    [
+      "foreign module SQL tables",
+      'const query = "SELECT * FROM identity_users";',
+      "prefijo de otro módulo",
+    ],
+    ["JOIN statements", 'const query = "SELECT * FROM files_items JOIN files_folders";', "JOIN no permitido"],
+    ["foreign keys", 'const query = "FOREIGN KEY (owner_id) REFERENCES identity_users(id)";', "FOREIGN KEY no permitida"],
+    ["database batch calls", "await db.batch(statements);", "db.batch() requiere revisión explícita"],
+    ["R2 binding outside files", "const bucket = env.FILES_BUCKET;", "acceso a FILES_BUCKET fuera de files"],
+  ])("rejects %s", async (_name, source, expectedError) => {
+    const result = await runGuard({
+      "src/modules/files/repository.ts": source,
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain(expectedError);
+  });
+
+  it("allows imports through another module's public API", async () => {
+    const result = await runGuard({
+      "src/modules/files/service.ts":
+        'import type { IdentityPublicApi } from "../identity/module.public-api.js";',
+      "src/modules/identity/module.public-api.ts":
+        "export interface IdentityPublicApi {}",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Fronteras arquitectónicas OK");
   });
 });
