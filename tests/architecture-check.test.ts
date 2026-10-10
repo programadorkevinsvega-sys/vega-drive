@@ -51,13 +51,21 @@ describe("architecture guard", () => {
     {
       name: "JOIN statements",
       path: "src/modules/files/repository.ts",
-      source: 'const query = "SELECT * FROM files_items JOIN files_folders";',
+      source: [
+        "const query = ",
+        JSON.stringify("SELECT * FROM files_items JOIN files_folders"),
+        ";",
+      ].join(""),
       expectedError: "JOIN no permitido",
     },
     {
       name: "foreign keys",
       path: "src/modules/files/repository.ts",
-      source: 'const query = "FOREIGN KEY (owner_id) REFERENCES identity_users(id)";',
+      source: [
+        "const query = ",
+        JSON.stringify("FOREIGN KEY (owner_id) REFERENCES identity_users(id)"),
+        ";",
+      ].join(""),
       expectedError: "FOREIGN KEY no permitida",
     },
     {
