@@ -62,7 +62,7 @@ Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está d
 - [x] Crear `src/modules/identity`, `files`, `quota` y `sharing`, cada uno con `module.public-api.ts` mínimo.
 - [x] Crear composition root con gateways en proceso para los cuatro módulos; por ahora las APIs son placeholders que informan `ready: false`.
 - [x] Servir assets y `/api/*` desde el mismo Worker; `/api/health` responde 200.
-- [ ] Añadir/verificar una prueba de contrato del composition root y los gateways. No hay todavía controllers de negocio que llamen gateways; registro, catálogo y transferencias pertenecen a fases posteriores.
+- [x] Añadir prueba de contrato del composition root: los cuatro gateways delegan en sus APIs públicas placeholder y se mantienen en `ready: false`. No hay todavía controllers de negocio que llamen gateways; registro, catálogo y transferencias pertenecen a fases posteriores.
 - **Aceptación ajustada a Fase 0:** Worker único, rutas API separadas de assets, salud de liveness y composición mínima tipada. No afirmar que módulos placeholder están funcionalmente listos.
 - 🔒 SEC-FE-01, SEC-MOD-01, SEC-MOD-04.
 
@@ -71,7 +71,7 @@ Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está d
 - [x] CI ejecuta format, lint, typecheck, pruebas y `pnpm audit`.
 - [x] Gitleaks está configurado en el workflow de CI.
 - [x] La guardia arquitectónica está conectada a `pnpm run lint` y revisa imports entre módulos, SQL con prefijos ajenos, JOIN, FOREIGN KEY, `db.batch()` y uso del binding R2 fuera de files.
-- [ ] Ejecutar y confirmar en CI pruebas negativas que introducen violaciones a propósito. Se han añadido pruebas de regresión para las violaciones principales; su aprobación en CI aún debe confirmarse.
+- [ ] Confirmar en CI las nuevas pruebas negativas que introducen violaciones a propósito. Se añadieron casos para imports internos, SQL con prefijo ajeno, JOIN, FOREIGN KEY, `db.batch()` y binding R2 fuera de files; el workflow del commit actual está en ejecución.
 - **Aceptación:** los checks base pasan y CI demuestra que las violaciones relevantes fallan. El último build reportado pasó los checks base; las nuevas pruebas negativas quedan pendientes hasta que el workflow las ejecute.
 - 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
