@@ -18,7 +18,10 @@ const guards = {
   gateway: "verify-files-gateway-contract.mjs",
 };
 
-async function runFixture(guard: keyof typeof guards, files: Record<string, string>) {
+async function runFixture(
+  guard: keyof typeof guards,
+  files: Record<string, string>,
+) {
   const root = await mkdtemp(join(tmpdir(), "vega-drive-guard-"));
   try {
     for (const [path, content] of Object.entries(files)) {
@@ -91,7 +94,8 @@ describe("independent architecture verification scripts", () => {
 
   it("rejects controllers that import module internals", async () => {
     const result = await runFixture("bff", {
-      "src/bff/controllers/files.ts": 'import { File } from "../../modules/files/domain/file.js";',
+      "src/bff/controllers/files.ts":
+        'import { File } from "../../modules/files/domain/file.js";',
     });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("importar módulos directamente");
@@ -109,7 +113,8 @@ describe("independent architecture verification scripts", () => {
     const result = await runFixture("gateway", {
       "src/bff/composition-root.ts":
         "export interface FilesGateway {\n status(): void;\n list(): void;\n}\nexport class InProcessFilesGateway implements FilesGateway {\n status() {}\n}",
-      "src/modules/files/module.public-api.ts": "export interface FilesPublicApi {}",
+      "src/modules/files/module.public-api.ts":
+        "export interface FilesPublicApi {}",
     });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("no implementa el método list");
