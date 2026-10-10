@@ -64,6 +64,7 @@ describe("module-owned D1 migrations", () => {
     expect(paths).toEqual([
       "files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
+      "identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql",
     ]);
   });
 
@@ -78,7 +79,8 @@ describe("module-owned D1 migrations", () => {
           relativePath,
         ),
       );
-    const activeDefinitions = new Map<string, string>();
+    const allActiveDefinitions = new Map<string, string>();
+    const initialDefinitions = new Map<string, string>();
 
     for (const { absolutePath, relativePath } of paths) {
       const owner = relativePath.split("/")[0];
@@ -88,21 +90,32 @@ describe("module-owned D1 migrations", () => {
       for (const [key, value] of moduleDefinitions) {
         const name = key.slice(key.indexOf(":") + 1);
         expect(name.startsWith(`${owner}_`)).toBe(true);
-        expect(activeDefinitions.has(key)).toBe(false);
-        activeDefinitions.set(key, value);
+        expect(allActiveDefinitions.has(key)).toBe(false);
+        allActiveDefinitions.set(key, value);
+
+        // The initial module migrations must reproduce the legacy schema
+        // exactly. Later migrations are additive and may define new objects.
+        if (/\/0001_[^/]+\.sql$/i.test(relativePath)) {
+          initialDefinitions.set(key, value);
+        }
       }
     }
 
     const legacyDefinitions = definitions(
       await readFile(legacyMigrationPath, "utf8"),
     );
-    expect(activeDefinitions.size).toBe(17);
-    expect([...activeDefinitions.keys()].sort()).toEqual(
+    expect(initialDefinitions.size).toBe(17);
+    expect([...initialDefinitions.keys()].sort()).toEqual(
       [...legacyDefinitions.keys()].sort(),
     );
     for (const [key, value] of legacyDefinitions) {
-      expect(activeDefinitions.get(key)).toBe(value);
+      expect(initialDefinitions.get(key)).toBe(value);
     }
+
+    expect(allActiveDefinitions.has("table:identity_auth_attempts")).toBe(true);
+    expect(
+      allActiveDefinitions.has("index:identity_auth_attempts_locked_until_idx"),
+    ).toBe(true);
   });
 
   it("documents the module migration order and retains the legacy migration", async () => {

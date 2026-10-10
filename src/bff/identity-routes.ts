@@ -197,8 +197,9 @@ identityRoutes.use("/password", async (c, next) => {
   if (!originAllowed(c.req.raw)) {
     return c.json({ error: "Invalid request origin" }, 403);
   }
-  await requireAuthenticatedActor(c, next);
+  await next();
 });
+identityRoutes.use("/password", requireAuthenticatedActor);
 
 identityRoutes.post("/password", async (c) => {
   const gateway = createCompositionRoot(c.env).identity;
