@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createRegisterUser } from "../src/modules/identity/application/registration/register-user.js";
 import type {
+  IdentityAuthAttemptRepository,
   IdentityUserRecord,
   IdentityUserRepository,
 } from "../src/modules/identity/application/ports/identity-repositories.js";
@@ -75,6 +76,29 @@ describe("identity registration use case", () => {
       register({ ...validInput, password: "123456789012" }),
     ).resolves.toEqual({ ok: false, reason: "invalid-input" });
     expect(verify).not.toHaveBeenCalled();
+  });
+
+  it("counts malformed registration requests toward the IP limit", async () => {
+    const attempts: IdentityAuthAttemptRepository = {
+      find: vi.fn(async () => null),
+      recordFailure: vi.fn(async (_key, now) => ({
+        failedAttempts: 1,
+        windowStartedAt: now,
+        lockedUntil: null,
+      })),
+      clear: vi.fn(async () => undefined),
+    };
+    const register = createRegisterUser({
+      users: createUsers(),
+      turnstile: { verify: vi.fn(async () => true) },
+      attempts,
+      maxUsers: 10,
+    });
+
+    await expect(
+      register({ ...validInput, email: "invalid" }, "203.0.113.10"),
+    ).resolves.toEqual({ ok: false, reason: "invalid-input" });
+    expect(attempts.recordFailure).toHaveBeenCalledTimes(1);
   });
 
   it("fails closed if Turnstile fails or configuration is invalid", async () => {
