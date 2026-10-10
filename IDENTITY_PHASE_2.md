@@ -17,7 +17,7 @@ Todas las rutas están bajo el mismo origen y prefijo /api/auth.
 | GET /session   | No              | Devuelve solo estado autenticado y correo público, nunca el token.            |
 | POST /password | Sí              | Comprueba contraseña actual, rota sesión y revoca las demás sesiones.         |
 
-Las mutaciones exigen Origin exactamente igual al origen de la solicitud. Los cuerpos JSON rechazan campos desconocidos y se limitan a 64 KiB durante la lectura del stream. Los errores de login no distinguen correo inexistente, contraseña incorrecta o cuenta deshabilitada.
+Las mutaciones exigen Origin exactamente igual al origen de la solicitud. Las mutaciones requieren `Content-Type: application/json`; los cuerpos rechazan campos desconocidos y se limitan a 64 KiB durante la lectura del stream. Los errores de login no distinguen correo inexistente, contraseña incorrecta o cuenta deshabilitada.
 
 ## Controles de seguridad implementados
 
@@ -31,7 +31,7 @@ Las mutaciones exigen Origin exactamente igual al origen de la solicitud. Los cu
 - Expiración absoluta de 7 días e inactividad máxima de 24 horas.
 - Logout revoca la sesión en D1. Login rota la sesión anterior únicamente si pertenece al mismo usuario. Cambio de contraseña rota la sesión y revoca las demás.
 - Limitación persistente por clave de correo/IP hasheada, con ventana de 15 minutos y bloqueo progresivo (1, 5, 15 y 30 minutos).
-- Eventos de auditoría para login correcto/fallido, rechazo de Turnstile/registro y cambio de contraseña. No se guardan contraseñas, tokens de sesión ni cuerpos de petición.
+- Eventos de auditoría con fecha, IP y actor cuando se conoce para login correcto/fallido, registro y cambio de contraseña. No se guardan contraseñas, tokens de sesión ni cuerpos de petición.
 - Middleware AuthenticatedActor crea userId, sessionId y email solo a partir de una sesión validada en el servidor.
 - Respuestas API Cache-Control: no-store y cabeceras base nosniff, CSP, HSTS, X-Frame-Options y Referrer-Policy.
 
