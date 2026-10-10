@@ -236,3 +236,18 @@ No se anticipa esta separación con Workers ficticios ni con dependencias de red
 ## 13. Prioridad
 
 La arquitectura del monolito modular tiene prioridad sobre atajos de implementación. Si un requisito exige romper estas reglas, se detiene el cambio y se solicita una decisión explícita con ADR.
+
+## 14. Seguridad transversal en la capa Worker/Hono
+
+Los controles HTTP se configuran en el middleware Hono o en la capa de respuesta del Worker que corresponda; no se debe asumir Next.js ni configurar `next.config.ts` en este proyecto.
+
+- Aplicar CSP, HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` y defensa contra framing con valores revisados para los assets reales.
+- Comprobar cabeceras en respuestas normales, errores, rutas API y assets cuando corresponda.
+- HSTS solo se habilita con HTTPS confirmado y un alcance de dominio deliberado. La CSP debe probarse con el frontend real; no copiar una política genérica ni relajarla sin justificación.
+- Las rutas Hono son adaptadores de transporte: validan la forma de la petición, obtienen el actor desde una sesión verificada y delegan a gateways/APIs públicas. No autorizan basándose en IDs o roles enviados por el navegador.
+- Toda operación sobre metadatos o contenido de archivos verifica propiedad/permisos en el servidor antes de consultar o mutar D1 y antes de leer, escribir o borrar en R2.
+- Las respuestas autenticadas o privadas deben usar `Cache-Control: no-store`. El diseño predeterminado es mismo origen y no CORS abierto.
+- No introducir un segundo modelo de autorización ni identidades operativas adicionales sin una necesidad explícita del producto.
+- La certificación requiere pruebas negativas de sesiones, autorización, IDOR/BOLA, concurrencia, entradas malformadas, rate limiting, privacidad R2 y comprobaciones productivas. El éxito de `/api/health` no sustituye estas pruebas.
+
+La matriz y el estado de cada control se mantienen en [Security.md](./Security.md); el seguimiento por fases está en [roadmap.md](./roadmap.md).
