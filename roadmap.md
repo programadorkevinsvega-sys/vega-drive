@@ -84,39 +84,53 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 1 — D1 única y límites de datos
 
-**Estado de implementación (2026-10-10; validación y refuerzo de guardias):** las migraciones modulares de `files` e `identity`, el manifest, los puertos/repositorios D1 y la guardia arquitectónica están implementados. La ejecución local de `pnpm run cloudflare:build` también terminó correctamente tras el commit de corrección del guard: preflight, 10 verificaciones arquitectónicas, formato, lint, TypeScript, 51/51 tests y `pnpm audit --audit-level=high` sin vulnerabilidades conocidas. Este comando no despliega el Worker. Ya se comprobó localmente formato, lint, TypeScript, 32 pruebas, `pnpm run cloudflare:build`, auditoría sin vulnerabilidades conocidas, aplicación de ambas migraciones locales y coincidencia de los 17 objetos locales. GitHub Actions quedó en verde con 32 pruebas y Gitleaks sin fugas. Cloudflare también publicó la versión `59053a71-ff24-4d8e-b032-1a985899ed14`: no había migraciones remotas pendientes, la comprobación estructural remota coincidió con los 17 objetos y `/api/health` respondió HTTP 200. Este cambio incorpora pruebas de aislamiento que ejecutan las migraciones versionadas en SQLite real para verificar lecturas y mutaciones de items, carpetas, uploads y revocación de sesiones entre propietarios; además añade una guardia de propiedad de migraciones al gate de despliegue. La suite reforzada y los nuevos gates se validaron en CI para el commit `cd7edb6cfc3141a8b68c7a2f883d408d5d837bb0` el 2026-10-10: el workflow CI terminó con `success`. La validación local posterior confirmó 11 archivos de prueba y 51 tests aprobados, incluidos los tests negativos de las guardias de arquitectura. Esto verifica repositorios y límites estáticos; no certifica casos de uso funcionales ni una cadena de autorización basada en sesiones, que aún no existe. No se deben tratar como verificados hasta que pasen. Los casos de uso funcionales aún no existen; su aislamiento deberá probarse cuando se implementen, usando un actor autenticado por servidor en vez de aceptar `ownerId` de la petición.
+**Estado: CERRADA (2026-10-10).** Se completó el alcance de infraestructura y persistencia de esta fase. El cierre se basa en las verificaciones locales, CI y producción registradas abajo. Las dos actividades que necesitan casos de uso funcionales y autenticación basada en sesión quedan explícitamente diferidas a la Fase 2; no se declaran implementadas ni verificadas.
+
+### Evidencia de cierre
+
+- **Build local:** `pnpm run cloudflare:build` terminó correctamente: preflight, 10 verificaciones arquitectónicas, formato, lint, TypeScript, 11 archivos de prueba con 51/51 tests aprobados y `pnpm audit --audit-level=high` sin vulnerabilidades conocidas. Este comando no despliega el Worker.
+- **CI:** GitHub Actions terminó con `success` para el commit `cd7edb6cfc3141a8b68c7a2f883d408d5d837bb0` el 2026-10-10; incluyó las pruebas de aislamiento reforzadas y Gitleaks sin fugas detectadas.
+- **Persistencia modular:** migraciones independientes de `identity` y `files`, manifest central, puertos/repositorios D1 y guardias arquitectónicas implementados. Los ocho repositorios D1 existentes usan SQL parametrizado.
+- **Aislamiento de repositorios:** pruebas con las migraciones versionadas sobre SQLite real cubren lecturas y mutaciones de items, carpetas y uploads, además de revocación de sesiones entre propietarios. Las pruebas negativas comprueban que las guardias detectan violaciones de fronteras.
+- **D1 local:** las migraciones modulares se aplicaron localmente y los 17 objetos estructurales esperados coincidieron.
+- **D1 de producción (verificación del usuario, 2026-10-10):** `pnpm run db:verify:schema:production` informó `17 tables/indexes match migrations in vega_drive_db (remote)`; `pnpm run db:migration:list` informó `No migrations to apply!`. Estas comprobaciones fueron de lectura: no se aplicaron migraciones.
+- **Despliegue previamente registrado:** Cloudflare publicó la versión `59053a71-ff24-4d8e-b032-1a985899ed14`; la verificación de salud registrada respondió HTTP 200 en `/api/health`. No se atribuye un nuevo despliegue a la verificación documental de cierre.
 
 ### 1.1 Tablas y migraciones por módulo
 
 - [x] Crear migraciones independientes en cada módulo con numeración propia.
 - [x] Mantener un manifest central que documente el orden de aplicación contra VEGA_DRIVE_DB.
-- [x] Crear inicialmente identity_users, identity_sessions, identity_invites e identity_outbox.
-- [x] Preparar files_items, files_folders, files_uploads y files_outbox; quota_usage y sharing_links se completan en sus fases.
-- [x] Usar valores entre módulos, nunca claves foráneas; por ejemplo files_items.owner_id no referencia mediante FK a identity_users.
+- [x] Crear inicialmente `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
+- [x] Preparar `files_items`, `files_folders`, `files_uploads` y `files_outbox`; `quota_usage` y `sharing_links` se completan en sus fases.
+- [x] Usar valores entre módulos, nunca claves foráneas; por ejemplo `files_items.owner_id` no referencia mediante FK a `identity_users`.
 - **Aceptación:** cada tabla e índice tiene un módulo dueño; no existe una tabla genérica compartida.
 - 🔒 SEC-MOD-02, SEC-ISO-02.
 
 ### 1.2 Repositorios por módulo
 
-- [x] Implementar repositorios solo bajo infrastructure/persistence/d1 de su módulo.
-- [x] Definir puertos en application y no exponer D1Database fuera de infraestructura.
+- [x] Implementar repositorios solo bajo `infrastructure/persistence/d1` de su módulo.
+- [x] Definir puertos en application y no exponer `D1Database` fuera de infraestructura.
 - [x] Usar SQL parametrizado en los ocho repositorios D1 existentes; las pruebas verifican valores enlazados y ausencia de interpolación SQL.
-- [ ] Derivar el filtro de propietario del actor creado desde una sesión validada. Depende de `SessionResolver` y `AuthenticatedActor` de la Fase 2; hasta entonces, los repositorios reciben el identificador como parámetro y no deben exponerse a rutas/controladores.
-- [x] Prohibir un módulo global db/ que concentre la lógica de todos los dominios.
-- **Aceptación:** domain y application no importan D1Database; un repositorio no menciona tablas ajenas.
+- [ ] **DIFERIDO A FASE 2:** derivar el filtro de propietario del actor creado desde una sesión validada. `SessionResolver` y `AuthenticatedActor` aún no existen; hasta implementarlos, los repositorios reciben el identificador como parámetro y no deben exponerse a rutas/controladores.
+- [x] Prohibir un módulo global `db/` que concentre la lógica de todos los dominios.
+- **Aceptación de Fase 1:** domain y application no importan `D1Database`; un repositorio no menciona tablas ajenas. La autorización funcional desde sesión validada no forma parte de la evidencia de esta fase.
 - 🔒 SEC-ISO-01, SEC-ISO-02, SEC-VAL-02, SEC-MOD-01.
 
 ### 1.3 Pruebas de frontera y aislamiento
 
 - [x] Validar en CI las pruebas de aislamiento efectivas de los repositorios D1 con SQLite real (workflow CI `success` para `cd7edb6cfc3141a8b68c7a2f883d408d5d837bb0`; pruebas locales: 51/51 aprobadas).
-- [ ] Probar acceso cruzado en cada caso de uso cuando se implemente; no existen casos de uso funcionales todavía.
-- [x] Probar que el lint arquitectónico bloquea import, SQL, JOIN, FK y batch cruzados.
-- **Aceptación:** las pruebas se ejecutan en CI y fallan ante una violación insertada a propósito.
+- [ ] **DIFERIDO A LAS FASES QUE IMPLEMENTEN LOS CASOS DE USO:** probar acceso cruzado para cada operación funcional. Los casos de uso todavía no existen; al implementarlos, el actor deberá derivarse de la sesión validada en servidor, nunca de un `ownerId` suministrado por el cliente.
+- [x] Probar que el lint arquitectónico bloquea imports, SQL, JOIN, FK y batch cruzados.
+- **Aceptación de Fase 1:** las pruebas de repositorios y las guardias se ejecutan en CI y detectan las violaciones cubiertas. Las pruebas de autorización de casos de uso quedan pendientes hasta que exista ese código.
 - 🔒 SEC-ISO-06, SEC-MOD-03.
 
 ---
 
 ## Fase 2 — Módulo identity
+
+**Estado: SIGUIENTE FASE SELECCIONADA; TODAVÍA NO INICIADA (2026-10-10).** Este registro solo prepara la transición de planificación. En esta actualización no se implementó ni modificó código funcional de la Fase 2, no se configuraron secretos y no se ejecutaron migraciones ni despliegues.
+
+**Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main) y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
 
 ### 2.1 Registro cerrado
 
@@ -130,7 +144,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 ### 2.2 Login y sesiones
 
 - [ ] Implementar Login, Logout y SessionResolver dentro de identity.
-- [ ] Usar cookie \_\_Host-session y guardar solo hash de token.
+- [ ] Usar cookie `__Host-session` y guardar solo hash de token.
 - [ ] Crear AuthenticatedActor desde la sesión validada en middleware BFF.
 - [ ] Pasar AuthenticatedActor a gateways; nunca aceptar ownerId, rol o permisos del navegador como autoridad.
 - **Aceptación:** las rutas protegidas responden 401 sin sesión y un ownerId enviado por cliente no altera la autorización.
