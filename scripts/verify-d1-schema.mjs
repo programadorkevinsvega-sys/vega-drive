@@ -25,7 +25,7 @@ function normalizeSql(sql) {
 
 function parseExpectedSchema(sql, filename) {
   const statements = sql
-    .replace(/^\\s*--.*$/gm, "")
+    .replace(/^\s*--.*$/gm, "")
     .split(";")
     .map((statement) => statement.trim())
     .filter(Boolean);
