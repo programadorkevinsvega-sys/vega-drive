@@ -2,8 +2,10 @@ import { readFile, readdir } from "node:fs/promises";
 import { relative, resolve, sep } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
+import { buildWranglerD1ExecuteArgs, resolveD1Target } from "./d1-schema-verifier-args.mjs";
 
 const databaseName = process.env.D1_DATABASE_NAME ?? "vega_drive_db";
+const target = resolveD1Target(process.argv.slice(2));
 const customMigrationsDirectory = process.env.D1_MIGRATIONS_DIR;
 const migrationsDirectory = resolve(customMigrationsDirectory ?? "src/modules");
 const moduleMigrationPattern =
@@ -25,10 +27,11 @@ async function walk(directory) {
   return files;
 }
 const wranglerCommand = process.env.WRANGLER_COMMAND ?? "pnpm";
-const wranglerArgs =
-  wranglerCommand === "pnpm"
-    ? ["exec", "wrangler", "d1", "execute", databaseName, "--remote", "--json"]
-    : ["d1", "execute", databaseName, "--remote", "--json"];
+const wranglerArgs = buildWranglerD1ExecuteArgs({
+  wranglerCommand,
+  databaseName,
+  target,
+});
 
 function normalizeSql(sql) {
   return sql
@@ -133,7 +136,7 @@ const result = spawnSync(
 if (result.error) throw result.error;
 if (result.status !== 0) {
   throw new Error(
-    `Unable to inspect remote D1 schema (exit ${result.status}): ${(result.stderr || result.stdout).slice(0, 1000)}`,
+    `Unable to inspect ${target} D1 schema (exit ${result.status}): ${(result.stderr || result.stdout).slice(0, 1000)}`,
   );
 }
 
@@ -177,6 +180,6 @@ if (missing.length || mismatched.length || unexpected.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    `D1 structural verification passed: ${expected.size} tables/indexes match migrations in ${databaseName}.`,
+    `D1 structural verification passed: ${expected.size} tables/indexes match migrations in ${databaseName} (${target}).`,
   );
 }

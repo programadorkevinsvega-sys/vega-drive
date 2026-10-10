@@ -24,10 +24,11 @@ El orden no establece dependencias entre módulos. Los IDs entre módulos son va
 
 ## Despliegue y verificación
 
-- `pnpm run db:migrate:local` aplica las migraciones modulares al D1 local.
+- `pnpm run db:migrate:local` aplica las migraciones modulares a la D1 local.
+- `pnpm run db:verify:schema:local` comprueba el esquema local sin conectarse a producción.
 - `pnpm run db:migrate:production` aplica las migraciones modulares a D1 remota; úsalo únicamente como parte del procedimiento de despliegue revisado.
 - `pnpm run db:migration:list` enumera migraciones pendientes según el patrón activo de Wrangler.
-- `pnpm run db:verify:schema:production` compara las tablas e índices reales de `sqlite_schema` con el resultado esperado de las migraciones modulares.
+- `pnpm run db:verify:schema:production` consulta explícitamente la D1 remota y compara tablas e índices con las migraciones modulares.
 - `pnpm run deploy` es el comando de despliegue documentado: migraciones remotas, historial, verificación estructural, publicación del Worker y comprobación de `/api/health`.
 
 Una migración nueva debe ser propiedad de un módulo, permanecer dentro de su directorio y ser aditiva y compatible con el Worker desplegado durante la ventana de rollback. Nunca edites una migración que ya se haya aplicado en un entorno compartido. No ejecutes migraciones remotas ni alteres datos de producción durante una validación local.

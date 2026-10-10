@@ -22,7 +22,8 @@
     "test": "vitest run",
     "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test",
     "cloudflare:build": "pnpm run predeploy && pnpm run check && pnpm audit --audit-level=high",
-    "db:verify:schema:production": "node scripts/verify-d1-schema.mjs"
+    "db:verify:schema:local": "node scripts/verify-d1-schema.mjs --local",
+    "db:verify:schema:production": "node scripts/verify-d1-schema.mjs --remote"
   },
   "dependencies": {
     "hono": "4.13.13"
