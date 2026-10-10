@@ -4,9 +4,13 @@ Database: `vega_drive_db` (binding `VEGA_DRIVE_DB`).
 
 Wrangler applies migration files in lexicographic order from this directory when a migration command is explicitly run.
 
-| Migration | Owner | Purpose | Status |
-| --- | --- | --- | --- |
-| `0001_initial_schema.sql` | identity + files | Initial tables and indexes for identity and files module boundaries | Draft; production schema and migration history must be inspected first |
+## Migration inventory
+
+### `0001_initial_schema.sql`
+
+- **Owner:** identity + files
+- **Purpose:** Initial tables and indexes for identity and files module boundaries
+- **Status:** Draft; inspect the production schema and migration history first
 
 ## Deployment safety
 
