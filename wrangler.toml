@@ -20,3 +20,17 @@ bucket_name = "vega-drive-files"
 [vars]
 MAX_USERS = "10"
 TURNSTILE_SITE_KEY = ""
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 1
+persist = true
+
+[observability.issue_detection]
+enabled = true
