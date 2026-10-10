@@ -13,15 +13,15 @@ describe("Cloudflare deployment guard", () => {
       await writeFile(
         configPath,
         [
-          '[[d1_databases]]',
+          "[[d1_databases]]",
           'binding = "VEGA_DRIVE_DB"',
           'database_name = "vega_drive_db"',
           'database_id = "00000000-0000-0000-0000-000000000000"',
-          '',
-          '[[r2_buckets]]',
+          "",
+          "[[r2_buckets]]",
           'binding = "VEGA_DRIVE_FILES"',
           'bucket_name = "vega-drive-files"',
-          '',
+          "",
         ].join("\n"),
       );
 
