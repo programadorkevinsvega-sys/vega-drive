@@ -8,7 +8,7 @@ import {
   validatePassword,
   verifyPassword,
 } from "../registration/password.js";
-import { createSession, hashRateKey } from "../sessions/session-tokens.js";
+import { createSession } from "../sessions/session-tokens.js";
 import type { ResolvedIdentitySession } from "../sessions/resolve-session.js";
 
 export function createChangePassword(deps: {
@@ -20,11 +20,10 @@ export function createChangePassword(deps: {
   const now = deps.now ?? (() => new Date());
   async function audit(eventType: string, userId: string, ip: string | null) {
     try {
-      const ipHash = ip ? await hashRateKey("audit-ip:" + ip) : null;
       await deps.outbox.append({
         id: crypto.randomUUID(),
         eventType,
-        payloadJson: JSON.stringify({ userId, ipHash }),
+        payloadJson: JSON.stringify({ userId, ip }),
         createdAt: now().toISOString(),
         publishedAt: null,
       });
