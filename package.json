@@ -23,9 +23,19 @@
     "cloudflare:build": "pnpm run deploy:preflight && pnpm run check && pnpm audit --audit-level=high",
     "db:verify:schema:local": "node scripts/verify-d1-schema.mjs --local",
     "db:verify:schema:production": "node scripts/verify-d1-schema.mjs --remote",
-    "deploy:preflight": "node scripts/check-cloudflare-config.mjs && pnpm run verify:module-migrations && pnpm run verify:architecture",
+    "deploy:preflight": "node scripts/check-cloudflare-config.mjs && pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:architecture:all",
     "verify:module-migrations": "node scripts/check-module-migrations.mjs",
-    "verify:architecture": "node scripts/architecture-check.mjs"
+    "verify:architecture": "node scripts/architecture-check.mjs",
+    "verify:module-ownership": "node scripts/architecture/verify-module-ownership.mjs",
+    "verify:sql-boundaries": "node scripts/architecture/verify-sql-boundaries.mjs",
+    "verify:r2-port-boundary": "node scripts/architecture/verify-r2-port-boundary.mjs",
+    "verify:frontend-boundary": "node scripts/architecture/verify-frontend-boundary.mjs",
+    "verify:module-extraction": "node scripts/architecture/verify-module-extraction.mjs",
+    "verify:r2-privacy": "node scripts/architecture/verify-r2-privacy.mjs",
+    "verify:bff-boundary": "node scripts/architecture/verify-bff-boundary.mjs",
+    "verify:authenticated-actor": "node scripts/architecture/verify-authenticated-actor.mjs",
+    "verify:files-gateway-contract": "node scripts/architecture/verify-files-gateway-contract.mjs",
+    "verify:architecture:all": "pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:module-ownership && pnpm run verify:sql-boundaries && pnpm run verify:r2-port-boundary && pnpm run verify:frontend-boundary && pnpm run verify:module-extraction && pnpm run verify:r2-privacy && pnpm run verify:bff-boundary && pnpm run verify:authenticated-actor && pnpm run verify:files-gateway-contract"
   },
   "dependencies": {
     "hono": "4.13.13"
