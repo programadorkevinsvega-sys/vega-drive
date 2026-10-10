@@ -41,6 +41,20 @@ function normalizeEmail(value: unknown): string | null {
 export function createRegisterUser(deps: RegisterUserDependencies) {
   const now = deps.now ?? (() => new Date());
   const createId = deps.createId ?? (() => crypto.randomUUID());
+  async function audit(eventType: string, userId: string | null, ip: string | null) {
+    if (!deps.outbox) return;
+    try {
+      await deps.outbox.append({
+        id: crypto.randomUUID(),
+        eventType,
+        payloadJson: JSON.stringify({ userId, ip }),
+        createdAt: now().toISOString(),
+        publishedAt: null,
+      });
+    } catch {
+      // Audit failure must not leak registration details or block registration.
+    }
+  }
   return async function registerUser(
     input: RegisterUserInput,
     clientIp: string | null = null,
@@ -54,6 +68,7 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
       !input.turnstileToken ||
       input.turnstileToken.length > 2048
     ) {
+      await audit("identity.register.captcha-failed", null, clientIp);
       return { ok: false, reason: "captcha-failed" };
     }
     if (
@@ -87,6 +102,7 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
     }
     try {
       if (await deps.users.findByNormalizedEmail(email)) {
+        await audit("identity.register.rejected", null, clientIp);
         return { ok: false, reason: "registration-unavailable" };
       }
       const createdAt = now().toISOString();
@@ -100,22 +116,11 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
         disabledAt: null,
       };
       if (!(await deps.users.insertWithinLimit(user, deps.maxUsers))) {
+        await audit("identity.register.rejected", null, clientIp);
         return { ok: false, reason: "registration-closed" };
       }
       if (ipHash && deps.attempts) await deps.attempts.clear(ipHash);
-      if (deps.outbox) {
-        try {
-          await deps.outbox.append({
-            id: crypto.randomUUID(),
-            eventType: "identity.register.succeeded",
-            payloadJson: JSON.stringify({ userId: user.id, ipHash }),
-            createdAt,
-            publishedAt: null,
-          });
-        } catch {
-          // Keep registration independent from audit availability.
-        }
-      }
+      await audit("identity.register.succeeded", user.id, clientIp);
       return { ok: true, userId: user.id };
     } catch {
       return { ok: false, reason: "registration-unavailable" };
