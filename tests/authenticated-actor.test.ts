@@ -6,7 +6,7 @@ import { sha256Hex } from "../src/modules/identity/application/sessions/session-
 
 const token = "a".repeat(43);
 const tokenHash = await sha256Hex(token);
-const now = new Date("2026-10-10T12:00:00.000Z");
+const now = new Date();
 
 function envWithSession(options: { revokedAt?: string | null; expiresAt?: string; lastSeenAt?: string } = {}) {
   const session = {
@@ -15,7 +15,7 @@ function envWithSession(options: { revokedAt?: string | null; expiresAt?: string
     tokenHash,
     createdAt: now.toISOString(),
     lastSeenAt: options.lastSeenAt ?? now.toISOString(),
-    expiresAt: options.expiresAt ?? new Date(now.getTime() + 60_000).toISOString(),
+    expiresAt: options.expiresAt ?? new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
     revokedAt: options.revokedAt ?? null,
   };
   const user = {
