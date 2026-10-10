@@ -12,13 +12,13 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 4. El frontend llama solo al mismo origen bajo /api y nunca accede a R2.
 5. R2 es privado y solo el módulo files lo usa mediante IFileStoragePort.
 6. Cada fase incluye pruebas proporcionales y el checklist de Security.md.
-7. Una subfase se termina solo con código, pruebas, documentación y controles arquitectónicos en CI.
+7. Una subfase se termina solo con código, pruebas, documentación y controles arquitectónicos ejecutados por los scripts del proyecto y el build de Cloudflare.
 
 ## Resumen
 
 | Fase | Resultado                                           |
 | ---- | --------------------------------------------------- |
-| 0    | Contrato, estructura del Worker y CI                |
+| 0    | Contrato, estructura del Worker y verificaciones de build/despliegue |
 | 1    | D1 única con límites verificables por módulo        |
 | 2    | Módulo identity: registro, sesiones y autenticación |
 | 3    | Módulo files: catálogo de carpetas y archivos       |
@@ -34,15 +34,15 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 ## Fase 0 — Fundamentos del monolito modular
 
-Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está desplegado, `/api/health` responde 200, D1 tiene 17 tablas/índices que coinciden con la migración y el último `cloudflare:build` compartido pasó formato, lint, typecheck, 4 tests y auditoría de dependencias. Estas evidencias no demuestran privacidad de R2 ni protección de `main`.
+Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está desplegado, `/api/health` responde 200, D1 tiene 17 tablas/índices que coinciden con las migraciones y el último `cloudflare:build` confirmado por el usuario pasó formato, guardia arquitectónica, typecheck, 4 tests y `pnpm audit --audit-level=high`. El criterio principal es el resultado de los scripts `pnpm` ejecutados en el build/despliegue de Cloudflare, no GitHub Actions. Estas evidencias no demuestran por sí solas la privacidad real de R2.
 
 ### 0.1 Contrato y convenciones
 
 - [x] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
 - [x] Añadir .gitignore para `.dev.vars*`, `.env*`, `.wrangler` y `node_modules`.
 - [x] Añadir plantilla de PR con checklist de seguridad y arquitectura.
-- [ ] Verificar y decidir la protección de `main` (PR/CI obligatoria). La API de GitHub no permitió leer la configuración con la conexión disponible; no se asume que esté activa.
-- **Aceptación:** documentos coherentes con el Worker único y decisiones de protección registradas. Como el desarrollo actual se realiza directamente en `main`, no se cambia el flujo a PR obligatorio sin comprobar antes la configuración y decidirlo explícitamente.
+- [ ] Si se desea, revisar las reglas de `main` como configuración de colaboración, sin convertirlas en criterio de despliegue ni imponer un flujo de PR.
+- **Aceptación:** documentos coherentes con el Worker único; las verificaciones que bloquean despliegue se ejecutan con los scripts `pnpm` en el build de Cloudflare.
 
 ### 0.2 Recursos Cloudflare
 
@@ -51,7 +51,8 @@ Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está d
 - [ ] Verificar en el panel de Cloudflare que R2 no tiene acceso público, dominio público ni `r2.dev` habilitado y que no existe CORS para navegador. La configuración del binding no demuestra privacidad.
 - [ ] Confirmar permisos mínimos y secretos del Worker en Cloudflare; la configuración local no demuestra los permisos reales del recurso.
 - [ ] Configurar Turnstile solo cuando se habilite registro/login; actualmente `TURNSTILE_SITE_KEY` está vacío y no hay flujo de autenticación en Fase 0.
-- [x] Tener el escaneo Gitleaks y `pnpm audit --audit-level=high` definidos en CI/build. Mantener secretos fuera de archivos versionados.
+- [x] Ejecutar `pnpm audit --audit-level=high` dentro de `pnpm run cloudflare:build`.
+- [ ] Definir un control de secretos que forme parte del camino de despliegue si se requiere que también bloquee despliegues. Gitleaks existe en GitHub Actions, pero ese job no debe presentarse como una comprobación ejecutada por `cloudflare:build`. Mantener secretos fuera de archivos versionados.
 - **Aceptación:** D1/R2 solo se usan desde el Worker, privacidad R2 comprobada en Cloudflare y no hay secretos versionados. Los dos últimos puntos de privacidad/permisos siguen pendientes de verificación externa.
 - 🔒 SEC-R2-01, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
 
@@ -66,13 +67,13 @@ Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está d
 - **Aceptación ajustada a Fase 0:** Worker único, rutas API separadas de assets, salud de liveness y composición mínima tipada. No afirmar que módulos placeholder están funcionalmente listos.
 - 🔒 SEC-FE-01, SEC-MOD-01, SEC-MOD-04.
 
-### 0.4 Integración continua
+### 0.4 Verificaciones automatizadas de build y despliegue
 
-- [x] CI ejecuta format, lint, typecheck, pruebas y `pnpm audit`.
-- [x] Gitleaks está configurado en el workflow de CI.
+- [x] `pnpm run cloudflare:build` ejecuta `predeploy`, `pnpm run check` (formato, guardia arquitectónica, TypeScript y tests) y `pnpm audit --audit-level=high`.
+- [x] Existe Gitleaks como comprobación complementaria en GitHub Actions; no forma parte del gate de despliegue de Cloudflare según el script actual.
 - [x] La guardia arquitectónica está conectada a `pnpm run lint` y revisa imports entre módulos, SQL con prefijos ajenos, JOIN, FOREIGN KEY, `db.batch()` y uso del binding R2 fuera de files.
-- [ ] Confirmar en CI las nuevas pruebas negativas que introducen violaciones a propósito. Se añadieron casos para imports internos, SQL con prefijo ajeno, JOIN, FOREIGN KEY, `db.batch()` y binding R2 fuera de files; el workflow del commit actual está en ejecución.
-- **Aceptación:** los checks base pasan y CI demuestra que las violaciones relevantes fallan. El último build reportado pasó los checks base; las nuevas pruebas negativas quedan pendientes hasta que el workflow las ejecute.
+- [ ] Ejecutar `pnpm run check` en el build de Cloudflare con las nuevas pruebas negativas, y corregir cualquier fallo antes de considerar cerrada esta subfase. Las pruebas cubren imports internos, SQL con prefijo ajeno, JOIN, FOREIGN KEY, `db.batch()` y binding R2 fuera de files.
+- **Aceptación:** `pnpm run cloudflare:build` termina con código 0 y las pruebas de `pnpm test` demuestran que la guardia rechaza las violaciones insertadas a propósito. La ejecución anterior de build pasó los checks base, pero las nuevas pruebas negativas todavía necesitan una ejecución verde en el camino de build/despliegue.
 - 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
 ---
