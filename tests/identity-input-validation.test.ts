@@ -51,6 +51,23 @@ describe("identity HTTP input hardening", () => {
     expect(response.status).toBe(403);
   });
 
+  it("rejects non-JSON content types for auth mutations", async () => {
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/api/auth/register", {
+        method: "POST",
+        headers: { Origin: "https://vega-drive.test" },
+        body: JSON.stringify({
+          email: "person@example.test",
+          password: "A strong passphrase 42!",
+          turnstileToken: "token",
+        }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "Invalid request" });
+  });
+
   it("rejects bodies larger than 64 KiB while streaming", async () => {
     const response = await app.fetch(
       request(
