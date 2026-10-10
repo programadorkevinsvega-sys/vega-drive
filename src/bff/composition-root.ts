@@ -1,8 +1,6 @@
 import type { Env, ModuleStatus } from "../worker/env.js";
-import {
-  createIdentityModule,
-  type IdentityPublicApi,
-} from "../modules/identity/module.public-api.js";
+import { createIdentityModuleFromD1 } from "../modules/identity/infrastructure/persistence/d1/create-identity-module.js";
+import type { IdentityPublicApi } from "../modules/identity/module.public-api.js";
 import type { FilesPublicApi } from "../modules/files/module.public-api.js";
 import type { QuotaPublicApi } from "../modules/quota/module.public-api.js";
 import type { SharingPublicApi } from "../modules/sharing/module.public-api.js";
@@ -75,7 +73,7 @@ export class InProcessSharingGateway implements SharingGateway {
 }
 
 export function createCompositionRoot(env: Env) {
-  const identityApi = createIdentityModule(env);
+  const identityApi = createIdentityModuleFromD1(env);
   const filesApi: FilesPublicApi = {
     status: () => ({ module: "files", ready: false }),
   };
