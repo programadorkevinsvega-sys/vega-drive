@@ -47,11 +47,19 @@ for (const file of sourceFiles) {
     const targetModule = names.find((name) =>
       target.startsWith("src/modules/" + name + "/"),
     );
+    // The Worker composition root may assemble module-owned D1 adapters.
+    // Controllers and other modules still cannot import module internals.
+    const isCompositionFactory =
+      rel === "src/worker/composition-root.ts" &&
+      /^src\/modules\/(?:identity|files|quota|sharing)\/infrastructure\/persistence\/d1\/create-[a-z-]+-module\.(?:js|ts)$/.test(
+        target,
+      );
     if (
       targetModule &&
       targetModule !== owner &&
       !target.endsWith("/module.public-api.js") &&
-      !target.endsWith("/module.public-api.ts")
+      !target.endsWith("/module.public-api.ts") &&
+      !isCompositionFactory
     ) {
       failures.push(
         rel + ": importa interior de " + targetModule + ": " + specifier,
