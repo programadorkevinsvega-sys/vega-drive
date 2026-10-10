@@ -16,7 +16,7 @@ export interface IdentityPublicApi {
   login(input: LoginUserInput, ip: string | null, previousToken: string | null): ReturnType<ReturnType<typeof createLoginUser>>;
   logout(token: string | null): Promise<void>;
   resolveSession(token: string | null): Promise<ResolvedIdentitySession | null>;
-  changePassword(actor: ResolvedIdentitySession, current: unknown, next: unknown): ReturnType<ReturnType<typeof createChangePassword>>;
+  changePassword(actor: ResolvedIdentitySession, current: unknown, next: unknown, ip: string | null): ReturnType<ReturnType<typeof createChangePassword>>;
 }
 export function createIdentityModule(env: Env): IdentityPublicApi {
   const users = new D1IdentityUserRepository(env.VEGA_DRIVE_DB);
@@ -27,7 +27,7 @@ export function createIdentityModule(env: Env): IdentityPublicApi {
   const register = createRegisterUser({ users, turnstile, attempts, outbox, maxUsers: Number(env.MAX_USERS) });
   const login = createLoginUser({ users, sessions, attempts, turnstile, outbox });
   const resolveSession = createSessionResolver({ sessions, users });
-  const changePassword = createChangePassword({ users, sessions });
+  const changePassword = createChangePassword({ users, sessions, outbox });
   const ready = Boolean(env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY);
   return {
     status: () => ({ module: "identity", ready }),
@@ -40,6 +40,6 @@ export function createIdentityModule(env: Env): IdentityPublicApi {
       if (session && !session.revokedAt) await sessions.revokeForUser(session.id, session.userId, new Date().toISOString());
     },
     resolveSession: (token) => resolveSession(token),
-    changePassword: (actor, current, next) => changePassword(actor, current, next),
+    changePassword: (actor, current, next, ip) => changePassword(actor, current, next, ip),
   };
 }
