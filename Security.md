@@ -126,3 +126,75 @@ Marca cada punto en el PR (si no aplica, indica "N/A" y por qué):
 ## Reporte de vulnerabilidades
 
 Si encuentras una vulnerabilidad, no abras un issue público: contacta directamente al propietario del repositorio.
+
+## 14. Endurecimiento transversal y certificación
+
+Esta sección concreta los requisitos de seguridad para la arquitectura real de Vega Drive: Cloudflare Workers, Hono, D1, R2 y frontend servido desde el mismo origen. No se debe copiar configuración específica de Next.js ni introducir roles, identidades o mecanismos paralelos que el producto no necesite.
+
+**Estado de certificación: PENDIENTE.** Que el Worker se despliegue, que D1 coincida con las migraciones y que `/api/health` responda correctamente no demuestra que los controles de seguridad estén implementados ni que hayan superado pruebas negativas. Los checks de esta sección solo se marcan como completados cuando exista evidencia reproducible en pruebas o en la verificación de producción.
+
+### 14.1 Reglas transversales obligatorias
+
+- **SEC-BASE-01 — Sesiones seguras:** las cookies de sesión serán `HttpOnly`, `Secure` en producción y usarán una política `SameSite` adecuada. El servidor validará la sesión en cada petición protegida; las sesiones tendrán expiración y revocación verificables.
+- **SEC-BASE-02 — Autorización por operación:** cada endpoint y caso de uso sensible comprobará la identidad autenticada, los permisos necesarios y la propiedad del recurso antes de leerlo o mutarlo. La interfaz nunca es una frontera de autorización.
+- **SEC-BASE-03 — IDOR/BOLA:** conocer o adivinar un identificador no concede acceso. Las lecturas, descargas, cambios y borrados deben estar limitados al propietario o al actor explícitamente autorizado; se devolverá 404 para recursos ajenos cuando corresponda para evitar enumeración.
+- **SEC-BASE-04 — Validación del servidor:** validar tipos, formato, longitud, rangos, identificadores, campos permitidos y límites de cuerpo en el servidor. Las restricciones del navegador son solo UX. SQL debe estar parametrizado.
+- **SEC-BASE-05 — Privacidad de datos y archivos:** R2 permanecerá privado y solo será accesible a través del Worker autorizado. No exponer credenciales, tokens, claves internas de objetos, URLs de almacenamiento ni datos sensibles en URLs, respuestas o logs.
+- **SEC-BASE-06 — Protección contra abuso:** aplicar límites apropiados a autenticación, recuperación de acceso si existe, subidas/descargas y operaciones costosas. Combinar controles por IP y por actor cuando sea viable; un límite global no sustituye los controles específicos.
+- **SEC-BASE-07 — Fronteras de aplicación:** las rutas Hono validan el transporte y delegan en gateways/APIs públicas y casos de uso. No contienen SQL, acceso directo a R2 ni reglas de negocio; el actor se deriva de la sesión validada.
+- **SEC-BASE-08 — Roles mínimos:** solo implementar roles y clases de identidad que tengan un requisito real. No añadir una identidad de técnicos ni un segundo sistema de autorización por analogía con otra aplicación. Si se introducen roles administrativos, la comprobación de permisos será server-side.
+- **SEC-BASE-09 — Webhooks condicionales:** si se integra un proveedor de pagos u otro webhook privilegiado, verificar criptográficamente la autenticidad, proteger contra repetición cuando el proveedor lo permita y reconciliar el estado con el proveedor antes de una transición financiera. No crear esta infraestructura si el producto no tiene ese flujo.
+- **SEC-BASE-10 — D1 y despliegue:** conservar la verificación de esquema D1 previa al despliegue. Es un control de integridad de esquema, no una prueba de aislamiento de usuarios ni una certificación funcional.
+
+### 14.2 Cabeceras HTTP en Workers/Hono
+
+La configuración debe implementarse en la capa Hono/Worker adecuada para este repositorio, no en `next.config.ts`. Debe comprobarse en respuestas normales, errores, rutas de API y assets según corresponda.
+
+- `Content-Security-Policy`: limitar scripts, estilos, imágenes, conexiones y `frame-ancestors) a lo que la aplicación realmente necesita; evitar `unsafe-inline` cuando sea viable.
+- `Strict-Transport-Security`: habilitar solo para dominios servidos exclusivamente por HTTPS y con un alcance deliberado.
+- `X-Content-Type-Options: nosniff`.
+- `X-Frame-Options: DENY` o una política CSP equivalente con `frame-ancestors 'none'`, salvo necesidad de incrustación aprobada.
+- `Referrer-Policy: strict-origin-when-cross-origin` o una política más restrictiva compatible con el producto.
+- `Permissions-Policy`: desactivar capacidades del navegador que no se utilicen.
+- Considerar también `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` y `X-DNS-Prefetch-Control` cuando sean compatibles con la aplicación.
+- Deshabilitar encabezados que revelen tecnología innecesariamente cuando la plataforma permita controlarlos.
+- Las respuestas autenticadas o con datos privados deben usar `Cache-Control: no-store`. No habilitar CORS abierto; el diseño predeterminado es mismo origen.
+
+No copiar una CSP genérica sin probar los assets y las llamadas legítimas: una política debe ser restrictiva y funcional. Registrar las excepciones necesarias y su justificación.
+
+### 14.3 Matriz de regresión para la certificación
+
+Todos los puntos comienzan **pendientes**. Para marcar uno como completado se requiere una prueba automatizada reproducible o evidencia de verificación documentada; una casilla marcada manualmente no ejecuta ni demuestra el control.
+
+#### Arquitectura y entradas
+
+- [ ] Las rutas no pueden saltarse los gateways, APIs públicas o casos de uso ni acceder directamente a D1/R2.
+- [ ] Las entradas malformadas, identificadores inválidos, campos desconocidos y valores fuera de límites se rechazan en el servidor.
+- [ ] Los errores públicos no revelan secretos, tokens, consultas, trazas ni detalles internos.
+
+#### Autenticación y autorización
+
+- [ ] Las sesiones ausentes, inválidas, vencidas y revocadas se rechazan; logout invalida la sesión en el servidor.
+- [ ] Cada operación sensible verifica identidad y permisos en el servidor.
+- [ ] Las pruebas IDOR/BOLA demuestran que una cuenta no puede leer, modificar ni eliminar recursos de otra cuenta.
+- [ ] Las pruebas concurrentes demuestran que solicitudes paralelas no eluden propiedad, permisos, cuotas o límites de uso.
+
+#### Archivos y privacidad
+
+- [ ] Una cuenta no puede leer, sobrescribir, mover ni eliminar archivos o metadatos ajenos.
+- [ ] Las claves de objetos R2 se generan/validan en el servidor y no permiten acceso arbitrario.
+- [ ] Los enlaces temporales, si el diseño llega a utilizarlos, son limitados, expiran y pueden revocarse cuando corresponda; no se exponen URLs de R2 por defecto.
+- [ ] Tokens, secretos, claves internas y datos sensibles no aparecen en URLs, respuestas públicas ni logs.
+
+#### Abuso y despliegue
+
+- [ ] El rate limiting de Cloudflare y los controles de aplicación se prueban con solicitudes reales, incluidos los límites de autenticación y operaciones costosas.
+- [ ] Se validan `Origin` y las defensas CSRF para las operaciones que usan cookies y modifican estado.
+- [ ] Se revisan dependencias, configuración y secretos; el escaneo de secretos y la auditoría de dependencias se ejecutan en CI.
+- [ ] La verificación de producción comprueba salud y, cuando existan, los flujos críticos de autenticación, autorización y transferencia de archivos; el endpoint de salud por sí solo no certifica esos flujos.
+
+### 14.4 Evidencia y cierre
+
+Para cada punto certificado, registrar la prueba o comando, el resultado, el commit revisado y, para verificaciones productivas, la fecha y el entorno. No incluir tokens, datos privados ni secretos en la evidencia. Mantener los fallos como pendientes hasta corregirlos y volver a ejecutar las pruebas.
+
+La certificación global solo puede declararse completada cuando todos los controles aplicables hayan pasado, las excepciones estén justificadas y las pruebas se ejecuten contra el commit que se pretende desplegar. Los controles que aún no tengan funcionalidad asociada se mantienen como requisitos futuros, no como controles aprobados.
