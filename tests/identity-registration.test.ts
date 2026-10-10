@@ -19,6 +19,7 @@ function createUsers(
     findByNormalizedEmail: vi.fn(async () => null),
     insert: vi.fn(async () => undefined),
     insertWithinLimit: vi.fn(async () => true),
+    updatePassword: vi.fn(async () => true),
     ...overrides,
   };
 }

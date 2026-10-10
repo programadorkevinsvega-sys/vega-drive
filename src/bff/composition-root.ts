@@ -1,62 +1,39 @@
 import type { Env, ModuleStatus } from "../worker/env.js";
-import type { IdentityPublicApi } from "../modules/identity/module.public-api.js";
+import { createIdentityModule, type IdentityPublicApi } from "../modules/identity/module.public-api.js";
 import type { FilesPublicApi } from "../modules/files/module.public-api.js";
 import type { QuotaPublicApi } from "../modules/quota/module.public-api.js";
 import type { SharingPublicApi } from "../modules/sharing/module.public-api.js";
-
-export interface IdentityGateway {
-  status(): ModuleStatus;
-}
-export interface FilesGateway {
-  status(): ModuleStatus;
-}
-export interface QuotaGateway {
-  status(): ModuleStatus;
-}
-export interface SharingGateway {
-  status(): ModuleStatus;
-}
-
+export interface IdentityGateway extends IdentityPublicApi {}
+export interface FilesGateway { status(): ModuleStatus; }
+export interface QuotaGateway { status(): ModuleStatus; }
+export interface SharingGateway { status(): ModuleStatus; }
 export class InProcessIdentityGateway implements IdentityGateway {
   constructor(private readonly api: IdentityPublicApi) {}
-  status() {
-    return this.api.status();
-  }
+  status() { return this.api.status(); }
+  authConfig() { return this.api.authConfig(); }
+  register(input: Parameters<IdentityPublicApi["register"]>[0], ip: string | null) { return this.api.register(input, ip); }
+  login(input: Parameters<IdentityPublicApi["login"]>[0], ip: string | null, previous: string | null) { return this.api.login(input, ip, previous); }
+  logout(token: string | null) { return this.api.logout(token); }
+  resolveSession(token: string | null) { return this.api.resolveSession(token); }
+  changePassword(actor: Parameters<IdentityPublicApi["changePassword"]>[0], current: unknown, next: unknown) { return this.api.changePassword(actor, current, next); }
 }
 export class InProcessFilesGateway implements FilesGateway {
   constructor(private readonly api: FilesPublicApi) {}
-  status() {
-    return this.api.status();
-  }
+  status() { return this.api.status(); }
 }
 export class InProcessQuotaGateway implements QuotaGateway {
   constructor(private readonly api: QuotaPublicApi) {}
-  status() {
-    return this.api.status();
-  }
+  status() { return this.api.status(); }
 }
 export class InProcessSharingGateway implements SharingGateway {
   constructor(private readonly api: SharingPublicApi) {}
-  status() {
-    return this.api.status();
-  }
+  status() { return this.api.status(); }
 }
-
-/** Phase 0 placeholders deliberately report not-ready. */
-export function createCompositionRoot(_env: Env) {
-  const identityApi: IdentityPublicApi = {
-    status: () => ({ module: "identity", ready: false }),
-  };
-  const filesApi: FilesPublicApi = {
-    status: () => ({ module: "files", ready: false }),
-  };
-  const quotaApi: QuotaPublicApi = {
-    status: () => ({ module: "quota", ready: false }),
-  };
-  const sharingApi: SharingPublicApi = {
-    status: () => ({ module: "sharing", ready: false }),
-  };
-
+export function createCompositionRoot(env: Env) {
+  const identityApi = createIdentityModule(env);
+  const filesApi: FilesPublicApi = { status: () => ({ module: "files", ready: false }) };
+  const quotaApi: QuotaPublicApi = { status: () => ({ module: "quota", ready: false }) };
+  const sharingApi: SharingPublicApi = { status: () => ({ module: "sharing", ready: false }) };
   return {
     identity: new InProcessIdentityGateway(identityApi),
     files: new InProcessFilesGateway(filesApi),

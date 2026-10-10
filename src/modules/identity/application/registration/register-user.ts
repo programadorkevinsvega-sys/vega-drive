@@ -1,114 +1,50 @@
-import type {
-  IdentityUserRecord,
-  IdentityUserRepository,
-} from "../ports/identity-repositories.js";
+import type { IdentityAuthAttemptRepository, IdentityOutboxRepository, IdentityUserRecord, IdentityUserRepository } from "../ports/identity-repositories.js";
+import { hashRateKey } from "../sessions/session-tokens.js";
 import { hashPassword, validatePassword } from "./password.js";
-
-export interface TurnstileVerifier {
-  verify(token: string): Promise<boolean>;
-}
-
-export interface RegisterUserInput {
-  email: unknown;
-  password: unknown;
-  turnstileToken: unknown;
-}
-
-export type RegisterUserResult =
-  | { ok: true; userId: string }
-  | {
-      ok: false;
-      reason:
-        | "invalid-input"
-        | "captcha-failed"
-        | "registration-closed"
-        | "registration-unavailable";
-    };
-
+import type { TurnstileVerifier } from "./register-user.types.js";
+export interface RegisterUserInput { email: unknown; password: unknown; turnstileToken: unknown; }
+export type RegisterUserResult = { ok: true; userId: string } | { ok: false; reason: "invalid-input" | "captcha-failed" | "registration-closed" | "registration-unavailable" | "rate-limited"; };
 export interface RegisterUserDependencies {
-  users: IdentityUserRepository;
-  turnstile: TurnstileVerifier;
-  maxUsers: number;
-  now?: () => Date;
-  createId?: () => string;
+  users: IdentityUserRepository; turnstile: TurnstileVerifier; maxUsers: number;
+  attempts?: IdentityAuthAttemptRepository; outbox?: IdentityOutboxRepository;
+  now?: () => Date; createId?: () => string;
 }
-
-function normalizeEmail(email: unknown): string | null {
-  if (typeof email !== "string") return null;
-  const normalized = email.trim().toLowerCase();
-  if (
-    normalized.length > 254 ||
-    normalized.length < 3 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)
-  ) {
-    return null;
-  }
-  return normalized;
+function normalizeEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  return email.length >= 3 && email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
-
-function validMaxUsers(maxUsers: number): boolean {
-  return Number.isInteger(maxUsers) && maxUsers >= 1 && maxUsers <= 10;
-}
-
-export function createRegisterUser(dependencies: RegisterUserDependencies) {
-  const now = dependencies.now ?? (() => new Date());
-  const createId = dependencies.createId ?? (() => crypto.randomUUID());
-
-  return async function registerUser(
-    input: RegisterUserInput,
-  ): Promise<RegisterUserResult> {
+export function createRegisterUser(deps: RegisterUserDependencies) {
+  const now = deps.now ?? (() => new Date());
+  const createId = deps.createId ?? (() => crypto.randomUUID());
+  return async function registerUser(input: RegisterUserInput, clientIp: string | null = null): Promise<RegisterUserResult> {
     const email = normalizeEmail(input.email);
-    if (!email || !validatePassword(input.password)) {
-      return { ok: false, reason: "invalid-input" };
+    if (!email || !validatePassword(input.password)) return { ok: false, reason: "invalid-input" };
+    if (typeof input.turnstileToken !== "string" || !input.turnstileToken || input.turnstileToken.length > 2048) return { ok: false, reason: "captcha-failed" };
+    if (!Number.isInteger(deps.maxUsers) || deps.maxUsers < 1 || deps.maxUsers > 10) return { ok: false, reason: "registration-closed" };
+    const timestamp = now().getTime();
+    const ipHash = clientIp ? await hashRateKey("register-ip:" + clientIp) : null;
+    if (ipHash && deps.attempts) {
+      const state = await deps.attempts.find(ipHash, timestamp, 15 * 60 * 1000);
+      if (state?.lockedUntil && state.lockedUntil > timestamp) return { ok: false, reason: "rate-limited" };
     }
-
-    if (
-      typeof input.turnstileToken !== "string" ||
-      input.turnstileToken.length < 1 ||
-      input.turnstileToken.length > 2048
-    ) {
+    let captchaValid = false;
+    try { captchaValid = await deps.turnstile.verify(input.turnstileToken, clientIp); } catch { captchaValid = false; }
+    if (!captchaValid) {
+      if (ipHash && deps.attempts) await deps.attempts.recordFailure(ipHash, timestamp, 15 * 60 * 1000);
       return { ok: false, reason: "captcha-failed" };
     }
-
-    if (!validMaxUsers(dependencies.maxUsers)) {
-      return { ok: false, reason: "registration-closed" };
-    }
-
-    let captchaValid = false;
     try {
-      captchaValid = await dependencies.turnstile.verify(input.turnstileToken);
-    } catch {
-      captchaValid = false;
-    }
-    if (!captchaValid) return { ok: false, reason: "captcha-failed" };
-
-    try {
-      // This early check avoids expensive hashing for a known duplicate. The
-      // unique constraint remains authoritative for concurrent registrations.
-      if (await dependencies.users.findByNormalizedEmail(email)) {
-        return { ok: false, reason: "registration-unavailable" };
-      }
-
-      const timestamp = now().toISOString();
+      if (await deps.users.findByNormalizedEmail(email)) return { ok: false, reason: "registration-unavailable" };
+      const createdAt = now().toISOString();
       const credentials = await hashPassword(input.password);
-      const user: IdentityUserRecord = {
-        id: createId(),
-        email,
-        ...credentials,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        disabledAt: null,
-      };
-
-      const inserted = await dependencies.users.insertWithinLimit(
-        user,
-        dependencies.maxUsers,
-      );
-      if (!inserted) return { ok: false, reason: "registration-closed" };
+      const user: IdentityUserRecord = { id: createId(), email, ...credentials, createdAt, updatedAt: createdAt, disabledAt: null };
+      if (!(await deps.users.insertWithinLimit(user, deps.maxUsers))) return { ok: false, reason: "registration-closed" };
+      if (ipHash && deps.attempts) await deps.attempts.clear(ipHash);
+      if (deps.outbox) {
+        try { await deps.outbox.append({ id: crypto.randomUUID(), eventType: "identity.register.succeeded", payloadJson: JSON.stringify({ userId: user.id, ipHash }), createdAt, publishedAt: null }); } catch { /* Keep registration independent from audit availability. */ }
+      }
       return { ok: true, userId: user.id };
-    } catch {
-      // Do not leak database errors or disclose whether an email is registered.
-      return { ok: false, reason: "registration-unavailable" };
-    }
+    } catch { return { ok: false, reason: "registration-unavailable" }; }
   };
 }
