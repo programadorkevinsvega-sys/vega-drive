@@ -37,7 +37,7 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 ### 0.1 Contrato y convenciones
 
 - [x] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
-- [x] Añadir .gitignore para .dev.vars, .env*, .wrangler y node_modules.
+- [x] Añadir .gitignore para `.dev.vars*`, `.env*`, `.wrangler` y `node_modules`.
 - [x] Añadir plantilla de PR con checklist de seguridad y arquitectura.
 - [ ] Proteger main con PR y CI obligatoria.
 - **Aceptación:** no existe un documento que describa BFF/Service Bindings o D1 por módulo como el despliegue actual.
