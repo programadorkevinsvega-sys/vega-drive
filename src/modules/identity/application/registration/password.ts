@@ -99,8 +99,7 @@ export async function verifyPassword(
     );
     const actual = new Uint8Array(bits);
     return (
-      actual.length === expected.length &&
-      constantTimeEqual(actual, expected)
+      actual.length === expected.length && constantTimeEqual(actual, expected)
     );
   } catch {
     return false;
