@@ -49,8 +49,9 @@ export class InProcessIdentityGateway implements IdentityGateway {
     actor: Parameters<IdentityPublicApi["changePassword"]>[0],
     current: unknown,
     next: unknown,
+    ip: string | null,
   ) {
-    return this.api.changePassword(actor, current, next);
+    return this.api.changePassword(actor, current, next, ip);
   }
 }
 
