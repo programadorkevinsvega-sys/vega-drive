@@ -82,7 +82,9 @@ describe("module-owned D1 migrations", () => {
 
     for (const { absolutePath, relativePath } of paths) {
       const owner = relativePath.split("/")[0];
-      const moduleDefinitions = definitions(await readFile(absolutePath, "utf8"));
+      const moduleDefinitions = definitions(
+        await readFile(absolutePath, "utf8"),
+      );
       for (const [key, value] of moduleDefinitions) {
         const name = key.slice(key.indexOf(":") + 1);
         expect(name.startsWith(`${owner}_`)).toBe(true);

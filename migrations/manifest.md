@@ -8,10 +8,13 @@ Wrangler lee `migrations_dir = "src/modules"` y aplica los archivos que coincide
 
 Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
 
-| Orden | Propietario | Migración activa | Tablas propiedad del módulo |
-| ---: | --- | --- | --- |
-| 1 | `files` | `files/infrastructure/persistence/d1/migrations/0001_files_initial.sql` | `files_items`, `files_folders`, `files_uploads`, `files_outbox` |
-| 2 | `identity` | `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql` | `identity_users`, `identity_sessions`, `identity_invites`, `identity_outbox` |
+1. **Propietario: `files`**
+   - Migración: `files/infrastructure/persistence/d1/migrations/0001_files_initial.sql`.
+   - Tablas: `files_items`, `files_folders`, `files_uploads` y `files_outbox`.
+
+2. **Propietario: `identity`**
+   - Migración: `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`.
+   - Tablas: `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
 
 El orden no establece dependencias entre módulos. Los IDs entre módulos son valores, nunca claves foráneas; no hay tablas genéricas compartidas, JOIN ni SQL cruzado. Los índices se definen en la migración del mismo propietario que la tabla indexada. `quota_usage` y `sharing_links` se crearán en las fases 6 y 7, respectivamente.
 
@@ -33,4 +36,4 @@ El verificador estructural rechaza DDL que todavía no pueda modelar, objetos in
 
 ## Compatibilidad y rollback
 
-Un rollback del Worker no revierte D1. Usa expansión/contracción: añade estructuras compatibles primero, despliega código compatible, realiza backfills idempotentes y retira estructuras obsoletas en otro release, cuando ninguna versión anterior las necesite. Antes de cambios de riesgo, revisa el esquema remoto, backups y el procedimiento de restauración según [`Rollback.md`](../Rollback.md).
+Un rollback del Worker no revierte D1. Usa expansión/contracción: añade estructuras compatibles primero, despliega código compatible, realiza backfills idempotentes y retira estructuras obsoletas en otro release, cuando ninguna versión anterior las necesite. Antes de cambios de riesgo, revisa el esquema remoto, backups y el procedimiento de restauración según [Rollback.md](../Rollback.md).
