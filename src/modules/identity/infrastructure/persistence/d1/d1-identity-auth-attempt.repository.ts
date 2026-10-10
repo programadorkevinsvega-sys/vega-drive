@@ -25,7 +25,15 @@ export class D1IdentityAuthAttemptRepository
       )
       .bind(keyHash)
       .first<AuthAttemptRow>();
-    if (!row || now - row.windowStartedAt >= windowMs) return null;
+    if (!row) return null;
+    if (row.lockedUntil !== null && row.lockedUntil > now) {
+      return {
+        failedAttempts: row.failedAttempts,
+        windowStartedAt: row.windowStartedAt,
+        lockedUntil: row.lockedUntil,
+      };
+    }
+    if (now - row.windowStartedAt >= windowMs) return null;
     return {
       failedAttempts: row.failedAttempts,
       windowStartedAt: row.windowStartedAt,
