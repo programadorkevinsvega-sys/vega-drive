@@ -97,7 +97,7 @@ describe("identity change-password use case", () => {
     expect(JSON.stringify(appendOutbox.mock.calls)).not.toContain(
       "Old passphrase",
     );
-    expect(JSON.stringify(outbox.append.mock.calls)).not.toContain(
+    expect(JSON.stringify(appendOutbox.mock.calls)).not.toContain(
       "New passphrase",
     );
   });

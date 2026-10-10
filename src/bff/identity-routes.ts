@@ -123,7 +123,7 @@ identityRoutes.post("/register", async (c) => {
   ]);
   if (!body) return c.json({ error: "Invalid request" }, 400);
   const result = await createCompositionRoot(c.env).identity.register(
-    body as Parameters<IdentityPublicApi["register"]>[0],
+    body as unknown as Parameters<IdentityPublicApi["register"]>[0],
     ip(c.req.raw),
   );
   if (result.ok) return c.json({ ok: true }, 201);
@@ -154,7 +154,7 @@ identityRoutes.post("/login", async (c) => {
   if (!body) return c.json({ error: "Invalid request" }, 400);
   const gateway = createCompositionRoot(c.env).identity;
   const result = await gateway.login(
-    body as Parameters<IdentityPublicApi["login"]>[0],
+    body as unknown as Parameters<IdentityPublicApi["login"]>[0],
     ip(c.req.raw),
     readCookie(c.req.header("Cookie")),
   );
