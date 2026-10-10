@@ -192,6 +192,22 @@ describe("identity login use case", () => {
     expect(deps.users.findByNormalizedEmail).not.toHaveBeenCalled();
   });
 
+  it("counts malformed login requests toward the IP limit", async () => {
+    const deps = makeDeps();
+    const result = await deps.login(
+      { email: "person@example.test", password: "short", turnstileToken: "" },
+      "203.0.113.10",
+      null,
+    );
+
+    expect(result).toEqual({ ok: false, reason: "invalid-credentials" });
+    expect(deps.attempts.recordFailure).toHaveBeenCalledTimes(1);
+    expect(deps.users.findByNormalizedEmail).not.toHaveBeenCalled();
+    expect(deps.outbox.append).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "identity.login.invalid-input" }),
+    );
+  });
+
   it("fails closed when Turnstile verification fails", async () => {
     const deps = makeDeps({ captcha: false });
     const result = await deps.login(
