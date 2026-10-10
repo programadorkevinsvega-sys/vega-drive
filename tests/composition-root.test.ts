@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCompositionRoot } from "../src/bff/composition-root.js";
+import { createCompositionRoot } from "../src/worker/composition-root.js";
 import type { Env } from "../src/worker/env.js";
 
 describe("composition root", () => {
