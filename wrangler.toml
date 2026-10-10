@@ -1,0 +1,23 @@
+name = "vega-drive"
+main = "src/worker/index.ts"
+compatibility_date = "2026-10-09"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "VEGA_DRIVE_DB"
+database_name = "VEGA_DRIVE_DB"
+# Sustituir el ID tras crear VEGA_DRIVE_DB con Wrangler.
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[r2_buckets]]
+binding = "FILES_BUCKET"
+bucket_name = "vega-drive-files"
+
+[vars]
+MAX_USERS = "10"
+TURNSTILE_SITE_KEY = ""

@@ -54,12 +54,12 @@ Una subida normal sigue este flujo: navegador → POST /api/files → caso de us
 
 Cada módulo posee su dominio, casos de uso, repositorios, tablas y eventos. Los módulos iniciales son:
 
-| Módulo | Responsabilidad |
-|---|---|
-| identity | usuarios, invitaciones, credenciales y sesiones |
-| files | carpetas, archivos, papelera, metadatos, transferencias privadas y almacenamiento físico en R2 |
-| quota | límites y contabilización de capacidad |
-| sharing | enlaces compartidos, revocación y expiración |
+| Módulo   | Responsabilidad                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------- |
+| identity | usuarios, invitaciones, credenciales y sesiones                                                |
+| files    | carpetas, archivos, papelera, metadatos, transferencias privadas y almacenamiento físico en R2 |
+| quota    | límites y contabilización de capacidad                                                         |
+| sharing  | enlaces compartidos, revocación y expiración                                                   |
 
 Los nombres pueden evolucionar, pero la propiedad de datos y reglas debe permanecer explícita.
 
@@ -83,8 +83,14 @@ El BFF solo conoce contratos de gateway y la API pública de cada módulo. El co
 
 ```typescript
 export interface FilesGateway {
-  initUpload(actor: AuthenticatedActor, input: InitUploadInput): Promise<InitUploadOutput>;
-  listFolder(actor: AuthenticatedActor, folderId: string): Promise<FolderListing>;
+  initUpload(
+    actor: AuthenticatedActor,
+    input: InitUploadInput,
+  ): Promise<InitUploadOutput>;
+  listFolder(
+    actor: AuthenticatedActor,
+    folderId: string,
+  ): Promise<FolderListing>;
 }
 
 export class InProcessFilesGateway implements FilesGateway {
@@ -138,7 +144,7 @@ Vega Drive tiene una sola base de datos: VEGA_DRIVE_DB. Compartir el binding no 
 - Están prohibidos los JOINs, claves foráneas, consultas SQL y modificaciones directas sobre tablas de otro módulo.
 - La comunicación de datos entre módulos usa la API pública o eventos, aunque físicamente compartan D1.
 - Un db.batch() o transacción solo toca tablas de un módulo. Si una operación necesita coordinación entre módulos, se modela mediante caso de uso orquestador, contratos explícitos e idempotencia; no mediante SQL que atraviese límites.
-- Esta frontera se verifica automáticamente: una regla de lint o test de arquitectura debe fallar cuando SQL de files mencione identity_ o cuando SQL de identity mencione files_, y se extiende la misma regla a todos los prefijos.
+- Esta frontera se verifica automáticamente: una regla de lint o test de arquitectura debe fallar cuando SQL de files mencione identity* o cuando SQL de identity mencione files*, y se extiende la misma regla a todos los prefijos.
 - Todo acceso a datos de usuario se filtra con el userId obtenido exclusivamente de la sesión validada.
 
 ## 8. R2 y almacenamiento privado
@@ -205,7 +211,7 @@ Para extraerlo:
 1. Se mantiene su domain y application sin cambios.
 2. Se sustituye la fachada en memoria por un adaptador de Service Binding que respeta el mismo contrato.
 3. Sus eventos pasan al adaptador de Cloudflare Queues si requieren entrega asíncrona.
-4. Se crea su D1 propia y se migran solo sus tablas con prefijo, por ejemplo files_*. Como no existen FKs ni JOINs cruzados, la copia no rompe a identity ni a los demás módulos.
+4. Se crea su D1 propia y se migran solo sus tablas con prefijo, por ejemplo files\_\*. Como no existen FKs ni JOINs cruzados, la copia no rompe a identity ni a los demás módulos.
 5. El composition root cambia InProcessFilesGateway por ServiceBindingFilesGateway(env.FILES_SERVICE).
 6. El BFF/Worker principal deja de conocer su infraestructura y usa solo el contrato público.
 

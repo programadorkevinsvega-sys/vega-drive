@@ -14,6 +14,6 @@ Vega Drive usa un monolito modular serverless, no microservicios:
 - No hay imports internos, SQL, JOINs, claves foráneas ni transacciones entre módulos; un lint/test automático detecta referencias SQL a prefijos ajenos.
 - Solo files accede a R2 por IFileStoragePort.
 - El frontend usa solo /api; no tiene lógica de negocio ni acceso, URL, SDK o configuración de R2.
-- La futura extracción de files preservará su API pública y sustituirá InProcessFilesGateway por ServiceBindingFilesGateway; se crea su D1 y se migran solo las tablas files_*. Las Queues y bases separadas se adoptan solo al extraer módulos.
+- La futura extracción de files preservará su API pública y sustituirá InProcessFilesGateway por ServiceBindingFilesGateway; se crea su D1 y se migran solo las tablas files\_\*. Las Queues y bases separadas se adoptan solo al extraer módulos.
 
 Cualquier regla genérica que contradiga estas decisiones queda reemplazada por el contrato canónico de Vega Drive. Security.md continúa siendo obligatorio y prevalece la regla más restrictiva de seguridad.
