@@ -66,11 +66,20 @@ pnpm exec wrangler secret put TURNSTILE_SECRET_KEY
 
 La clave de sitio de Turnstile es pública; la clave secreta nunca debe incluirse en el frontend ni en archivos versionados.
 
-## Comprobaciones y CI
+## Comprobaciones, migraciones y CI
 
-`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. `pnpm run cloudflare:build` ejecuta primero `predeploy`, después todas las comprobaciones y finalmente `pnpm audit --audit-level=high`; debe usarse como comando de build de Cloudflare Workers Builds, junto con la instalación reproducible `pnpm install --frozen-lockfile`. Cloudflare solo debe desplegar si ese comando termina correctamente.
+`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. `pnpm run cloudflare:build` ejecuta primero `predeploy`, después todas las comprobaciones y finalmente `pnpm audit --audit-level=high`; debe usarse como comando de build de Cloudflare Workers Builds, junto con la instalación reproducible `pnpm install --frozen-lockfile`.
 
-GitHub Actions mantiene temporalmente las mismas comprobaciones como respaldo hasta confirmar que Cloudflare ejecuta correctamente el comando en cada push. Gitleaks permanece en GitHub Actions para el escaneo de secretos; no se elimina ni se considera sustituido por las pruebas de build. Después de verificar un build de Cloudflare exitoso, se puede retirar el job duplicado `verify` y conservar el job `secrets`. La obligatoriedad de checks en GitHub es una configuración separada de la rama.
+El comando de despliegue de producción de Cloudflare Workers Builds debe ser **`pnpm run deploy`**, no `pnpm exec wrangler deploy`. El script ejecuta, en orden:
+
+1. `wrangler d1 migrations apply vega_drive_db --remote` para aplicar migraciones pendientes.
+2. `wrangler d1 migrations list vega_drive_db --remote` para mostrar y comprobar el historial registrado.
+3. `wrangler deploy` para publicar el Worker solo si los pasos anteriores terminan correctamente.
+4. `pnpm run verify:production` para verificar que `/api/health` responde con HTTP 200 y el JSON esperado.
+
+`db:migrate:local` aplica migraciones al D1 local. La lista remota de Wrangler confirma el historial de migraciones, pero no compara automáticamente todas las columnas y restricciones con el esquema esperado por el código. Antes de la primera aplicación en una D1 que ya pueda contener tablas, inspecciona y reconcilia ese esquema.
+
+GitHub Actions mantiene temporalmente las comprobaciones como respaldo hasta confirmar que Cloudflare ejecuta correctamente el comando en cada push. Gitleaks permanece en GitHub Actions para el escaneo de secretos; no se elimina ni se considera sustituido por las pruebas de build.
 
 ## Cierre de Fase 0 y preparación para producción
 
