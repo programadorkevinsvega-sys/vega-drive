@@ -1,0 +1,28 @@
+name: One-time formatting repair
+on:
+  push:
+    branches: ["feature/fase-0-fundamentos"]
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.ref == 'refs/heads/feature/fase-0-fundamentos'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/fase-0-fundamentos
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - run: npm run format
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "style: apply Prettier formatting"
+            git push origin HEAD:feature/fase-0-fundamentos
+          fi
