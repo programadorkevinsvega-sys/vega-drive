@@ -34,39 +34,45 @@ Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
 ## Fase 0 — Fundamentos del monolito modular
 
+Estado de cierre: **parcialmente verificado; no cerrar aún**. El Worker está desplegado, `/api/health` responde 200, D1 tiene 17 tablas/índices que coinciden con la migración y el último `cloudflare:build` compartido pasó formato, lint, typecheck, 4 tests y auditoría de dependencias. Estas evidencias no demuestran privacidad de R2 ni protección de `main`.
+
 ### 0.1 Contrato y convenciones
 
 - [x] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
 - [x] Añadir .gitignore para `.dev.vars*`, `.env*`, `.wrangler` y `node_modules`.
 - [x] Añadir plantilla de PR con checklist de seguridad y arquitectura.
-- [ ] Proteger main con PR y CI obligatoria.
-- **Aceptación:** no existe un documento que describa BFF/Service Bindings o D1 por módulo como el despliegue actual.
+- [ ] Verificar y decidir la protección de `main` (PR/CI obligatoria). La API de GitHub no permitió leer la configuración con la conexión disponible; no se asume que esté activa.
+- **Aceptación:** documentos coherentes con el Worker único y decisiones de protección registradas. Como el desarrollo actual se realiza directamente en `main`, no se cambia el flujo a PR obligatorio sin comprobar antes la configuración y decidirlo explícitamente.
 
 ### 0.2 Recursos Cloudflare
 
-- [ ] Crear una D1 privada: VEGA_DRIVE_DB.
-- [ ] Crear un bucket R2 privado: vega-drive-files, sin r2.dev, dominio público ni CORS para navegador.
-- [ ] Crear bindings del Worker para D1, R2, Turnstile y configuración.
-- **Aceptación:** solo el Worker puede contactar D1 y R2; no hay secretos en el repositorio.
+- [x] Configurar el binding `VEGA_DRIVE_DB` y verificar remotamente que las 17 tablas/índices coinciden con la migración versionada.
+- [x] Configurar el binding `FILES_BUCKET` al bucket `vega-drive-files`.
+- [ ] Verificar en el panel de Cloudflare que R2 no tiene acceso público, dominio público ni `r2.dev` habilitado y que no existe CORS para navegador. La configuración del binding no demuestra privacidad.
+- [ ] Confirmar permisos mínimos y secretos del Worker en Cloudflare; la configuración local no demuestra los permisos reales del recurso.
+- [ ] Configurar Turnstile solo cuando se habilite registro/login; actualmente `TURNSTILE_SITE_KEY` está vacío y no hay flujo de autenticación en Fase 0.
+- [x] Tener el escaneo Gitleaks y `pnpm audit --audit-level=high` definidos en CI/build. Mantener secretos fuera de archivos versionados.
+- **Aceptación:** D1/R2 solo se usan desde el Worker, privacidad R2 comprobada en Cloudflare y no hay secretos versionados. Los dos últimos puntos de privacidad/permisos siguen pendientes de verificación externa.
 - 🔒 SEC-R2-01, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
 
 ### 0.3 Esqueleto único del Worker
 
-- [ ] Crear src/worker para fetch, queue y scheduled.
-- [ ] Crear src/bff para Hono, middleware, controllers y gateways.
-- [ ] Crear src/modules/identity, src/modules/files, src/modules/quota y src/modules/sharing con domain, application, infrastructure y module.public-api.ts.
-- [ ] Crear composition root que inyecte InProcessIdentityGateway, InProcessFilesGateway y los demás gateways.
-- [ ] Servir los assets del frontend y /api desde el mismo origen.
-- [ ] Añadir /api/health sin lógica de negocio.
-- **Aceptación:** un controller llama un gateway en proceso; no importa internals de módulos ni bindings de D1/R2.
+- [x] Crear `src/worker` para fetch/scheduled (sin trabajo programado en esta fase).
+- [x] Crear `src/bff` con Hono y el punto de entrada de la aplicación.
+- [x] Crear `src/modules/identity`, `files`, `quota` y `sharing`, cada uno con `module.public-api.ts` mínimo.
+- [x] Crear composition root con gateways en proceso para los cuatro módulos; por ahora las APIs son placeholders que informan `ready: false`.
+- [x] Servir assets y `/api/*` desde el mismo Worker; `/api/health` responde 200.
+- [ ] Añadir/verificar una prueba de contrato del composition root y los gateways. No hay todavía controllers de negocio que llamen gateways; registro, catálogo y transferencias pertenecen a fases posteriores.
+- **Aceptación ajustada a Fase 0:** Worker único, rutas API separadas de assets, salud de liveness y composición mínima tipada. No afirmar que módulos placeholder están funcionalmente listos.
 - 🔒 SEC-FE-01, SEC-MOD-01, SEC-MOD-04.
 
 ### 0.4 Integración continua
 
-- [ ] Ejecutar format, lint, typecheck y pruebas.
-- [ ] Añadir test/lint de fronteras: imports internos entre módulos, SQL con prefijos ajenos, JOIN/FK cruzados y db.batch() multímódulo deben fallar.
-- [ ] Añadir Gitleaks y pnpm audit.
-- **Aceptación:** un SQL de files que mencione identity\_ falla en CI.
+- [x] CI ejecuta format, lint, typecheck, pruebas y `pnpm audit`.
+- [x] Gitleaks está configurado en el workflow de CI.
+- [x] La guardia arquitectónica está conectada a `pnpm run lint` y revisa imports entre módulos, SQL con prefijos ajenos, JOIN, FOREIGN KEY, `db.batch()` y uso del binding R2 fuera de files.
+- [ ] Ejecutar y confirmar en CI pruebas negativas que introducen violaciones a propósito. Se han añadido pruebas de regresión para las violaciones principales; su aprobación en CI aún debe confirmarse.
+- **Aceptación:** los checks base pasan y CI demuestra que las violaciones relevantes fallan. El último build reportado pasó los checks base; las nuevas pruebas negativas quedan pendientes hasta que el workflow las ejecute.
 - 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
 ---
