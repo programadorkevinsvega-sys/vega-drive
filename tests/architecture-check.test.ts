@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,9 +29,7 @@ async function runGuard(files: Record<string, string>) {
 describe("architecture guard", () => {
   it("is wired into lint", async () => {
     const pkg = JSON.parse(
-      await (
-        await import("node:fs/promises")
-      ).readFile(resolve("package.json"), "utf8"),
+      await readFile(resolve("package.json"), "utf8"),
     ) as { scripts: Record<string, string> };
 
     expect(pkg.scripts.lint).toContain("architecture-check.mjs");
