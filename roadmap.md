@@ -130,7 +130,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 **Estado: SIGUIENTE FASE SELECCIONADA; TODAVÍA NO INICIADA (2026-10-10).** Este registro solo prepara la transición de planificación. En esta actualización no se implementó ni modificó código funcional de la Fase 2, no se configuraron secretos y no se ejecutaron migraciones ni despliegues.
 
-**Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main) y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
+**Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main` y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
 
 ### 2.1 Registro cerrado
 
