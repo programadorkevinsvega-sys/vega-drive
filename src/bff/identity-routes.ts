@@ -192,12 +192,14 @@ identityRoutes.get("/session", async (c) => {
     : c.json({ authenticated: false });
 });
 
-identityRoutes.use("/password", requireAuthenticatedActor);
-
-identityRoutes.post("/password", async (c) => {
+identityRoutes.use("/password", async (c, next) => {
   if (!originAllowed(c.req.raw)) {
     return c.json({ error: "Invalid request origin" }, 403);
   }
+  await requireAuthenticatedActor(c, next);
+});
+
+identityRoutes.post("/password", async (c) => {
   const gateway = createCompositionRoot(c.env).identity;
   const actor = c.get("actor");
   const body = await strictJson(c.req.raw, ["currentPassword", "newPassword"]);
