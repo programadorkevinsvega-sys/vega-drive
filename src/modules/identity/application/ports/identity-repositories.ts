@@ -14,6 +14,7 @@ export interface IdentityUserRepository {
   insert(user: IdentityUserRecord): Promise<void>;
 }
 
+/** Session ownership comes from trusted server-side identity resolution. */
 export interface IdentitySessionRecord {
   id: string;
   userId: string;

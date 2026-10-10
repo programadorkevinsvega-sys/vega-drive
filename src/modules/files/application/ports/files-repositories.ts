@@ -1,3 +1,4 @@
+/** Owner IDs must come from the server-validated actor, never request input. */
 export interface FilesItemRecord {
   id: string;
   ownerId: string;
