@@ -20,3 +20,12 @@ The deployment workflow applies pending migrations before publishing the Worker,
 - Migrations must be additive and compatible with the currently deployed Worker. Never use destructive SQL to make the schema match without a reviewed backup and rollback plan.
 - Each module owns only its prefixed tables. Cross-module IDs are values and do not use foreign keys.
 - The migration list confirms Wrangler's recorded migration status; it does not validate every table column or constraint against application expectations.
+
+## Rollback y compatibilidad
+
+- Un rollback del Worker no revierte el historial ni los cambios ya aplicados en D1.
+- Toda migración nueva debe evaluarse contra el código actualmente desplegado y la versión estable anterior.
+- Durante la ventana de rollback, preferir expansión/contracción: añadir primero estructuras compatibles, desplegar código compatible, hacer backfill idempotente y retirar estructuras antiguas en un release separado.
+- No editar migraciones aplicadas ni ejecutar `DROP` o cambios incompatibles como parte de una recuperación rutinaria.
+- Antes de una migración de riesgo, confirmar backup disponible y procedimiento de restauración ensayado; restaurar D1 puede perder escrituras posteriores al punto de recuperación y requiere decisión operativa explícita.
+- El proceso detallado está en [Rollback.md](../Rollback.md). Staging debe validar la migración y el rollback antes de aplicar cambios de riesgo en producción.
