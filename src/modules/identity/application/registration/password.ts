@@ -12,8 +12,8 @@ export function validatePassword(password: unknown): password is string {
   }
   const normalized = password.trim().toLowerCase();
   if (
-    /^(?:password|qwerty|admin|letmein|welcome|iloveyou|monkey|dragon)\d{0,8}$/.test(
-      normalized,
+    /^(?:password|qwerty|admin|letmein|welcome|iloveyou|monkey|dragon)(?:[\\d!@#$%^&*._-]*)$/.test(
+    normalized,
     ) ||
     /^(.)\1{11,}$/.test(password)
   ) {
