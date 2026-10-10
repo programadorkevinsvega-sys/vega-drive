@@ -1,305 +1,237 @@
 # Roadmap de Vega Drive
 
-Plan paso a paso por **fases** y **subfases**. Cada subfase incluye tareas, criterio de aceptación y las **reglas de seguridad** (IDs de [Security.md](./Security.md)) que deben cumplirse antes de darla por terminada.
+Plan de implementación del monolito modular serverless. La arquitectura obligatoria está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md) y las reglas de seguridad en [Security.md](./Security.md).
 
-Leyenda: `[ ]` pendiente · `[x]` hecho · 🔒 reglas de seguridad aplicables
+Leyenda: [ ] pendiente · [x] hecho · 🔒 controles obligatorios.
 
-## Reglas generales para todas las fases
+## Reglas para todas las fases
 
-1. Una subfase = una rama `feature/<fase>-<descripcion>` y un PR.
-2. El PR no se fusiona sin el [checklist de seguridad](./SECURITY.md#checklist-de-pull-request) completo.
-3. Toda funcionalidad con datos de usuario lleva prueba de acceso cruzado (SEC-ISO-06).
-4. Se despliega primero en un entorno de pruebas (`wrangler dev` / entorno `staging`) y luego a producción.
-5. Definición de "hecho": código + pruebas + checklist de seguridad + documentación actualizada.
+1. Vega Drive se despliega como un único Worker con frontend y BFF internos, una única D1 llamada VEGA_DRIVE_DB y módulos en el mismo código.
+2. Un módulo solo usa sus tablas, repositorios, migraciones y API pública. Están prohibidos imports internos, JOINs, claves foráneas, SQL o transacciones entre módulos.
+3. Los controllers del BFF solo validan transporte, resuelven la sesión y llaman gateways; no contienen lógica de negocio, SQL ni R2.
+4. El frontend llama solo al mismo origen bajo /api y nunca accede a R2.
+5. R2 es privado y solo el módulo files lo usa mediante IFileStoragePort.
+6. Cada fase incluye pruebas proporcionales y el checklist de Security.md.
+7. Una subfase se termina solo con código, pruebas, documentación y controles arquitectónicos en CI.
 
-## Resumen de fases
+## Resumen
 
-| Fase | Nombre | Resultado |
-|---|---|---|
-| 0 | Fundamentos | Repo, entorno y recursos de Cloudflare listos |
-| 1 | Base de datos | Esquema D1 y capa de acceso con aislamiento |
-| 2 | Autenticación | Registro cerrado, login, sesiones |
-| 3 | Carpetas y archivos (metadatos) | Árbol de carpetas por usuario |
-| 4 | Almacenamiento y subidas | Acceso a R2 exclusivamente desde el Worker/backend |
-| 5 | Frontend | Inicio, registro, login, dashboard |
-| 6 | Cuotas y administración | Límites por usuario y panel mínimo |
-| 7 | Compartir enlaces | Enlaces con expiración (opcional) |
-| 8 | Endurecimiento | Pruebas de seguridad y revisión final |
-| 9 | Despliegue y operación | Producción, monitoreo y respaldos |
-| 10 | Mejoras futuras | Miniaturas, búsqueda, 2FA, etc. |
+| Fase | Resultado |
+|---|---|
+| 0 | Contrato, estructura del Worker y CI |
+| 1 | D1 única con límites verificables por módulo |
+| 2 | Módulo identity: registro, sesiones y autenticación |
+| 3 | Módulo files: catálogo de carpetas y archivos |
+| 4 | Módulo files: transferencias privadas con R2 |
+| 5 | Frontend/BFF en el mismo Worker |
+| 6 | Módulo quota |
+| 7 | Módulo sharing |
+| 8 | Endurecimiento y pruebas de arquitectura |
+| 9 | Despliegue y operación |
+| 10 | Mejoras y posible extracción de módulos |
 
 ---
 
-## Fase 0 — Fundamentos
+## Fase 0 — Fundamentos del monolito modular
 
-### 0.1 Repositorio y convenciones
-- [ ] Añadir `README.md`, `ROADMAP.md`, `SECURITY.md`.
-- [ ] `.gitignore` (incluir `.dev.vars`, `.env*`, `.wrangler`, `node_modules`).
-- [ ] Plantilla de PR con el checklist de seguridad.
-- [ ] Protección de la rama `main` (PR obligatorio).
-- **Aceptación:** repo con documentación y plantilla de PR visibles.
-- 🔒 SEC-SEC-02, SEC-SEC-03.
+### 0.1 Contrato y convenciones
 
-### 0.2 Recursos de Cloudflare
-- [ ] Crear bucket R2 privado `vega-drive-files`.
-- [ ] Crear base D1 `vega-drive-db`.
-- [ ] Crear token S3 de R2 con permisos mínimos sobre el bucket.
-- [ ] Configurar dominio y DNS en Cloudflare.
-- **Aceptación:** recursos creados; bucket sin acceso público.
-- 🔒 SEC-R2-01, SEC-R2-02, SEC-WEB-03.
+- [ ] Mantener Architecture, Security y este roadmap como documentos obligatorios y enlazados.
+- [ ] Añadir .gitignore para .dev.vars, .env*, .wrangler y node_modules.
+- [ ] Añadir plantilla de PR con checklist de seguridad y arquitectura.
+- [ ] Proteger main con PR y CI obligatoria.
+- **Aceptación:** no existe un documento que describa BFF/Service Bindings o D1 por módulo como el despliegue actual.
 
-### 0.3 Esqueleto del Worker
-- [ ] Inicializar proyecto TypeScript + `wrangler.toml` con bindings (D1, assets).
-- [ ] Router básico y ruta `/api/health`.
-- [ ] Middleware global de cabeceras de seguridad.
-- [ ] Gestión de secretos con `wrangler secret`.
-- **Aceptación:** `wrangler dev` responde `/api/health` con cabeceras de seguridad.
-- 🔒 SEC-WEB-02, SEC-SEC-01.
+### 0.2 Recursos Cloudflare
+
+- [ ] Crear una D1 privada: VEGA_DRIVE_DB.
+- [ ] Crear un bucket R2 privado: vega-drive-files, sin r2.dev, dominio público ni CORS para navegador.
+- [ ] Crear bindings del Worker para D1, R2, Turnstile y configuración.
+- **Aceptación:** solo el Worker puede contactar D1 y R2; no hay secretos en el repositorio.
+- 🔒 SEC-R2-01, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
+
+### 0.3 Esqueleto único del Worker
+
+- [ ] Crear src/worker para fetch, queue y scheduled.
+- [ ] Crear src/bff para Hono, middleware, controllers y gateways.
+- [ ] Crear src/modules/identity, src/modules/files, src/modules/quota y src/modules/sharing con domain, application, infrastructure y module.public-api.ts.
+- [ ] Crear composition root que inyecte InProcessIdentityGateway, InProcessFilesGateway y los demás gateways.
+- [ ] Servir los assets del frontend y /api desde el mismo origen.
+- [ ] Añadir /api/health sin lógica de negocio.
+- **Aceptación:** un controller llama un gateway en proceso; no importa internals de módulos ni bindings de D1/R2.
+- 🔒 SEC-FE-01, SEC-MOD-01, SEC-MOD-04.
 
 ### 0.4 Integración continua
-- [ ] Workflow de GitHub Actions: lint, typecheck, tests.
-- [ ] Escaneo de secretos (gitleaks) y `npm audit`.
-- **Aceptación:** CI verde obligatoria para fusionar.
-- 🔒 SEC-SEC-03, SEC-DEP-02.
+
+- [ ] Ejecutar format, lint, typecheck y pruebas.
+- [ ] Añadir test/lint de fronteras: imports internos entre módulos, SQL con prefijos ajenos, JOIN/FK cruzados y db.batch() multímódulo deben fallar.
+- [ ] Añadir gitleaks y npm audit.
+- **Aceptación:** un SQL de files que mencione identity_ falla en CI.
+- 🔒 SEC-MOD-02, SEC-MOD-03, SEC-SEC-03.
 
 ---
 
-## Fase 1 — Base de datos
+## Fase 1 — D1 única y límites de datos
 
-### 1.1 Esquema inicial
-- [ ] Migración con tablas: `users`, `sessions`, `invites`, `nodes` (archivos y carpetas), `uploads`, `audit_log`.
-- [ ] Índices por `user_id` y `(user_id, parent_id)`.
-- [ ] Claves foráneas y restricciones (`UNIQUE` en correo).
-- **Aceptación:** migración aplicada en local y remoto.
-- 🔒 SEC-ISO-02, SEC-AUTH-05.
+### 1.1 Tablas y migraciones por módulo
 
-### 1.2 Capa de acceso a datos
-- [ ] Módulo `db/` con funciones que **siempre** reciben `userId` como parámetro.
-- [ ] Prohibido SQL fuera de este módulo.
-- [ ] Utilidad de paginación.
-- **Aceptación:** ninguna ruta ejecuta SQL directo.
-- 🔒 SEC-ISO-01, SEC-ISO-02, SEC-VAL-02, SEC-VAL-04.
+- [ ] Crear migraciones independientes en cada módulo con numeración propia.
+- [ ] Mantener un manifest central que documente el orden de aplicación contra VEGA_DRIVE_DB.
+- [ ] Crear inicialmente identity_users, identity_sessions, identity_invites e identity_outbox.
+- [ ] Preparar files_items, files_folders, files_uploads y files_outbox; quota_usage y sharing_links se completan en sus fases.
+- [ ] Usar valores entre módulos, nunca claves foráneas; por ejemplo files_items.owner_id no referencia mediante FK a identity_users.
+- **Aceptación:** cada tabla e índice tiene un módulo dueño; no existe una tabla genérica compartida.
+- 🔒 SEC-MOD-02, SEC-ISO-02.
 
-### 1.3 Pruebas de aislamiento de datos
-- [ ] Tests con dos usuarios: A no puede leer/modificar/borrar datos de B.
-- **Aceptación:** pruebas pasan y se ejecutan en CI.
-- 🔒 SEC-ISO-03, SEC-ISO-06.
+### 1.2 Repositorios por módulo
+
+- [ ] Implementar repositorios solo bajo infrastructure/persistence/d1 de su módulo.
+- [ ] Definir puertos en application y no exponer D1Database fuera de infraestructura.
+- [ ] Usar SQL parametrizado y filtros de usuario derivados de la sesión.
+- [ ] Prohibir un módulo global db/ que concentre la lógica de todos los dominios.
+- **Aceptación:** domain y application no importan D1Database; un repositorio no menciona tablas ajenas.
+- 🔒 SEC-ISO-01, SEC-ISO-02, SEC-VAL-02, SEC-MOD-01.
+
+### 1.3 Pruebas de frontera y aislamiento
+
+- [ ] Probar acceso cruzado entre usuarios para cada repositorio y caso de uso.
+- [ ] Probar que el lint arquitectónico bloquea import, SQL, JOIN, FK y batch cruzados.
+- **Aceptación:** las pruebas se ejecutan en CI y fallan ante una violación insertada a propósito.
+- 🔒 SEC-ISO-06, SEC-MOD-03.
 
 ---
 
-## Fase 2 — Autenticación y sesiones
+## Fase 2 — Módulo identity
 
 ### 2.1 Registro cerrado
-- [ ] Endpoint `POST /api/auth/register`.
-- [ ] Código de invitación de un solo uso **o** tope de `MAX_USERS = 10`.
-- [ ] Validación de correo y contraseña; hash PBKDF2 con sal.
-- [ ] Turnstile en el servidor.
-- **Aceptación:** no se pueden crear más de 10 cuentas ni registrarse sin invitación válida.
-- 🔒 SEC-AUTH-01, SEC-AUTH-03, SEC-AUTH-05, SEC-AUTH-06, SEC-AUTH-07, SEC-VAL-01.
 
-### 2.2 Login
-- [ ] Endpoint `POST /api/auth/login` con mensajes genéricos.
-- [ ] Comparación en tiempo constante.
-- [ ] Bloqueo progresivo tras intentos fallidos.
-- **Aceptación:** login correcto crea sesión; fallos no revelan si el correo existe.
-- 🔒 SEC-AUTH-02, SEC-AUTH-04, SEC-AUTH-07, SEC-RATE-01, SEC-RATE-02.
+- [ ] Exponer Register a través de IdentityPublicApi y IdentityGateway.
+- [ ] Implementar invitación de un uso o MAX_USERS validado en servidor.
+- [ ] Normalizar correo, aplicar política de contraseña y almacenar hashes seguros.
+- [ ] Verificar Turnstile en el backend.
+- **Aceptación:** el controller no llama repositorios ni maneja reglas de registro.
+- 🔒 SEC-AUTH-01, SEC-AUTH-03, SEC-AUTH-05, SEC-AUTH-06, SEC-AUTH-07.
 
-### 2.3 Sesiones y logout
-- [ ] Generar token aleatorio de 32 bytes; guardar solo su hash.
-- [ ] Cookie `__Host-session` `HttpOnly; Secure; SameSite=Lax`.
-- [ ] Middleware que resuelve la sesión y expone `userId`.
-- [ ] `POST /api/auth/logout` invalida en servidor.
-- [ ] Verificación de `Origin` en peticiones mutantes.
-- **Aceptación:** rutas protegidas devuelven 401 sin sesión válida.
-- 🔒 SEC-SES-01, SEC-SES-02, SEC-SES-03, SEC-SES-05, SEC-ISO-01.
+### 2.2 Login y sesiones
 
-### 2.4 Gestión de cuenta
-- [ ] Cambio de contraseña (cierra las demás sesiones).
-- [ ] Listado y cierre de sesiones activas.
-- [ ] Registro de eventos de seguridad.
-- **Aceptación:** tras cambiar la contraseña, las otras sesiones dejan de ser válidas.
-- 🔒 SEC-SES-04, SEC-LOG-01, SEC-LOG-02.
+- [ ] Implementar Login, Logout y SessionResolver dentro de identity.
+- [ ] Usar cookie __Host-session y guardar solo hash de token.
+- [ ] Crear AuthenticatedActor desde la sesión validada en middleware BFF.
+- [ ] Pasar AuthenticatedActor a gateways; nunca aceptar ownerId, rol o permisos del navegador como autoridad.
+- **Aceptación:** las rutas protegidas responden 401 sin sesión y un ownerId enviado por cliente no altera la autorización.
+- 🔒 SEC-SES-01…05, SEC-ISO-01, SEC-AUTH-02, SEC-AUTH-04.
 
 ---
 
-## Fase 3 — Carpetas y archivos (metadatos)
+## Fase 3 — Módulo files: catálogo
 
-### 3.1 Carpetas
-- [ ] Crear, renombrar, mover y eliminar carpetas.
-- [ ] Prevenir ciclos al mover (una carpeta no puede entrar en sus descendientes).
-- **Aceptación:** operaciones limitadas al usuario de la sesión.
-- 🔒 SEC-ISO-01, SEC-ISO-02, SEC-ISO-03, SEC-VAL-03.
+### 3.1 Carpetas y nodos
 
-### 3.2 Listado y navegación
-- [ ] `GET /api/nodes?parent=<id>` con paginación y orden.
-- [ ] Ruta de migas (breadcrumbs).
-- **Aceptación:** un `parent` ajeno devuelve 404.
-- 🔒 SEC-ISO-03, SEC-VAL-04.
+- [ ] Implementar FilesPublicApi y FilesGateway.
+- [ ] Crear, renombrar, mover, listar y eliminar carpetas/archivos de metadatos.
+- [ ] Prevenir ciclos y duplicados dentro del mismo padre.
+- [ ] Mantener el nombre de usuario separado de la clave física de R2.
+- **Aceptación:** files usa solo files_* y devuelve 404 para recursos ajenos.
+- 🔒 SEC-ISO-02…06, SEC-VAL-03, SEC-MOD-02.
 
-### 3.3 Operaciones sobre archivos (metadatos)
-- [ ] Renombrar y mover archivos.
-- [ ] Validación de nombres duplicados en la misma carpeta.
-- **Aceptación:** cambios solo afectan metadatos, no la clave en R2.
-- 🔒 SEC-VAL-03, SEC-ISO-04.
+### 3.2 Papelera y navegación
 
-### 3.4 Papelera
-- [ ] Borrado lógico (`deleted_at`), restaurar y vaciar papelera.
-- [ ] Cron que elimina de R2 y D1 tras N días.
-- **Aceptación:** el borrado definitivo elimina el objeto en R2.
-- 🔒 SEC-ISO-05, SEC-LOG-01.
+- [ ] Implementar borrado lógico, restauración, paginación y breadcrumbs.
+- [ ] Programar limpieza de metadatos y objetos mediante el caso de uso de files.
+- **Aceptación:** la papelera no cruza las fronteras de usuario ni de módulo.
+- 🔒 SEC-ISO-03, SEC-ISO-05, SEC-LOG-01.
 
 ---
 
-## Fase 4 — Almacenamiento y subidas
+## Fase 4 — Módulo files: R2 privado
 
-### 4.1 Cliente privado de R2
-- [ ] Módulo `lib/r2.ts` usado exclusivamente por el Worker/backend, mediante binding de R2 o credenciales privadas.
-- [ ] Función de generación de clave `u/{userId}/{uuid}`.
-- [ ] Mantener el bucket sin CORS para el navegador, sin dominio público ni URLs prefirmadas.
-- **Aceptación:** el Worker crea, consulta y elimina objetos de prueba sin que el navegador pueda contactar R2.
-- 🔒 SEC-ISO-04, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
+### 4.1 Adaptador de almacenamiento
 
-### 4.2 Subir mediante la API del backend
-- [ ] `POST /api/files`: recibe el archivo en el Worker; valida sesión, nombre, tamaño y cuota antes de almacenarlo.
-- [ ] El Worker transmite el contenido a R2 y crea internamente cualquier operación multipart necesaria; ningún identificador interno se expone al navegador.
-- **Aceptación:** la API devuelve únicamente el metadato del archivo y R2 no registra ninguna petición originada por el navegador.
-- 🔒 SEC-ISO-01, SEC-ISO-04, SEC-R2-04, SEC-VAL-01, SEC-VAL-03, SEC-RATE-01, SEC-RATE-03.
+- [ ] Definir IFileStoragePort en application.
+- [ ] Implementar el adaptador solo en modules/files/infrastructure/storage/r2.
+- [ ] Inyectar el binding/credenciales únicamente en ese adaptador.
+- [ ] Generar claves u/{userId}/{uuid} en el backend.
+- **Aceptación:** una búsqueda de imports muestra que solo files usa R2Bucket o API S3.
+- 🔒 SEC-ISO-04, SEC-R2-01…03, SEC-MOD-04.
 
-### 4.3 Finalizar y limpiar en backend
-- [ ] El Worker verifica el tamaño real con `HEAD`, registra el archivo en `nodes` y limpia operaciones internas fallidas.
-- [ ] Si el tamaño real excede la cuota o lo declarado, el Worker borra el objeto y rechaza la operación.
-- **Aceptación:** una subida de un archivo > 300 MB completada a través de `/api/files`, sin URL, SDK ni llamada directa a R2 desde el navegador.
-- 🔒 SEC-R2-05, SEC-ISO-05, SEC-LOG-01.
+### 4.2 Subida por API
 
-### 4.4 Limpieza de subidas huérfanas
-- [ ] Regla de ciclo de vida de R2 para abortar multipart incompletas.
-- [ ] Cron que cancela registros `uploads` vencidos.
-- **Aceptación:** no quedan partes huérfanas tras el plazo.
-- 🔒 SEC-R2-07.
+- [ ] Implementar POST /api/files a través de FilesGateway.
+- [ ] Validar sesión, actor, nombre, tamaño, tipo, cuota y propiedad antes de almacenar.
+- [ ] Transmitir bytes mediante el Worker; si se necesita multipart interno, encapsularlo sin exponer IDs, partes o URLs al navegador.
+- [ ] Verificar tamaño real y registrar metadatos solo tras completar.
+- **Aceptación:** la red del navegador contiene únicamente llamadas al mismo origen y ninguna a R2.
+- 🔒 SEC-R2-03…05, SEC-ISO-05, SEC-RATE-01.
 
-### 4.5 Descargas
-- [ ] `GET /api/files/:id/download`: verifica propiedad y transmite la respuesta de R2 a través del Worker; nunca devuelve una URL de R2.
-- [ ] `Content-Disposition: attachment` y `nosniff`.
-- [ ] Soporte de `Range` gestionado y autorizado por el backend.
-- **Aceptación:** el archivo se descarga y se puede reanudar sin petición del navegador a R2.
-- 🔒 SEC-ISO-05, SEC-R2-03, SEC-R2-06, SEC-WEB-04.
+### 4.3 Descarga y limpieza
+
+- [ ] Implementar GET /api/files/:id/download a través de FilesGateway.
+- [ ] Autorizar antes de streaming y devolver Content-Disposition: attachment y nosniff.
+- [ ] Gestionar Range y limpieza interna de operaciones fallidas u obsoletas.
+- **Aceptación:** no se devuelve una URL de R2 ni se permite descargar un archivo ajeno.
+- 🔒 SEC-R2-03, SEC-R2-06, SEC-R2-07.
 
 ---
 
-## Fase 5 — Frontend
+## Fase 5 — Frontend y BFF del mismo Worker
 
-### 5.1 Base del frontend
-- [ ] Assets estáticos servidos por el mismo Worker.
-- [ ] Estilos, layout y componentes comunes.
-- [ ] CSP estricta compatible con los scripts propios.
-- **Aceptación:** las páginas cargan sin errores de CSP.
-- 🔒 SEC-WEB-01, SEC-WEB-02, SEC-VAL-05.
+### 5.1 Assets y presentación
 
-### 5.2 Página de inicio (landing)
-- [ ] Presentación del producto, enlaces a login y registro.
-- **Aceptación:** accesible sin sesión, sin datos sensibles.
-- 🔒 SEC-WEB-02.
+- [ ] Servir frontend y API desde el mismo Worker/origen.
+- [ ] Implementar componentes de presentación, accesibilidad, CSP y manejo visual de estados.
+- [ ] Prohibir SDKs, endpoint, bucket o configuración de R2 en assets.
+- **Aceptación:** frontend solo usa /api y no contiene lógica de autorización, cuota ni almacenamiento.
+- 🔒 SEC-FE-01, SEC-FE-02, SEC-WEB-01, SEC-WEB-02.
 
-### 5.3 Registro y login
-- [ ] Formularios que solo presentan la interfaz; cualquier validación de seguridad, autenticación y decisión de negocio se hace en el servidor.
-- [ ] Widget de Turnstile.
-- [ ] Mensajes de error genéricos.
-- **Aceptación:** flujo completo registro → login → dashboard.
-- 🔒 SEC-AUTH-04, SEC-AUTH-07, SEC-VAL-05, SEC-SES-02.
+### 5.2 Controllers y gateways
 
-### 5.4 Dashboard
-- [ ] Listado de carpetas/archivos, breadcrumbs, crear, renombrar, mover, eliminar, papelera.
-- [ ] Indicador de cuota usada.
-- [ ] Redirección al login si la sesión expira (401).
-- **Aceptación:** un usuario solo ve sus propios datos.
-- 🔒 SEC-ISO-01, SEC-VAL-05, SEC-WEB-04.
-
-### 5.5 Formulario de subida
-- [ ] Enviar el archivo únicamente a la ruta autenticada `/api/files`.
-- [ ] Mostrar el estado y el resultado devuelto por la API, sin implementar reglas de cuota, autorización, fragmentación multipart ni reintentos contra R2.
-- [ ] Prohibir en los assets del frontend referencias a endpoint, bucket, SDK, credenciales o URLs de R2.
-- **Aceptación:** la red del navegador muestra peticiones solo al origen de la aplicación; no hay peticiones directas a R2.
-- 🔒 SEC-R2-03, SEC-R2-08, SEC-RATE-03.
+- [ ] Implementar controllers Hono delgados que validan transporte y llaman gateways.
+- [ ] Mantener InProcessFilesGateway e InProcessIdentityGateway en el composition root.
+- [ ] Manejar 401/404/errores sin detalles sensibles.
+- **Aceptación:** controllers no importan domain, application, infrastructure, D1 ni R2.
+- 🔒 SEC-MOD-01, SEC-MOD-04, SEC-LOG-03.
 
 ---
 
-## Fase 6 — Cuotas y administración
+## Fase 6 — Módulo quota
 
-### 6.1 Cuotas por usuario
-- [ ] Campo `quota_bytes` y contador de uso.
-- [ ] Comprobación en el Worker antes y después de guardar el archivo (tamaño real).
-- [ ] Durable Object por usuario si hay condiciones de carrera.
-- **Aceptación:** no se puede superar la cuota ni con subidas paralelas.
-- 🔒 SEC-R2-05, SEC-ISO-01.
+- [ ] Crear quota_usage, migraciones y repositorios de quota.
+- [ ] Exponer QuotaPublicApi para verificar y reservar capacidad.
+- [ ] Usar contratos explícitos o eventos desde files; no leer files_* con SQL desde quota.
+- [ ] Usar Durable Object solo si la concurrencia requiere coordinación fuerte.
+- **Aceptación:** no se supera la cuota con transferencias paralelas y no hay SQL entre quota_* y files_*.
+- 🔒 SEC-R2-05, SEC-RATE-03, SEC-MOD-02.
 
-### 6.2 Panel de administración mínimo
-- [ ] Rol `admin` solo para el propietario.
-- [ ] Gestionar invitaciones, ver uso por cliente, desactivar cuentas.
-- [ ] El admin **no** puede ver el contenido de los archivos por defecto.
-- **Aceptación:** rutas admin devuelven 404/403 a usuarios normales.
-- 🔒 SEC-ISO-03, SEC-LOG-01, SEC-AUTH-06.
+## Fase 7 — Módulo sharing
 
-### 6.3 Auditoría
-- [ ] Visor de eventos de seguridad recientes.
-- **Aceptación:** eventos clave visibles sin datos sensibles.
-- 🔒 SEC-LOG-01, SEC-LOG-02.
-
----
-
-## Fase 7 — Compartir enlaces (opcional)
-
-### 7.1 Enlaces compartidos
-- [ ] Crear, listar y revocar enlaces por archivo.
-- [ ] Token de ≥ 32 bytes (hash en D1), expiración obligatoria, contraseña opcional.
-- [ ] Descarga pública transmitida por el Worker tras validar el token; nunca devuelve una URL de R2.
-- **Aceptación:** un enlace expirado o revocado no funciona.
-- 🔒 SEC-SHARE-01, SEC-SHARE-02, SEC-SHARE-03, SEC-RATE-01.
-
----
+- [ ] Crear sharing_links, migraciones, SharePublicApi y SharingGateway.
+- [ ] Usar token con hash, expiración y revocación.
+- [ ] Obtener el recurso mediante contrato de files, no consultando files_* directamente.
+- [ ] Transmitir descargas compartidas a través del Worker, sin URL de R2.
+- **Aceptación:** un enlace expirado/revocado falla y no permite navegación fuera de un único recurso.
+- 🔒 SEC-SHARE-01…03, SEC-R2-03, SEC-MOD-02.
 
 ## Fase 8 — Endurecimiento
 
-### 8.1 Pruebas de seguridad
-- [ ] Batería de pruebas de acceso cruzado en todos los endpoints.
-- [ ] Pruebas de fuerza bruta, subidas con tamaños falsos y ausencia total de acceso directo del navegador a R2.
-- [ ] Revisión de inyección y XSS (nombres de archivo con caracteres especiales).
-- **Aceptación:** sin hallazgos críticos abiertos.
-- 🔒 SEC-ISO-06, SEC-VAL-01…05, SEC-R2-04, SEC-R2-05, SEC-R2-08.
-
-### 8.2 Revisión de configuración
-- [ ] Verificar que R2 no permite CORS del navegador y revisar CSP, HSTS y cookies.
-- [ ] Revisar permisos del token S3 y rotarlo.
-- [ ] Auditar dependencias.
-- **Aceptación:** checklist completo sin excepciones.
-- 🔒 SEC-WEB-01…04, SEC-R2-02, SEC-R2-08, SEC-DEP-01…03.
-
----
+- [ ] Ejecutar batería de acceso cruzado, fuerza bruta, tamaños falsos, XSS y CSRF.
+- [ ] Mantener pruebas negativas de import y SQL entre módulos.
+- [ ] Revisar bucket privado, ausencia de CORS de navegador, CSP, HSTS, cookies y rate limits.
+- [ ] Auditar dependencias y secretos.
+- **Aceptación:** ninguna prueba de acceso directo a R2 ni de frontera modular pasa indebidamente.
+- 🔒 SEC-ISO-06, SEC-MOD-01…04, SEC-WEB-01…04, SEC-DEP-01…03.
 
 ## Fase 9 — Despliegue y operación
 
-### 9.1 Producción
-- [ ] Entornos `staging` y `production` separados (bucket y D1 distintos).
-- [ ] Dominio, HTTPS forzado y reglas WAF.
-- [ ] Despliegue desde CI con secretos de entorno.
-- **Aceptación:** app accesible por HTTPS en el dominio final.
-- 🔒 SEC-WEB-03, SEC-RATE-04, SEC-SEC-01.
+- [ ] Separar staging y producción por configuración, conservando un Worker y una D1 por entorno.
+- [ ] Configurar dominio, HTTPS, WAF, alertas y backups de D1.
+- [ ] Emitir logs JSON estructurados sin secretos ni datos sensibles.
+- [ ] Documentar rotación de secretos e incidentes.
+- **Aceptación:** restauración de D1 y despliegue staging se prueban al menos una vez.
+- 🔒 SEC-WEB-03, SEC-RATE-04, SEC-LOG-01…03, SEC-SEC-04.
 
-### 9.2 Monitoreo y respaldos
-- [ ] Alertas por errores y por picos de intentos fallidos.
-- [ ] Respaldo/export periódico de D1 (más Time Travel).
-- [ ] Procedimiento documentado de rotación de secretos y respuesta a incidentes.
-- **Aceptación:** restauración de D1 probada al menos una vez.
-- 🔒 SEC-LOG-01, SEC-LOG-02, SEC-SEC-04.
+## Fase 10 — Mejoras y extracción futura
 
----
-
-## Fase 10 — Mejoras futuras
-
-- [ ] Miniaturas y previsualización de imágenes/PDF.
-- [ ] Búsqueda por nombre.
-- [ ] Autenticación en dos pasos (TOTP).
-- [ ] Descarga de carpetas como ZIP en *streaming*.
-- [ ] Versionado de archivos.
-- [ ] Aplicación de sincronización.
-
-Cada mejora debe pasar por el mismo ciclo: rama, PR, checklist de seguridad y pruebas de acceso cruzado.
+- [ ] Miniaturas, búsqueda, 2FA, versionado y sincronización se modelan en un módulo dueño antes de codificar.
+- [ ] Extraer un módulo solo con una necesidad real de escala, despliegue o aislamiento operativo.
+- [ ] Para extraer files: crear Worker y D1 propios, migrar solo files_*, sustituir InProcessFilesGateway por ServiceBindingFilesGateway y conservar sus contratos.
+- **Aceptación:** la extracción no obliga a cambiar identity, controllers consumidores, dominio ni casos de uso.

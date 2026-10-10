@@ -1,148 +1,101 @@
-# vega-drive
-
 # Vega Drive
 
-Sistema de almacenamiento de archivos en la nube (tipo Drive / Mega) construido **100 % sobre Cloudflare**, sin Cloudflare Containers. Producto propio para un máximo de **10 clientes**, con aislamiento total entre cuentas: ningún cliente puede ver, editar ni eliminar los archivos de otro.
+Sistema privado de almacenamiento de archivos en la nube, construido sobre Cloudflare para un máximo de 10 clientes. El aislamiento entre cuentas es obligatorio: un cliente no puede leer, editar ni eliminar archivos de otro.
 
-> Estado del proyecto: en planificación. Consulta el [roadmap](./roadmap.md) para las fases y el [Security](./Security.md) para las reglas de seguridad obligatorias.
-
----
-
-## Características previstas
-
-- Registro, login, página de inicio y dashboard.
-- Carpetas y archivos por usuario (crear, renombrar, mover, eliminar, papelera).
-- Subida y descarga de archivos exclusivamente mediante la API del Worker; el navegador nunca se conecta a R2.
-- Descargas con soporte de `Range` (reanudación y streaming).
-- Cuotas de almacenamiento por usuario.
-- Enlaces compartidos con expiración (opcional, fase posterior).
-- Sin cifrado de extremo a extremo (decisión de producto): los archivos se guardan cifrados en reposo por R2.
-
-## Stack
-
-| Necesidad | Servicio |
-|---|---|
-| Archivos | Cloudflare **R2** (acceso exclusivo del Worker/backend) |
-| Metadatos, usuarios, sesiones | Cloudflare **D1** |
-| Backend / API | Cloudflare **Workers** |
-| Frontend | Workers con assets estáticos |
-| Estado concurrente (cuotas, subidas) | **Durable Objects** (si hace falta) |
-| Tareas programadas | **Cron Triggers** / **Queues** |
-| Anti-bots | **Turnstile** |
-| Límite de peticiones | **Workers Rate Limiting** |
-
-Lenguaje: TypeScript. Librería de firma S3: [`aws4fetch`](https://github.com/mhart/aws4fetch).
+> Estado: planificación. El contrato de arquitectura está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), la seguridad en [Security.md](./Security.md) y las fases en [roadmap.md](./roadmap.md).
 
 ## Arquitectura
 
-```mermaid
-flowchart LR
-    B[Navegador] -- HTML/JS --> W[Worker: API + assets]
-    W -- consultas --> D[(D1: usuarios, nodos, sesiones)]
-    W -- valida, procesa y transmite --> R[(R2 privado)]
+Vega Drive es un monolito modular serverless:
+
+- Un solo repositorio, código desplegable y Cloudflare Worker.
+- Frontend y backend separados por capas, pero servidos desde el mismo Worker y origen.
+- Una sola D1: VEGA_DRIVE_DB.
+- Módulos internos con API pública y gateways en proceso; no son microservicios hoy.
+- R2 es privado y solo el módulo files accede a él por IFileStoragePort.
+- El frontend llama únicamente a /api y nunca conoce ni contacta R2.
+
+```text
+Navegador
+   │ HTML, JS, CSS y /api desde el mismo origen
+   ▼
+Worker único de Vega Drive
+├── frontend / assets
+├── BFF: Hono, controllers y gateways
+└── módulos: identity · files · quota · sharing
+       ├── D1 única: VEGA_DRIVE_DB
+       └── R2 privado: solo files
 ```
 
-Idea clave: **todo acceso a R2 pasa por el Worker**. El Worker autentica, autoriza, valida propiedad y cuota, y transmite los bytes entre el navegador y el bucket. El navegador no recibe URLs prefirmadas, ni conoce el endpoint de R2, ni usa credenciales, SDKs o APIs de S3.
+Cada módulo es dueño de sus tablas con prefijo, migraciones, repositorios, dominio y API pública. Aunque existe una sola D1, están prohibidos JOIN, FK, SQL, imports internos o transacciones entre módulos. CI verifica estas fronteras.
 
-### Flujo de subida
+## Flujo de archivos
 
-1. El navegador envía el archivo a `POST /api/files` del Worker, sin lógica de negocio ni comunicación con R2.
-2. El Worker valida sesión, autorización, nombre, tipo, tamaño y cuota; crea internamente la clave `u/{userId}/{uuid}`.
-3. El Worker transmite el contenido a R2 con sus bindings o credenciales privadas y verifica el tamaño real.
-4. Solo tras completar la operación, el Worker registra el archivo en D1 y devuelve un resultado seguro al navegador.
-5. Si falla, el Worker limpia los recursos internos; el navegador nunca opera subidas multipart ni claves de R2.
+1. El frontend envía el archivo a POST /api/files.
+2. El BFF valida transporte y sesión; crea AuthenticatedActor y llama FilesGateway.
+3. El módulo files valida autorización, cuota, nombre y tamaño.
+4. Su adaptador privado transmite a R2; el navegador nunca recibe una URL, token, SDK o clave de R2.
+5. El módulo registra los metadatos y devuelve un resultado seguro.
 
-## Estructura del repositorio (propuesta)
+Las descargas atraviesan GET /api/files/:id/download y el Worker transmite el contenido autorizado desde R2.
 
-```
-vega-drive/
-├─ README.md
-├─ ROADMAP.md
-├─ SECURITY.md
-├─ wrangler.toml
-├─ package.json
-├─ tsconfig.json
-├─ migrations/            # migraciones SQL de D1
-├─ src/
-│  ├─ index.ts            # entrada del Worker y router
-│  ├─ routes/             # auth, folders, files, uploads, shares, admin
-│  ├─ middleware/         # sesión, CSRF/Origin, rate limit, headers
-│  └─ lib/                # crypto, sesiones, cliente S3, validación
-├─ public/                # inicio, registro, login, dashboard
-├─ tests/
-└─ .github/workflows/     # CI
-```
+## Estructura propuesta
 
-## Requisitos
-
-- Cuenta de Cloudflare con R2 y D1 habilitados.
-- Node.js LTS y `npm`.
-- `wrangler` (`npm i -D wrangler`).
-- Un dominio gestionado en Cloudflare (recomendado).
-
-## Puesta en marcha
-
-```bash
-# 1. Dependencias
-npm install
-
-# 2. Autenticarse en Cloudflare
-npx wrangler login
-
-# 3. Crear recursos
-npx wrangler r2 bucket create vega-drive-files
-npx wrangler d1 create vega-drive-db
-
-# 4. Copiar el database_id resultante a wrangler.toml
-
-# 5. Aplicar migraciones
-npx wrangler d1 migrations apply vega-drive-db --local   # desarrollo
-npx wrangler d1 migrations apply vega-drive-db --remote  # producción
-
-# 6. Secretos (nunca en el repositorio)
-npx wrangler secret put R2_ACCESS_KEY_ID
-npx wrangler secret put R2_SECRET_ACCESS_KEY
-npx wrangler secret put CF_ACCOUNT_ID
-npx wrangler secret put TURNSTILE_SECRET
-npx wrangler secret put INVITE_SECRET
-
-# 7. Desarrollo y despliegue
-npx wrangler dev
-npx wrangler deploy
+```text
+src/
+  worker/                 fetch, queue, scheduled y composition root
+  bff/                    Hono, controllers, gateways y middleware
+  modules/
+    identity/             dominio, aplicación, infraestructura y migraciones
+    files/                catálogo y R2 privado
+    quota/                límites de almacenamiento
+    sharing/              enlaces compartidos
+  platform/               logging, eventos y observabilidad
+  shared-kernel/          abstracciones universales mínimas
+frontend/
+  src/                    presentación y estado visual
+public/
+migrations/
+  manifest.md             orden de migraciones sobre VEGA_DRIVE_DB
+wrangler.toml
+tests/
 ```
 
-### Aislamiento de R2
+## Servicios Cloudflare
 
-No se configura CORS para el navegador en el bucket R2: R2 no recibe peticiones desde el cliente. El bucket permanece privado y solo el Worker/backend utiliza sus bindings o credenciales privadas. Cualquier necesidad de descarga o subida se implementa como una ruta autenticada de `/api`.
+| Necesidad | Servicio |
+|---|---|
+| Backend, BFF y assets | Cloudflare Workers |
+| Metadatos, usuarios y sesiones | D1: VEGA_DRIVE_DB |
+| Archivos | R2 privado, solo módulo files |
+| Coordinación de cuota si hace falta | Durable Objects |
+| Eventos y tareas futuras | Queues y Cron Triggers |
+| Anti-bots | Turnstile |
+| Rate limiting | Workers Rate Limiting |
 
-## Variables y secretos
+## Seguridad esencial
 
-| Nombre | Tipo | Descripción |
-|---|---|---|
-| `R2_ACCESS_KEY_ID` | secreto | Credencial S3 de R2 (solo permisos sobre este bucket) |
-| `R2_SECRET_ACCESS_KEY` | secreto | Clave secreta S3 de R2 |
-| `CF_ACCOUNT_ID` | secreto | ID de la cuenta de Cloudflare |
-| `BUCKET_NAME` | variable | Nombre del bucket |
-| `TURNSTILE_SECRET` | secreto | Verificación de Turnstile |
-| `INVITE_SECRET` | secreto | Firma de códigos de invitación |
-| `MAX_USERS` | variable | Tope de cuentas (10) |
+- El userId se deriva solo de la sesión validada; nunca del cliente.
+- Los assets no incluyen secretos, configuración de R2 ni lógica de negocio.
+- R2 no tiene acceso público, r2.dev, CORS de navegador ni URLs prefirmadas.
+- Las claves de objeto las crea files en el backend como u/{userId}/{uuid}.
+- D1 se mantiene como una base única, pero cada módulo solo consulta sus propios prefijos.
+- Todo PR debe pasar el checklist de [Security.md](./Security.md#checklist-de-pull-request) y las pruebas de frontera modular.
 
-## Seguridad
+## Preparación inicial
 
-Resumen de los principios (detalle completo en [SECURITY.md](./SECURITY.md)):
+1. Instalar Node.js LTS y dependencias del proyecto.
+2. Autenticarse en Cloudflare con Wrangler.
+3. Crear la D1 VEGA_DRIVE_DB y el bucket R2 vega-drive-files.
+4. Configurar los bindings en wrangler.toml.
+5. Guardar secretos mediante wrangler secret; nunca en el repositorio.
+6. Aplicar las migraciones según migrations/manifest.md.
+7. Ejecutar pruebas, typecheck y lint antes de desplegar.
 
-1. **Aislamiento por usuario en cada consulta y cada clave de R2.** El `userId` sale siempre de la sesión, nunca del cliente.
-2. **Bucket privado.** Todo acceso a objetos es efectuado por el Worker/backend; no se emiten URLs prefirmadas al navegador.
-3. **Registro cerrado** (invitación o tope de 10 usuarios).
-4. **Secretos solo en `wrangler secret`**, jamás en el código ni en el repositorio.
-5. **Cada implementación del roadmap debe cumplir el checklist de seguridad** antes de fusionarse.
+El binding de R2 es preferible. Si se requiere un adaptador S3 compatible, sus credenciales viven solo en el Worker y únicamente en infraestructura de files.
 
 ## Contribución
 
-- Trabaja en ramas `feature/<fase>-<descripcion>` y abre PR hacia `main`.
-- Cada PR debe incluir el checklist de seguridad de [Security.md](./Security.md#checklist-de-pull-request) completado.
-- Commits en formato convencional (`feat:`, `fix:`, `chore:`, `docs:`, `security:`).
-
-## Licencia
-
-Por definir (producto propietario).
+- Una subfase por rama feature/<fase>-<descripción>.
+- Commits convencionales: feat:, fix:, docs:, security: o chore:.
+- No se fusiona código que rompa los límites de módulos, la seguridad o el checklist de PR.

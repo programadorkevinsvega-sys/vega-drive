@@ -1,6 +1,6 @@
 # Reglas de seguridad de Vega Drive
 
-Estas reglas son **obligatorias** para cada implementación. Cada regla tiene un ID (`SEC-XXX-NN`) que el [ROADMAP](./ROADMAP.md) referencia en cada fase. Si una tarea no puede cumplir una regla, se documenta la excepción en el PR y se aprueba explícitamente.
+Estas reglas son **obligatorias** para cada implementación. Cada regla tiene un ID (`SEC-XXX-NN`) que el [roadmap](./roadmap.md) referencia en cada fase. La separación de módulos se rige además por [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md). Si una tarea no puede cumplir una regla, se documenta la excepción en el PR y se aprueba explícitamente.
 
 Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; el atacante principal es **otro cliente autenticado** (que intenta acceder a datos ajenos), seguido de bots anónimos (fuerza bruta, abuso del registro) y de errores propios (secretos filtrados, configuraciones laxas).
 
@@ -9,7 +9,7 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 ## 1. Aislamiento entre clientes (ISO)
 
 - **SEC-ISO-01** El `userId` se obtiene **únicamente de la sesión validada en el servidor**. Nunca de la URL, el body, headers ni cookies no firmadas.
-- **SEC-ISO-02** Toda consulta a D1 sobre datos de usuario incluye `WHERE user_id = ?` con el ID de la sesión. Se centraliza en una capa de acceso a datos; prohibido SQL suelto en las rutas.
+- **SEC-ISO-02** Toda consulta a D1 sobre datos de usuario incluye `WHERE user_id = ?` con el ID de la sesión. Cada repositorio vive en el módulo dueño y solo accede a sus tablas con prefijo; prohibido SQL suelto en rutas, gateways o módulos ajenos.
 - **SEC-ISO-03** Un recurso ajeno responde **404** (no 403), para no revelar que existe.
 - **SEC-ISO-04** Las claves de R2 las genera el servidor con el formato `u/{userId}/{uuid}`. El cliente nunca envía, elige, conoce ni recibe una clave o URL de R2.
 - **SEC-ISO-05** Antes de cada operación de subida, descarga, lectura o borrado en R2, el Worker verifica en D1 que el recurso pertenece al usuario de la sesión. El navegador nunca contacta R2.
@@ -44,9 +44,9 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 ## 5. Almacenamiento y R2 (R2)
 
 - **SEC-R2-01** Bucket **privado**: sin acceso público ni dominio público ni `r2.dev` habilitado.
-- **SEC-R2-02** Token S3 de R2 con permisos mínimos (Object Read & Write) limitado a **este bucket**. Rotación periódica.
+- **SEC-R2-02** El binding o token S3 de R2 tiene permisos mínimos (Object Read & Write) limitados a **este bucket**, y solo infrastructure/storage/r2 del módulo files puede usarlo. Rotación periódica.
 - **SEC-R2-03** Está prohibido emitir URLs prefirmadas, endpoints, credenciales o tokens de R2 al navegador. Toda transferencia pasa por una ruta autenticada del Worker/backend.
-- **SEC-R2-04** El Worker valida el tamaño total y transmite a R2 solo después de autorizar la operación. Cualquier multipart interno queda encapsulado en el backend y no expone partes ni identificadores al navegador.
+- **SEC-R2-04** El módulo files valida el tamaño total y transmite a R2 solo después de autorizar la operación. Cualquier multipart interno queda encapsulado en el backend y no expone partes ni identificadores al navegador.
 - **SEC-R2-05** Al completar, verificar con `HEAD` el **tamaño real** del objeto frente a la cuota y al tamaño declarado; si excede, borrar el objeto y rechazar.
 - **SEC-R2-06** El Worker transmite las descargas con `Content-Disposition: attachment` y `X-Content-Type-Options: nosniff` para evitar XSS almacenado por archivos HTML/SVG subidos.
 - **SEC-R2-07** Regla de ciclo de vida para abortar subidas multipart incompletas y cron de limpieza de subidas huérfanas.
@@ -57,40 +57,47 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 - **SEC-FE-01** El frontend solo presenta interfaz y envía solicitudes al mismo origen `/api`. No toma decisiones de autorización, cuotas, propiedad, claves de almacenamiento ni reglas de negocio; el servidor siempre es la fuente de verdad.
 - **SEC-FE-02** Los assets del frontend no importan SDKs de R2/S3 ni contienen endpoint, bucket, configuración, URL prefirmada, token o credencial de R2.
 
-## 7. CORS, cabeceras y transporte (WEB)
+## 7. Fronteras modulares y D1 única (MOD)
+
+- **SEC-MOD-01** Un módulo solo se comunica con otro mediante su API pública y un gateway. Están prohibidos imports de domain, application, infrastructure o repositorios internos de otro módulo.
+- **SEC-MOD-02** VEGA_DRIVE_DB es única, pero cada módulo solo lee y escribe sus tablas con prefijo. Están prohibidos JOINs, claves foráneas, SQL y `db.batch()` entre prefijos distintos; una referencia entre módulos es un valor, no una FK.
+- **SEC-MOD-03** CI ejecuta un lint o test de arquitectura que bloquea imports internos y SQL que mencione el prefijo de otro módulo.
+- **SEC-MOD-04** Controllers y gateways del BFF no contienen reglas de negocio ni acceden a D1 o R2. El actor autenticado se deriva de la sesión del backend, nunca de ownerId, rol o permisos enviados por el cliente.
+
+## 8. CORS, cabeceras y transporte (WEB)
 
 - **SEC-WEB-01** Servir frontend y API desde el **mismo origen**; sin CORS abierto en la API. Si hace falta CORS, lista blanca exacta, nunca `*` con credenciales.
 - **SEC-WEB-02** Cabeceras en todas las respuestas: `Content-Security-Policy` estricta (sin `unsafe-inline` si es posible), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` (o `frame-ancestors 'none'`).
 - **SEC-WEB-03** Solo HTTPS; redirección forzada y "Always Use HTTPS" activo.
 - **SEC-WEB-04** Respuestas de la API con `Cache-Control: no-store` en datos autenticados.
 
-## 8. Límite de peticiones y abuso (RATE)
+## 9. Límite de peticiones y abuso (RATE)
 
 - **SEC-RATE-01** Rate limiting en login, registro, transferencias de archivos por `/api` y creación de subidas (por IP y por usuario).
 - **SEC-RATE-02** Bloqueo temporal progresivo tras intentos fallidos de login.
 - **SEC-RATE-03** Tope de transferencias y subidas internas activas simultáneas por usuario.
 - **SEC-RATE-04** Reglas WAF de Cloudflare activas sobre el dominio.
 
-## 9. Secretos y configuración (SEC)
+## 10. Secretos y configuración (SEC)
 
 - **SEC-SEC-01** Ningún secreto en el repositorio, en `wrangler.toml`, en logs ni en el frontend. El frontend tampoco contiene endpoint, bucket, SDK, URL prefirmada, token ni configuración de R2. Solo el Worker usa `wrangler secret` / variables de entorno.
 - **SEC-SEC-02** `.gitignore` incluye `.dev.vars`, `.env*`, `node_modules`, `.wrangler`.
 - **SEC-SEC-03** Escaneo de secretos en CI (p. ej. gitleaks) y protección de rama `main`.
 - **SEC-SEC-04** Si un secreto se filtra: rotar de inmediato y revisar logs de acceso.
 
-## 10. Registro, auditoría y privacidad (LOG)
+## 11. Registro, auditoría y privacidad (LOG)
 
 - **SEC-LOG-01** Registrar eventos de seguridad (login correcto/fallido, registro, cambio de contraseña, subida, borrado, compartición) con `userId`, IP y fecha.
 - **SEC-LOG-02** Nunca registrar contraseñas, tokens, URLs prefirmadas completas ni cuerpos de petición sensibles.
 - **SEC-LOG-03** Los errores al cliente son genéricos; el detalle va solo a logs internos.
 
-## 11. Dependencias y cadena de suministro (DEP)
+## 12. Dependencias y cadena de suministro (DEP)
 
 - **SEC-DEP-01** Mínimo de dependencias; versiones fijadas con lockfile.
 - **SEC-DEP-02** `npm audit` / Dependabot activos; revisar antes de actualizar.
 - **SEC-DEP-03** Preferir APIs nativas de Workers/Web Crypto antes que librerías de terceros.
 
-## 12. Compartición de enlaces (SHARE)
+## 13. Compartición de enlaces (SHARE)
 
 - **SEC-SHARE-01** Token aleatorio de ≥ 32 bytes, guardado con hash; con expiración obligatoria y revocable por el dueño.
 - **SEC-SHARE-02** Solo permiso de lectura por defecto; contraseña opcional.
@@ -106,6 +113,8 @@ Marca cada punto en el PR (si no aplica, indica "N/A" y por qué):
 - [ ] Añadí pruebas de acceso cruzado entre usuarios (SEC-ISO-06).
 - [ ] Toda entrada nueva está validada con esquema (SEC-VAL-01) y el SQL usa parámetros (SEC-VAL-02).
 - [ ] El frontend no incorpora lógica de negocio y solo llama al mismo origen `/api` (SEC-FE-01).
+- [ ] El BFF usa gateways y APIs públicas; no importa internals de módulos, SQL, D1 ni R2 (SEC-MOD-01, SEC-MOD-04).
+- [ ] El cambio usa solo tablas del prefijo dueño, sin JOIN, FK ni batch cruzado, y pasa el lint/test de fronteras (SEC-MOD-02, SEC-MOD-03).
 - [ ] Ninguna clave, endpoint, SDK, URL, token, configuración ni ruta de R2 llega al cliente; el Worker es el único acceso a R2 (SEC-FE-02, SEC-ISO-04, SEC-R2-03, SEC-R2-08).
 - [ ] Cada operación de R2 se autoriza en el Worker y no se emiten URLs prefirmadas (SEC-ISO-05, SEC-R2-03).
 - [ ] Los endpoints nuevos tienen rate limiting (SEC-RATE-01).
