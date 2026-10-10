@@ -1,4 +1,4 @@
--- Files-owned metadata schema. No foreign key to identity or other modules.
+-- Files-owned metadata schema; no cross-module references.
 CREATE TABLE IF NOT EXISTS files_folders (
   id TEXT PRIMARY KEY NOT NULL,
   owner_id TEXT NOT NULL,
