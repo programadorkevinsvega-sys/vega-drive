@@ -10,7 +10,15 @@ const migrationsDirectory = resolve(
 const wranglerCommand = process.env.WRANGLER_COMMAND ?? "pnpm";
 const wranglerArgs =
   wranglerCommand === "pnpm"
-    ? ["exec", "wrangler", "d1", "execute", databaseName, "--remote", "--json"]
+    ? [
+        "exec",
+        "wrangler",
+        "d1",
+        "execute",
+        databaseName,
+        "--remote",
+        "--json",
+      ]
     : ["d1", "execute", databaseName, "--remote", "--json"];
 
 function normalizeSql(sql) {
@@ -117,10 +125,7 @@ const actual = new Map(
         typeof row.name === "string" &&
         typeof row.sql === "string",
     )
-    .map((row) => [
-      `${row.type}:${row.name}`,
-      normalizeSql(row.sql),
-    ]),
+    .map((row) => [`${row.type}:${row.name}`, normalizeSql(row.sql)]),
 );
 
 const missing = [];
