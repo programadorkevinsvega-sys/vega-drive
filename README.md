@@ -1,101 +1,39 @@
 # Vega Drive
 
-Sistema privado de almacenamiento de archivos en la nube, construido sobre Cloudflare para un máximo de 10 clientes. El aislamiento entre cuentas es obligatorio: un cliente no puede leer, editar ni eliminar archivos de otro.
+Sistema privado de almacenamiento de archivos en la nube sobre Cloudflare, para un máximo de 10 clientes. El aislamiento entre cuentas es obligatorio.
 
-> Estado: planificación. El contrato de arquitectura está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), la seguridad en [Security.md](./Security.md) y las fases en [roadmap.md](./roadmap.md).
+> Estado: Fase 0 en construcción. Consulta [arquitectura](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), [seguridad](./Security.md) y [roadmap](./roadmap.md).
 
 ## Arquitectura
 
-Vega Drive es un monolito modular serverless:
+Monolito modular serverless: un Worker, una D1 (`VEGA_DRIVE_DB`) y un bucket R2 privado. Frontend y BFF comparten origen; el navegador solo consume `/api`. Solo infraestructura del módulo `files` podrá usar R2 mediante `IFileStoragePort`.
 
-- Un solo repositorio, código desplegable y Cloudflare Worker.
-- Frontend y backend separados por capas, pero servidos desde el mismo Worker y origen.
-- Una sola D1: VEGA_DRIVE_DB.
-- Módulos internos con API pública y gateways en proceso; no son microservicios hoy.
-- R2 es privado y solo el módulo files accede a él por IFileStoragePort.
-- El frontend llama únicamente a /api y nunca conoce ni contacta R2.
+## Desarrollo
 
-```text
-Navegador
-   │ HTML, JS, CSS y /api desde el mismo origen
-   ▼
-Worker único de Vega Drive
-├── frontend / assets
-├── BFF: Hono, controllers y gateways
-└── módulos: identity · files · quota · sharing
-       ├── D1 única: VEGA_DRIVE_DB
-       └── R2 privado: solo files
+Requisitos: Node.js 22+, npm 10+ y cuenta Cloudflare. Ejecuta `npm install` y `npm run dev`. Configura secretos solo con Wrangler, por ejemplo `npx wrangler secret put TURNSTILE_SECRET_KEY`; nunca los guardes en Git.
+
+## Recursos Cloudflare
+
+El ID de D1 en `wrangler.toml` es un marcador hasta crear el recurso en la cuenta correcta:
+
+```bash
+npx wrangler d1 create VEGA_DRIVE_DB
+npx wrangler r2 bucket create vega-drive-files
 ```
 
-Cada módulo es dueño de sus tablas con prefijo, migraciones, repositorios, dominio y API pública. Aunque existe una sola D1, están prohibidos JOIN, FK, SQL, imports internos o transacciones entre módulos. CI verifica estas fronteras.
+Copia el ID devuelto por Wrangler. Mantén R2 privado: sin `r2.dev`, dominio público ni CORS de navegador. No añadas credenciales de R2 al frontend.
 
-## Flujo de archivos
+## Comandos
 
-1. El frontend envía el archivo a POST /api/files.
-2. El BFF valida transporte y sesión; crea AuthenticatedActor y llama FilesGateway.
-3. El módulo files valida autorización, cuota, nombre y tamaño.
-4. Su adaptador privado transmite a R2; el navegador nunca recibe una URL, token, SDK o clave de R2.
-5. El módulo registra los metadatos y devuelve un resultado seguro.
-
-Las descargas atraviesan GET /api/files/:id/download y el Worker transmite el contenido autorizado desde R2.
-
-## Estructura propuesta
-
-```text
-src/
-  worker/                 fetch, queue, scheduled y composition root
-  bff/                    Hono, controllers, gateways y middleware
-  modules/
-    identity/             dominio, aplicación, infraestructura y migraciones
-    files/                catálogo y R2 privado
-    quota/                límites de almacenamiento
-    sharing/              enlaces compartidos
-  platform/               logging, eventos y observabilidad
-  shared-kernel/          abstracciones universales mínimas
-frontend/
-  src/                    presentación y estado visual
-public/
-migrations/
-  manifest.md             orden de migraciones sobre VEGA_DRIVE_DB
-wrangler.toml
-tests/
-```
-
-## Servicios Cloudflare
-
-| Necesidad | Servicio |
+| Comando | Propósito |
 |---|---|
-| Backend, BFF y assets | Cloudflare Workers |
-| Metadatos, usuarios y sesiones | D1: VEGA_DRIVE_DB |
-| Archivos | R2 privado, solo módulo files |
-| Coordinación de cuota si hace falta | Durable Objects |
-| Eventos y tareas futuras | Queues y Cron Triggers |
-| Anti-bots | Turnstile |
-| Rate limiting | Workers Rate Limiting |
+| `npm run dev` | Worker local |
+| `npm run format:check` | Formato |
+| `npm run lint` | Guardia arquitectónica |
+| `npm run typecheck` | TypeScript estricto |
+| `npm test` | Pruebas |
+| `npm run check` | Verificaciones locales |
 
-## Seguridad esencial
+## CI
 
-- El userId se deriva solo de la sesión validada; nunca del cliente.
-- Los assets no incluyen secretos, configuración de R2 ni lógica de negocio.
-- R2 no tiene acceso público, r2.dev, CORS de navegador ni URLs prefirmadas.
-- Las claves de objeto las crea files en el backend como u/{userId}/{uuid}.
-- D1 se mantiene como una base única, pero cada módulo solo consulta sus propios prefijos.
-- Todo PR debe pasar el checklist de [Security.md](./Security.md#checklist-de-pull-request) y las pruebas de frontera modular.
-
-## Preparación inicial
-
-1. Instalar Node.js LTS y dependencias del proyecto.
-2. Autenticarse en Cloudflare con Wrangler.
-3. Crear la D1 VEGA_DRIVE_DB y el bucket R2 vega-drive-files.
-4. Configurar los bindings en wrangler.toml.
-5. Guardar secretos mediante wrangler secret; nunca en el repositorio.
-6. Aplicar las migraciones según migrations/manifest.md.
-7. Ejecutar pruebas, typecheck y lint antes de desplegar.
-
-El binding de R2 es preferible. Si se requiere un adaptador S3 compatible, sus credenciales viven solo en el Worker y únicamente en infraestructura de files.
-
-## Contribución
-
-- Una subfase por rama feature/<fase>-<descripción>.
-- Commits convencionales: feat:, fix:, docs:, security: o chore:.
-- No se fusiona código que rompa los límites de módulos, la seguridad o el checklist de PR.
+Cada PR a `main` ejecuta formato, guardia arquitectónica, typecheck, pruebas, `npm audit` y Gitleaks. Dependabot y plantilla de PR quedan configurados. La protección de rama requiere activar en GitHub la obligatoriedad de CI; un workflow no protege `main` por sí solo.
