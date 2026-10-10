@@ -9,6 +9,7 @@ describe("identity password policy and storage", () => {
   it("rejects short, trivial, repetitive and overlong passwords", () => {
     expect(validatePassword("short")).toBe(false);
     expect(validatePassword("Password123456")).toBe(false);
+    expect(validatePassword("Password123456!")).toBe(false);
     expect(validatePassword("aaaaaaaaaaaa")).toBe(false);
     expect(validatePassword("123456789012")).toBe(false);
     expect(validatePassword("x".repeat(129))).toBe(false);
