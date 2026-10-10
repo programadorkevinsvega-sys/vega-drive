@@ -1,78 +1,84 @@
 # Vega Drive
 
-Sistema privado de almacenamiento de archivos en la nube sobre Cloudflare para un máximo de 10 clientes. El aislamiento entre cuentas es obligatorio: un cliente no puede leer, editar ni eliminar archivos de otro.
+Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> Estado: Fase 0 en construcción. Consulta ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md, Security.md y roadmap.md.
+> **Estado real:** el esqueleto del Worker está desplegado en Cloudflare, pero la aplicación de archivos aún no está lista para producción con datos reales. No están implementados el registro/login, la autorización por usuario, el esquema de D1 ni las operaciones de subida y descarga de archivos. No habilites usuarios reales hasta cerrar esos puntos y las comprobaciones de seguridad.
 
 ## Arquitectura
 
-Vega Drive es un monolito modular serverless: un Worker, una base D1 (VEGA_DRIVE_DB) y un bucket R2 privado. El frontend y el BFF comparten origen. El navegador solo consume /api; nunca contacta R2 ni recibe credenciales, SDK de almacenamiento o URLs prefirmadas.
+Vega Drive se diseña como un monolito modular serverless:
 
-Cada módulo (identity, files, quota y sharing) es dueño de sus tablas con prefijo, migraciones, repositorios, dominio y API pública. Aunque existe una sola D1, están prohibidos JOIN, claves foráneas, SQL entre módulos, imports de implementaciones internas y transacciones entre módulos. La guardia de arquitectura inspecciona el código fuente para detectar varias de estas violaciones; no sustituye la revisión de código.
+- Un único Cloudflare Worker y un único origen para frontend y API.
+- Una única D1 con binding `VEGA_DRIVE_DB`.
+- Un bucket R2 privado con binding `FILES_BUCKET`.
+- El navegador solo consume rutas del mismo origen bajo `/api`; nunca accede directamente a R2.
+- Los módulos previstos son `identity`, `files`, `quota` y `sharing`. Cada módulo debe poseer sus tablas con prefijo, migraciones, dominio y API pública.
+- Los módulos solo se comunican mediante sus API públicas/gateways. No se permiten JOIN, claves foráneas ni SQL entre prefijos de módulos.
 
-El módulo files será el único autorizado para usar R2, mediante IFileStoragePort en su infraestructura. La Fase 0 solo establece la estructura: el adaptador de almacenamiento, la autorización por usuario y el flujo real de archivos todavía no están implementados.
+El adaptador real de almacenamiento, autenticación, autorización por usuario y flujo de archivos siguen pendientes. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
 ## Flujo de archivos previsto
 
-1. El frontend envía el archivo a POST /api/files.
-2. El BFF valida transporte y sesión y llama a FilesGateway.
-3. El módulo files valida autorización, cuota, nombre y tamaño.
-4. Su adaptador privado transmite a R2.
+1. El frontend envía el archivo a `POST /api/files`.
+2. El BFF valida la petición y la sesión y llama a `FilesGateway`.
+3. El módulo `files` valida autorización, cuota, nombre y tamaño.
+4. El adaptador privado transmite el objeto a R2.
 5. El módulo registra los metadatos y devuelve un resultado seguro.
 
-Las descargas atravesarán GET /api/files/:id/download y el Worker transmitirá el contenido autorizado desde R2. Este flujo es el objetivo arquitectónico, no una función ya implementada.
+Las descargas se harán por `GET /api/files/:id/download`, tras autorizar el recurso y transmitir el contenido desde el Worker. Este flujo todavía no está implementado.
 
 ## Estructura
 
-- src/worker: entrada del Worker y handlers.
-- src/bff: Hono y composition root.
-- src/modules/identity, files, quota y sharing: límites modulares y APIs públicas.
-- src/platform: infraestructura técnica compartida.
-- src/shared-kernel: abstracciones universales mínimas.
-- public: assets estáticos.
-- tests: pruebas y verificaciones de arquitectura.
+- `src/worker`: entrada del Worker.
+- `src/bff`: Hono y composition root.
+- `src/modules/identity`, `files`, `quota`, `sharing`: límites y APIs públicas de módulos.
+- `src/platform`: infraestructura técnica compartida.
+- `src/shared-kernel`: abstracciones compartidas mínimas.
+- `public`: assets estáticos.
+- `tests`: pruebas de salud, configuración y arquitectura.
 
 ## Servicios Cloudflare
 
-| Necesidad                      | Servicio                                                     |
-| ------------------------------ | ------------------------------------------------------------ |
-| Backend, BFF y assets          | Cloudflare Workers                                           |
-| Metadatos, usuarios y sesiones | D1: VEGA_DRIVE_DB                                            |
-| Archivos                       | R2 privado, solo módulo files                                |
-| Anti-bots                      | Turnstile                                                    |
-| Tareas futuras                 | Queues y Cron Triggers, solo cuando haya consumidores reales |
+| Necesidad | Servicio |
+| --- | --- |
+| Backend, BFF y assets | Cloudflare Workers |
+| Metadatos, usuarios y sesiones | D1: `VEGA_DRIVE_DB` |
+| Archivos | R2 privado: `FILES_BUCKET` |
+| Anti-bots | Turnstile, pendiente de configuración |
 
-El userId deberá derivarse de la sesión validada, nunca de una entrada confiada al cliente. R2 no debe tener acceso público, r2.dev, dominio público ni CORS de navegador. Las claves de objeto se crearán en el backend.
+El ID D1 y el nombre del bucket en `wrangler.toml` corresponden a recursos de la cuenta conectada al despliegue. La existencia de un binding no demuestra que exista el esquema de tablas ni que el bucket sea privado. Verifica en Cloudflare que R2 no tenga acceso público, dominio público, `r2.dev` ni CORS de navegador.
 
 ## Desarrollo
 
-Requisitos: Node.js 22+, npm 10+ y cuenta Cloudflare. Ejecuta npm install y npm run dev. Configura secretos solo con Wrangler, por ejemplo npx wrangler secret put TURNSTILE_SECRET_KEY; nunca los guardes en Git.
+Requisitos: Node.js 22+ y pnpm 10.18.3.
 
-## Recursos Cloudflare
+```bash
+pnpm install --frozen-lockfile
+pnpm run dev
+pnpm run check
+```
 
-El ID de D1 en wrangler.toml es un marcador hasta crear el recurso en la cuenta correcta:
+No guardes secretos en Git ni en `wrangler.toml`. Configura secretos de Worker mediante Wrangler, por ejemplo:
 
-    npx wrangler d1 create VEGA_DRIVE_DB
-    npx wrangler r2 bucket create vega-drive-files
+```bash
+pnpm exec wrangler secret put TURNSTILE_SECRET_KEY
+```
 
-Copia el ID real de D1 a wrangler.toml. npm run deploy se bloquea mientras el ID siga siendo el marcador. Mantén R2 privado. La comprobación local no puede verificar si el bucket está expuesto públicamente en la cuenta Cloudflare.
+La clave de sitio de Turnstile es pública; la clave secreta nunca debe incluirse en el frontend ni en archivos versionados.
 
-## Comandos
+## Comprobaciones y CI
 
-| Comando              | Propósito                                      |
-| -------------------- | ---------------------------------------------- |
-| npm run dev          | Worker local                                   |
-| npm run format:check | Formato                                        |
-| npm run lint         | Guardia arquitectónica                         |
-| npm run typecheck    | TypeScript estricto                            |
-| npm test             | Pruebas                                        |
-| npm run check        | Formato, arquitectura, tipos y pruebas         |
-| npm run deploy       | Comprueba el ID D1 y después intenta desplegar |
+`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. GitHub Actions debe ejecutar esas comprobaciones, auditoría de dependencias y Gitleaks en los pushes a `main` y en PRs. Un workflow no protege por sí solo la rama: la obligatoriedad de los checks debe configurarse en GitHub.
 
-## CI y protección de rama
+## Cierre de Fase 0 y preparación para producción
 
-Cada PR a main ejecuta formato, guardia arquitectónica, typecheck, pruebas, npm audit y Gitleaks. Gitleaks necesita permiso de lectura de PR para consultar los commits del pull request. Dependabot y la plantilla de PR quedan configurados. La protección de rama requiere activar en GitHub la obligatoriedad de CI; un workflow no protege main por sí solo.
+No declarar la Fase 0 ni la preparación para producción como completadas hasta verificar:
 
-## Estado de Fase 0
+- CI verde en el commit actual y protección de `main` con los checks obligatorios.
+- `/api/health` desplegado y respondiendo.
+- D1 con migraciones/esquema aplicados y comprobados.
+- R2 privado, sin exposición pública/CORS, y operaciones reales probadas a través del Worker.
+- Secretos y variables de entorno configurados; Turnstile listo si se exige para registro/login.
+- Autenticación, autorización por usuario, aislamiento entre clientes y flujos de archivos implementados y probados antes de admitir usuarios reales.
 
-No declarar la Fase 0 completa hasta tener un lockfile de npm versionado, CI verde, recursos D1/R2 reales y privados, y protección de la rama main. Los módulos de negocio y el flujo de archivos no forman parte de este andamiaje.
+La estructura actual es un andamiaje inicial. La arquitectura y el roadmap describen las fases posteriores; no son evidencia de funcionalidades implementadas.
