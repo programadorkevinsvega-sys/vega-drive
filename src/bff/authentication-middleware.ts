@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import type { Env } from "../worker/env.js";
-import { createCompositionRoot } from "./composition-root.js";
+import { createCompositionRoot } from "../worker/composition-root.js";
 import type { AuthenticatedActor } from "./authenticated-actor.js";
 
 export type AuthenticatedEnv = {

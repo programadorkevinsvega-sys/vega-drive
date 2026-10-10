@@ -31,15 +31,29 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-function fromBase64(value: string): Uint8Array {
+function fromBase64(value: string): Uint8Array<ArrayBuffer> {
   const binary = atob(value);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(new ArrayBuffer(binary.length));
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+}
+
+function constantTimeEqual(actual: Uint8Array, expected: Uint8Array): boolean {
+  let difference = actual.length ^ expected.length;
+  const length = Math.max(actual.length, expected.length);
+  for (let index = 0; index < length; index += 1) {
+    difference |= (actual[index] ?? 0) ^ (expected[index] ?? 0);
+  }
+  return difference === 0;
 }
 
 export async function hashPassword(
   password: string,
 ): Promise<{ passwordHash: string; passwordSalt: string }> {
-  const salt = crypto.getRandomValues(new Uint8Array(PASSWORD_SALT_BYTES));
+  const salt = new Uint8Array(new ArrayBuffer(PASSWORD_SALT_BYTES));
+  crypto.getRandomValues(salt);
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
@@ -86,7 +100,7 @@ export async function verifyPassword(
     const actual = new Uint8Array(bits);
     return (
       actual.length === expected.length &&
-      crypto.subtle.timingSafeEqual(actual, expected)
+      constantTimeEqual(actual, expected)
     );
   } catch {
     return false;

@@ -54,8 +54,9 @@ describe("identity change-password use case", () => {
       revokeOtherSessions: vi.fn(async () => undefined),
       touch: vi.fn(async () => undefined),
     };
+    const appendOutbox = vi.fn(async () => undefined);
     const outbox: IdentityOutboxRepository = {
-      append: vi.fn(async () => undefined),
+      append: appendOutbox,
       listUnpublished: vi.fn(async () => []),
       markPublished: vi.fn(async () => true),
     };
@@ -93,7 +94,7 @@ describe("identity change-password use case", () => {
         }),
       }),
     );
-    expect(JSON.stringify(outbox.append.mock.calls)).not.toContain(
+    expect(JSON.stringify(appendOutbox.mock.calls)).not.toContain(
       "Old passphrase",
     );
     expect(JSON.stringify(outbox.append.mock.calls)).not.toContain(
