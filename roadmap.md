@@ -128,7 +128,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 2 — Módulo identity
 
-**Estado: IMPLEMENTACIÓN EN CURSO (2026-10-10).** El flujo inicial de identidad está implementado en código. La fase sigue abierta hasta que CI/build y las pruebas productivas pasen; la configuración observada aún tiene TURNSTILE_SITE_KEY vacía.
+**Estado: IMPLEMENTACIÓN EN CURSO (2026-10-10).** Registro, login, logout, resolución de sesión, cambio de contraseña, limitación progresiva y auditoría están implementados en código con pruebas añadidas. La fase sigue abierta: los nuevos tests aún necesitan ejecutarse en CI tras el formateo manual, y la configuración de producción observada tiene TURNSTILE_SITE_KEY vacía. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md) para endpoints, controles, configuración y procedimiento de verificación.
 
 **Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main` y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
 
@@ -146,8 +146,13 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Implementar Login, Logout y SessionResolver dentro de identity.
 - [x] Usar cookie `__Host-session` y guardar solo hash de token.
 - [x] Crear AuthenticatedActor desde la sesión validada en middleware BFF.
-- [ ] Pasar AuthenticatedActor a gateways; nunca aceptar ownerId, rol o permisos del navegador como autoridad.
-- **Aceptación:** las rutas protegidas responden 401 sin sesión y un ownerId enviado por cliente no altera la autorización.
+- [x] Pasar el actor derivado de la sesión validada al gateway de identity para cambio de contraseña; nunca aceptar ownerId, rol o permisos del navegador como autoridad.
+- [x] Proteger cambio de contraseña con AuthenticatedActor; validar sesión y no aceptar campos desconocidos como userId/ownerId.
+- [x] Añadir auditoría de login, registro y cambio de contraseña sin guardar contraseñas ni tokens.
+- [x] Añadir bloqueo progresivo por correo/IP con claves hasheadas y expiración de ventana.
+- [x] Limitar el cuerpo JSON a 64 KiB durante lectura, verificar Origin y aplicar cabeceras de seguridad.
+- [x] Añadir pruebas de casos de uso y límites HTTP para registro, login, logout, sesiones, contraseña, Turnstile y rate limiting.
+- **Aceptación:** las rutas protegidas responden 401 sin sesión y un ownerId enviado por cliente no altera la autorización. Ejecución completa de pruebas y CI aún pendiente.
 - 🔒 SEC-SES-01…05, SEC-ISO-01, SEC-AUTH-02, SEC-AUTH-04.
 
 ---
