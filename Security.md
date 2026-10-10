@@ -9,7 +9,7 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 ## 1. Aislamiento entre clientes (ISO)
 
 - **SEC-ISO-01** El `userId` se obtiene **únicamente de la sesión validada en el servidor**. Nunca de la URL, el body, headers ni cookies no firmadas.
-- **SEC-ISO-02** Toda consulta a D1 sobre datos de usuario incluye `WHERE user_id = ?` con el ID de la sesión. Cada repositorio vive en el módulo dueño y solo accede a sus tablas con prefijo; prohibido SQL suelto en rutas, gateways o módulos ajenos.
+- **SEC-ISO-02** Toda consulta a D1 sobre datos propiedad de un usuario debe limitarse al actor obtenido de la sesión validada usando la columna de propiedad definida por el esquema del módulo. En tablas que usan `user_id`, aplica `WHERE user_id = ?`; en las tablas de `files` existentes (`files_items`, `files_folders` y `files_uploads`), aplica `WHERE owner_id = ?`. Las búsquedas directas de recursos deben combinar el identificador del recurso con el filtro de propiedad, nunca confiar solo en un ID recibido del cliente. Cada repositorio vive en el módulo dueño y solo accede a sus tablas con prefijo; está prohibido SQL suelto en rutas, gateways o módulos ajenos.
 - **SEC-ISO-03** Un recurso ajeno responde **404** (no 403), para no revelar que existe.
 - **SEC-ISO-04** Las claves de R2 las genera el servidor con el formato `u/{userId}/{uuid}`. El cliente nunca envía, elige, conoce ni recibe una clave o URL de R2.
 - **SEC-ISO-05** Antes de cada operación de subida, descarga, lectura o borrado en R2, el Worker verifica en D1 que el recurso pertenece al usuario de la sesión. El navegador nunca contacta R2.
