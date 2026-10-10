@@ -67,25 +67,6 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
     input: RegisterUserInput,
     clientIp: string | null = null,
   ): Promise<RegisterUserResult> {
-    const email = normalizeEmail(input.email);
-    if (!email || !validatePassword(input.password)) {
-      return { ok: false, reason: "invalid-input" };
-    }
-    if (
-      typeof input.turnstileToken !== "string" ||
-      !input.turnstileToken ||
-      input.turnstileToken.length > 2048
-    ) {
-      await audit("identity.register.captcha-failed", null, clientIp);
-      return { ok: false, reason: "captcha-failed" };
-    }
-    if (
-      !Number.isInteger(deps.maxUsers) ||
-      deps.maxUsers < 1 ||
-      deps.maxUsers > 10
-    ) {
-      return { ok: false, reason: "registration-closed" };
-    }
     const nowMs = now().getTime();
     const ipHash = clientIp
       ? await hashRateKey("register-ip:" + clientIp)
@@ -95,6 +76,32 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
       if (state?.lockedUntil && state.lockedUntil > nowMs) {
         return { ok: false, reason: "rate-limited" };
       }
+    }
+    const email = normalizeEmail(input.email);
+    if (!email || !validatePassword(input.password)) {
+      if (ipHash && deps.attempts) {
+        await deps.attempts.recordFailure(ipHash, nowMs, 900000);
+      }
+      await audit("identity.register.invalid-input", null, clientIp);
+      return { ok: false, reason: "invalid-input" };
+    }
+    if (
+      typeof input.turnstileToken !== "string" ||
+      !input.turnstileToken ||
+      input.turnstileToken.length > 2048
+    ) {
+      if (ipHash && deps.attempts) {
+        await deps.attempts.recordFailure(ipHash, nowMs, 900000);
+      }
+      await audit("identity.register.captcha-failed", null, clientIp);
+      return { ok: false, reason: "captcha-failed" };
+    }
+    if (
+      !Number.isInteger(deps.maxUsers) ||
+      deps.maxUsers < 1 ||
+      deps.maxUsers > 10
+    ) {
+      return { ok: false, reason: "registration-closed" };
     }
     let captchaValid = false;
     try {
