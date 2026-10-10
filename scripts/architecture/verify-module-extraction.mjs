@@ -9,14 +9,14 @@ await runGuard(
     let applicationCount = 0;
     for (const file of files) {
       const rel = relativePath(file);
-      const domain = /\\/domain\\//.test(rel);
-      const application = /\\/application\\//.test(rel);
+      const domain = /\/domain\//.test(rel);
+      const application = /\/application\//.test(rel);
       if (!domain && !application) continue;
       const source = await readFile(file, "utf8");
       if (domain) {
         domainCount++;
         if (
-          /\\b(?:from\\s*|import\\s*)["'][^"']*(?:\\/application\\/|\\/infrastructure\\/|\\/bff\\/|\\/worker\\/|hono|cloudflare|wrangler)[^"']*["']/i.test(
+          /\b(?:from\s*|import\s*)["'][^"']*(?:\/application\/|\/infrastructure\/|\/bff\/|\/worker\/|hono|cloudflare|wrangler)[^"']*["']/i.test(
             source,
           )
         )
@@ -24,7 +24,7 @@ await runGuard(
             rel + ": el dominio depende de una capa externa o infraestructura.",
           );
         if (
-          /\\b(?:D1Database|R2Bucket|Hono|ExecutionContext|Fetcher)\\b|\\b(?:VEGA_DRIVE_DB|FILES_BUCKET)\\b/.test(
+          /\b(?:D1Database|R2Bucket|Hono|ExecutionContext|Fetcher)\b|\b(?:VEGA_DRIVE_DB|FILES_BUCKET)\b/.test(
             source,
           )
         )
@@ -35,7 +35,7 @@ await runGuard(
       if (application) {
         applicationCount++;
         if (
-          /\\b(?:from\\s*|import\\s*)["'][^"']*(?:\\/infrastructure\\/|\\/bff\\/|\\/worker\\/|hono|cloudflare|wrangler)[^"']*["']/i.test(
+          /\b(?:from\s*|import\s*)["'][^"']*(?:\/infrastructure\/|\/bff\/|\/worker\/|hono|cloudflare|wrangler)[^"']*["']/i.test(
             source,
           )
         )
@@ -43,7 +43,7 @@ await runGuard(
             rel + ": aplicación depende de infraestructura, BFF o plataforma.",
           );
         if (
-          /\\b(?:D1Database|D1PreparedStatement|R2Bucket|Hono|ExecutionContext|Fetcher)\\b|\\b(?:VEGA_DRIVE_DB|FILES_BUCKET)\\b/.test(
+          /\b(?:D1Database|D1PreparedStatement|R2Bucket|Hono|ExecutionContext|Fetcher)\b|\b(?:VEGA_DRIVE_DB|FILES_BUCKET)\b/.test(
             source,
           )
         )
