@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "wrangler dev",
@@ -19,20 +19,31 @@
     "cloudflare:build": "pnpm run predeploy && pnpm run check && pnpm audit --audit-level=high"
   },
   "dependencies": {
-    "hono": "4.12.25"
+    "hono": "4.13.13"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261006.1",
     "@types/node": "^26.6.5",
     "prettier": "3.6.2",
     "typescript": "5.9.3",
-    "vitest": "3.2.6",
+    "vitest": "5.0.3",
     "wrangler": "4.149.0"
   },
   "packageManager": "pnpm@10.18.3",
   "pnpm": {
     "overrides": {
-      "tinypool": "2.1.2"
+      "tinypool": "2.1.2",
+      "hono@>=4.3.3 <4.12.27": ">=4.12.27",
+      "hono@>=4.11.8 <4.12.27": ">=4.12.27",
+      "hono@>=4.0.0 <4.12.27": ">=4.12.27",
+      "hono@<4.12.34": ">=4.12.34",
+      "hono@>=3.8.0 <4.12.34": ">=4.12.34",
+      "hono@>=4.7.0 <4.12.34": ">=4.12.34",
+      "hono@>=4.12.0 <4.12.34": ">=4.12.34",
+      "vitest@>=2.1.0 <4.1.11": ">=4.1.11",
+      "@vitest/mocker@>=2.1.0 <4.1.11": ">=4.1.11",
+      "hono@<4.13.5": ">=4.13.5",
+      "hono@<4.13.7": ">=4.13.7"
     }
   }
 }
