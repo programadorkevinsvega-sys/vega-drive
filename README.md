@@ -92,7 +92,7 @@ El comando de despliegue de producción de Cloudflare Workers Builds debe ser **
 
 `db:migrate:local` aplica migraciones al D1 local. La verificación estructural compara las definiciones SQL creadas por las migraciones con `sqlite_schema`; por seguridad, si se añade una migración con `ALTER`, `DROP` u otro DDL no admitido por el verificador, el despliegue se detendrá hasta actualizar el verificador para modelar el esquema final esperado. Las tablas o índices creados manualmente también se reportan como inesperados y requieren reconciliación intencional. La comprobación no sustituye pruebas funcionales de la aplicación ni valida datos de negocio.
 
-GitHub Actions mantiene temporalmente las comprobaciones como respaldo hasta confirmar que Cloudflare ejecuta correctamente el comando en cada push. Gitleaks permanece en GitHub Actions para el escaneo de secretos; no se elimina ni se considera sustituido por las pruebas de build.
+GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecución del commit `0d1c145904f20678ea9397f114f551ce18e01cee` terminó correctamente, con 4 archivos/12 tests aprobados y sin secretos detectados. Cloudflare Workers Builds también ejecutó correctamente `pnpm run cloudflare:build` y `pnpm run deploy` el 2026-10-10, incluidas migraciones, verificación estructural D1 y smoke check de producción. Son ejecuciones separadas; no se asume que el commit de CI y el artefacto desplegado sean el mismo commit porque el log de despliegue aportado no incluye el SHA del commit.
 
 ## Cierre de Fase 0 y preparación para producción
 
