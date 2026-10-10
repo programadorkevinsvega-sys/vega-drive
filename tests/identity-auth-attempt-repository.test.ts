@@ -30,6 +30,7 @@ describe("identity auth-attempt repository", () => {
     });
     expect(fake.calls).toHaveLength(2);
     expect(fake.calls[0]?.sql).toContain("ON CONFLICT(key_hash) DO UPDATE");
+    expect(fake.calls[0]?.sql.match(/window_started_at <= \?/g)).toHaveLength(3);
     expect(fake.calls[0]?.bindings).toEqual(["sha256-key", 2000, 2000, -898000, -898000, -898000]);
     expect(fake.calls[1]?.sql).toContain("failed_attempts >= 10 THEN ? + 1800000");
     expect(fake.calls[1]?.sql).toContain("failed_attempts >= 8 THEN ? + 900000");
