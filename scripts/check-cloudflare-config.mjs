@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 import process from "node:process";
 
-const config = await readFile(
-  new URL("../wrangler.toml", import.meta.url),
-  "utf8",
-);
+const configPath =
+  process.env.VEGA_DRIVE_WRANGLER_CONFIG ??
+  new URL("../wrangler.toml", import.meta.url);
+const config = await readFile(configPath, "utf8");
 const databaseId = config.match(/^database_id\s*=\s*"([^"]+)"/m)?.[1];
 const bucketName = config.match(/^bucket_name\s*=\s*"([^"]+)"/m)?.[1];
 const failures = [];
