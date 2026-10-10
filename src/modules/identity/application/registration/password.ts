@@ -19,8 +19,9 @@ export function validatePassword(password: unknown): password is string {
   ) {
     return false;
   }
-  return !/^(?:0123456789|1234567890|abcdefghijklmnopqrstuvwxyz){1,}$/.test(
-    normalized,
+  return !(
+    /^(?:0123456789|1234567890)\\d*$/.test(normalized) ||
+    /^(?:abcdefghijklmnopqrstuvwxyz){1,}$/.test(normalized)
   );
 }
 
