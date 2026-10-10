@@ -1,7 +1,6 @@
 const PASSWORD_ITERATIONS = 100_000;
 const PASSWORD_SALT_BYTES = 16;
 const PASSWORD_HASH_BITS = 256;
-const COMMON_PASSWORDS = new Set(["123456789012", "password1234", "qwerty123456", "admin1234567", "letmein12345"]);
 export function validatePassword(password: unknown): password is string {
   if (typeof password !== "string" || password.length < 12 || password.length > 128) return false;
   const normalized = password.trim().toLowerCase();
