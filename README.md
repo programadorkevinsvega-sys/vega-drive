@@ -2,7 +2,7 @@
 
 Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> **Estado real (2026-10-10):** las Fases 0 y 1 están cerradas y la Fase 2 de identity quedó implementada y aceptada: registro, login, logout, resolución de sesión y cambio de contraseña; Turnstile se valida en el servidor. El propietario confirmó en producción la aceptación con tokens válidos e inválidos y la rotación/revocación de sesiones tras cambiar la contraseña. La aplicación de archivos todavía no está lista para almacenar datos reales: el catálogo, las transferencias con R2, las cuotas y la compartición siguen pendientes. La certificación global de seguridad y el procedimiento de rollback también continúan pendientes.
+> **Estado real (2026-10-11):** las Fases 0, 1 y 2 están cerradas, y la Fase 3 del catálogo de metadatos de archivos/carpetas también está cerrada dentro de su alcance. La autenticación, sesiones, Turnstile, persistencia modular y catálogo con aislamiento por propietario están implementados y validados. Vega Drive aún no está listo para transferencias reales de archivos: la integración física con R2 (Fase 4), la integración HTTP/BFF completa para archivos (Fase 5), cuotas (Fase 6) y compartición (Fase 7) siguen pendientes. La certificación global de seguridad (Fase 8) y el procedimiento de rollback/operación (Fase 9) también continúan pendientes.
 
 ## Arquitectura
 
@@ -29,7 +29,7 @@ Las reglas obligatorias, los headers esperados para Workers/Hono y la matriz de 
 
 **La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban autenticación, autorización, aislamiento entre cuentas ni transferencias seguras. No habilites usuarios reales hasta implementar y probar los flujos correspondientes.
 
-La autenticación y la resolución de sesión del módulo `identity` están implementadas y probadas. Siguen pendientes el adaptador de almacenamiento real, el catálogo de archivos y la autorización por recurso en las operaciones de `files`. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
+La autenticación y la resolución de sesión del módulo `identity` están implementadas y probadas. El catálogo de metadatos del módulo `files` está implementado y validado, incluyendo aislamiento por propietario para las operaciones de catálogo. Siguen pendientes el adaptador y las transferencias reales con R2, y la integración de las operaciones de archivos en rutas HTTP/BFF. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
 ## Flujo de archivos previsto
 
@@ -53,7 +53,7 @@ Las descargas se harán por `GET /api/files/:id/download`, tras autorizar el rec
 - `public`: assets estáticos.
 - `tests`: pruebas de salud, configuración, migraciones, repositorios y arquitectura.
 
-El módulo `identity` ya implementa registro/login, logout, resolución de sesión y cambio de contraseña mediante sus APIs reales. El módulo `files` conserva la base de persistencia, pero el catálogo y las transferencias no están implementados.
+El módulo `identity` ya implementa registro/login, logout, resolución de sesión y cambio de contraseña mediante sus APIs reales. El módulo `files` implementa el catálogo de metadatos y su persistencia D1; las transferencias de bytes a/desde R2 todavía no están implementadas.
 
 ## Servicios Cloudflare
 
