@@ -166,21 +166,33 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 3 — Módulo files: catálogo
 
+**Estado: IMPLEMENTACIÓN PARCIAL; NO CERRADA (revisión documental 2026-10-11).** Los casos de uso y repositorios D1 del catálogo están implementados en buena parte y las pruebas de CI reportadas aprobaron 126/126 tests. Sin embargo, la cobertura negativa de aislamiento aún no demuestra todas las operaciones entre propietarios, el gateway/BFF HTTP sigue perteneciendo a la Fase 5 y la última verificación local de esquema D1 falló. No declarar la fase cerrada hasta resolver los pendientes de [FILES_PHASE_3.md](./FILES_PHASE_3.md).
+
 ### 3.1 Carpetas y nodos
 
-- [ ] Implementar FilesPublicApi y FilesGateway.
-- [ ] Crear, renombrar, mover, listar y eliminar carpetas/archivos de metadatos.
-- [ ] Prevenir ciclos y duplicados dentro del mismo padre.
-- [ ] Mantener el nombre de usuario separado de la clave física de R2.
-- **Aceptación:** files usa solo files\_\* y devuelve 404 para recursos ajenos.
+- [x] Implementar casos de uso de catálogo para crear, renombrar, mover, listar y borrar lógicamente metadatos de carpetas y archivos.
+- [x] Normalizar nombres y validar entradas; prevenir ciclos de carpetas y conflictos de nombres entre tipos de nodo.
+- [x] Mantener el nombre visible separado de cualquier clave física de almacenamiento; no se ha implementado aún el adaptador R2.
+- [ ] Completar pruebas de movimientos, restauraciones y operaciones negativas de aislamiento por propietario para todos los caminos relevantes.
+- [ ] Completar la integración del contrato público con FilesGateway/BFF HTTP; no confundir el servicio de dominio con rutas HTTP funcionales.
+- **Aceptación pendiente:** solo tablas `files_*`, sin acceso cruzado; los recursos ajenos deben resultar indistinguibles de los inexistentes en la interfaz HTTP (404 al integrarse en la Fase 5).
 - 🔒 SEC-ISO-02…06, SEC-VAL-03, SEC-MOD-02.
 
 ### 3.2 Papelera y navegación
 
-- [ ] Implementar borrado lógico, restauración, paginación y breadcrumbs.
-- [ ] Programar limpieza de metadatos y objetos mediante el caso de uso de files.
-- **Aceptación:** la papelera no cruza las fronteras de usuario ni de módulo.
+- [x] Implementar borrado lógico, restauración, listado de papelera, paginación y breadcrumbs en el catálogo.
+- [ ] Añadir pruebas explícitas de aislamiento de la papelera, restauración de carpeta/archivo, movimiento hacia/desde carpetas ajenas y ausencia de cambios colaterales ante rechazo.
+- [ ] Definir y documentar el ciclo de vida/retención y el caso de uso de limpieza de metadatos y objetos. La limpieza física de objetos depende de R2 y no se considera implementada en esta fase.
+- [ ] Ejecutar y registrar `pnpm run db:verify:schema:local` con resultado satisfactorio después de reconciliar la discrepancia observada el 2026-10-11.
+- **Aceptación pendiente:** las pruebas de papelera no cruzan propietarios; esquema local verificado contra migraciones; ciclo de limpieza definido y asignado a una fase.
 - 🔒 SEC-ISO-03, SEC-ISO-05, SEC-LOG-01.
+
+### Evidencia actual y criterio de cierre
+
+- CI previamente reportado como satisfactorio: [run 38114942365](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38114942365).
+- Verificación local reportada: Prettier, arquitectura, TypeScript y 126/126 tests aprobados; `pnpm run verify:architecture:all` completó sus controles.
+- **Bloqueador actual:** `pnpm run db:verify:schema:local` falló el 2026-10-11. Faltan según el verificador `files_catalog_names`, `files_folders_owner_parent_name_active_idx`, `files_items_owner_folder_name_active_idx`, `identity_auth_attempts` e `identity_auth_attempts_locked_until_idx`. Esto es evidencia de discrepancia en la D1 local; no determina por sí solo si la base local no recibió migraciones o si hay otra causa. No se debe corregir editando migraciones ya aplicadas ni ejecutar migraciones remotas como atajo.
+- **Cierre de fase:** completar las pruebas de aislamiento pendientes, reconciliar el esquema local mediante el procedimiento documentado, confirmar el alcance de limpieza, actualizar esta lista con evidencia real y volver a ejecutar los checks. Fase 4 (R2), Fase 5 (BFF HTTP) y Fase 8 (certificación transversal) siguen siendo fases separadas.
 
 ---
 
