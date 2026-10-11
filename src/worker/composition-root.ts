@@ -8,45 +8,7 @@ import type { SharingPublicApi } from "../modules/sharing/module.public-api.js";
 
 export interface IdentityGateway extends IdentityPublicApi {}
 
-export interface FilesGateway {
-  status(): ModuleStatus;
-  createFolder(
-    ...args: Parameters<FilesPublicApi["createFolder"]>
-  ): ReturnType<FilesPublicApi["createFolder"]>;
-  renameFolder(
-    ...args: Parameters<FilesPublicApi["renameFolder"]>
-  ): ReturnType<FilesPublicApi["renameFolder"]>;
-  moveFolder(
-    ...args: Parameters<FilesPublicApi["moveFolder"]>
-  ): ReturnType<FilesPublicApi["moveFolder"]>;
-  deleteFolder(
-    ...args: Parameters<FilesPublicApi["deleteFolder"]>
-  ): ReturnType<FilesPublicApi["deleteFolder"]>;
-  restoreFolder(
-    ...args: Parameters<FilesPublicApi["restoreFolder"]>
-  ): ReturnType<FilesPublicApi["restoreFolder"]>;
-  createFileMetadata(
-    ...args: Parameters<FilesPublicApi["createFileMetadata"]>
-  ): ReturnType<FilesPublicApi["createFileMetadata"]>;
-  renameFile(
-    ...args: Parameters<FilesPublicApi["renameFile"]>
-  ): ReturnType<FilesPublicApi["renameFile"]>;
-  moveFile(
-    ...args: Parameters<FilesPublicApi["moveFile"]>
-  ): ReturnType<FilesPublicApi["moveFile"]>;
-  deleteFile(
-    ...args: Parameters<FilesPublicApi["deleteFile"]>
-  ): ReturnType<FilesPublicApi["deleteFile"]>;
-  restoreFile(
-    ...args: Parameters<FilesPublicApi["restoreFile"]>
-  ): ReturnType<FilesPublicApi["restoreFile"]>;
-  listFolder(
-    ...args: Parameters<FilesPublicApi["listFolder"]>
-  ): ReturnType<FilesPublicApi["listFolder"]>;
-  listTrash(
-    ...args: Parameters<FilesPublicApi["listTrash"]>
-  ): ReturnType<FilesPublicApi["listTrash"]>;
-}
+export interface FilesGateway extends FilesPublicApi {}
 
 export interface QuotaGateway {
   status(): ModuleStatus;
@@ -120,12 +82,6 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.restoreFolder(...args);
   }
 
-  createFileMetadata(
-    ...args: Parameters<FilesPublicApi["createFileMetadata"]>
-  ) {
-    return this.api.createFileMetadata(...args);
-  }
-
   renameFile(...args: Parameters<FilesPublicApi["renameFile"]>) {
     return this.api.renameFile(...args);
   }
@@ -140,6 +96,18 @@ export class InProcessFilesGateway implements FilesGateway {
 
   restoreFile(...args: Parameters<FilesPublicApi["restoreFile"]>) {
     return this.api.restoreFile(...args);
+  }
+
+  uploadFile(...args: Parameters<FilesPublicApi["uploadFile"]>) {
+    return this.api.uploadFile(...args);
+  }
+
+  downloadFile(...args: Parameters<FilesPublicApi["downloadFile"]>) {
+    return this.api.downloadFile(...args);
+  }
+
+  cleanupExpiredUploads(...args: Parameters<FilesPublicApi["cleanupExpiredUploads"]>) {
+    return this.api.cleanupExpiredUploads(...args);
   }
 
   listFolder(...args: Parameters<FilesPublicApi["listFolder"]>) {

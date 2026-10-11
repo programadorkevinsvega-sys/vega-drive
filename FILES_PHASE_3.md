@@ -101,7 +101,7 @@ Las respuestas de listado, creación, renombrado, movimiento y restauración con
 - Los resultados `invalid-input`, `not-found`, `duplicate-name`, `cycle` y `unavailable` se traducen respectivamente a HTTP 400, 404, 409, 409 y 503. La respuesta de error no revela SQL, trazas ni mensajes internos.
 - Se conservan las cabeceras existentes y `Cache-Control: no-store` en las respuestas `/api/*`.
 
-No se exponen rutas de subida o descarga física, búsqueda ni favoritos: el contrato actual no implementa esas operaciones. Mi unidad y la papelera ya consumen las rutas del catálogo mediante `frontend/src/services/files-service.ts`; la existencia de metadatos no equivale a una transferencia de bytes.
+En el hito inicial documentado por esta fase aún no se exponían rutas de subida o descarga física, búsqueda ni favoritos; la ruta histórica de metadatos quedó retirada en la Fase 4. La implementación actual de transferencias se documenta en [FILES_PHASE_4.md](./FILES_PHASE_4.md). Mi unidad y la papelera ya consumen las rutas del catálogo mediante `frontend/src/services/files-service.ts`; la existencia de metadatos no equivale a una transferencia de bytes.
 
 ## 8. Evidencia del hito HTTP del backend
 

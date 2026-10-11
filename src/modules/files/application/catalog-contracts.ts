@@ -12,7 +12,11 @@ export type CatalogFailureReason =
   | "not-found"
   | "duplicate-name"
   | "cycle"
-  | "unavailable";
+  | "unavailable"
+  | "too-large"
+  | "quota-exceeded"
+  | "rate-limited"
+  | "size-mismatch";
 
 export type CatalogResult<T> =
   | { ok: true; value: T }

@@ -214,35 +214,50 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 ---
 
-## Fase 4 — Módulo files: R2 privado
+## Fase 4 — Módulo files: transferencias privadas con R2
+
+**Estado al 2026-10-11: código implementado; cierre operativo pendiente.** El adaptador, las rutas autenticadas de transferencia, los límites de tamaño/cuota, las descargas por streaming y la limpieza programada están implementados en el código. No se marca la fase como cerrada hasta verificar la configuración de R2 en el panel y ejecutar una prueba real de subida/descarga en el Worker desplegado. La UI de selección/subida de archivos pertenece a la Fase 5.
 
 ### 4.1 Adaptador de almacenamiento
 
-- [ ] Definir IFileStoragePort en application.
-- [ ] Implementar el adaptador solo en modules/files/infrastructure/storage/r2.
-- [ ] Inyectar el binding/credenciales únicamente en ese adaptador.
-- [ ] Generar claves u/{userId}/{uuid} en el backend.
-- **Aceptación:** una búsqueda de imports muestra que solo files usa R2Bucket o API S3.
+- [x] Definir IFileStoragePort en application sin depender de Cloudflare.
+- [x] Implementar R2FileStorage solo en modules/files/infrastructure/storage/r2.
+- [x] Mantener el binding de R2 dentro del adaptador autorizado; el resto del sistema depende del puerto.
+- [x] Generar las claves de objeto en el servidor como u/{userId}/{uuid}; la clave no se devuelve en los DTO públicos.
+- [x] Añadir guardias arquitectónicas para detectar uso de R2 fuera del adaptador.
+- **Aceptación de código:** solo el adaptador de infraestructura accede al binding y los casos de uso dependen de IFileStoragePort.
 - 🔒 SEC-ISO-04, SEC-R2-01…03, SEC-MOD-04.
 
-### 4.2 Subida por API
+### 4.2 Subida autenticada por API
 
-- [ ] Implementar POST /api/files a través de FilesGateway.
-- [ ] Validar sesión, actor, nombre, tamaño, tipo, cuota y propiedad antes de almacenar.
-- [ ] Transmitir bytes mediante el Worker; si se necesita multipart interno, encapsularlo sin exponer IDs, partes o URLs al navegador.
-- [ ] Verificar tamaño real y registrar metadatos solo tras completar.
-- **Aceptación:** la red del navegador contiene únicamente llamadas al mismo origen y ninguna a R2.
+- [x] Implementar POST /api/files a través de FilesGateway, con bytes transmitidos por streaming del Worker.
+- [x] Exigir una sesión válida, comprobar origen, nombre, carpeta del propietario, tipo y tamaño declarado.
+- [x] Aplicar límites de 95 MiB por archivo, 1 GiB de almacenamiento por propietario, 20 subidas y 120 descargas por hora y propietario. La reserva de capacidad se hace en D1 antes de almacenar.
+- [x] Verificar el tamaño transmitido y el tamaño real del objeto con HEAD; escribir los metadatos solo después de almacenar un objeto del tamaño esperado.
+- [x] Compensar errores retirando el objeto, metadatos y reserva cuando sea posible; los fallos de limpieza quedan registrados para el cron de reconciliación.
+- [x] Rechazar la antigua ruta de creación de metadatos sin bytes; el catálogo no puede crear un archivo descargable ficticio.
+- **Aceptación de código:** el navegador solo envía al mismo origen /api; no recibe claves, URLs ni referencias privadas de R2.
 - 🔒 SEC-R2-03…05, SEC-ISO-05, SEC-RATE-01.
 
 ### 4.3 Descarga y limpieza
 
-- [ ] Implementar GET /api/files/:id/download a través de FilesGateway.
-- [ ] Autorizar antes de streaming y devolver Content-Disposition: attachment y nosniff.
-- [ ] Gestionar Range y limpieza interna de operaciones fallidas u obsoletas.
-- **Aceptación:** no se devuelve una URL de R2 ni se permite descargar un archivo ajeno.
+- [x] Implementar GET /api/files/:id/download a través de FilesGateway.
+- [x] Autorizar la pertenencia y la carpeta activa antes de leer el objeto; los archivos ajenos responden 404.
+- [x] Transmitir el contenido con Content-Disposition: attachment, X-Content-Type-Options: nosniff, Cache-Control: no-store y soporte de un rango de bytes.
+- [x] Rechazar rangos inválidos con 416 y Content-Range; no se generan URLs prefirmadas.
+- [x] Ejecutar una limpieza programada de reservas pendientes vencidas, subidas fallidas y eventos de limitación antiguos, con reintento en ejecuciones posteriores.
+- **Aceptación de código:** las pruebas cubren subida/descarga, rango parcial, tamaño incorrecto, autenticación y aislamiento entre propietarios.
 - 🔒 SEC-R2-03, SEC-R2-06, SEC-R2-07.
 
----
+### 4.4 Validación operativa obligatoria antes de cerrar
+
+- [ ] En el panel de Cloudflare, comprobar que el bucket vega-drive-files no tiene dominio público, r2.dev deshabilitado, CORS de navegador ni AllowedOrigins.
+- [ ] Confirmar que los permisos de acceso están limitados al bucket vega-drive-files y solo permiten lectura/escritura de los objetos necesarios.
+- [ ] Ejecutar el despliegue revisado mediante pnpm run deploy, que aplica la nueva migración files/.../0003_files_transfers.sql antes de publicar el Worker.
+- [ ] En producción, subir un archivo de prueba pequeño, descargarlo y comprobar los bytes; probar rango parcial y rechazo de acceso desde otra cuenta.
+- [ ] Registrar el SHA del commit desplegado y la evidencia de producción sin almacenar archivos sensibles, tokens ni cookies.
+
+La CI y un wrangler deploy --dry-run no sustituyen los pasos operativos anteriores. La fase no se anunciará como 100 % cerrada hasta que los cinco puntos estén comprobados.
 
 ## Fase 5 — Frontend y BFF del mismo Worker
 

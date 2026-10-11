@@ -255,32 +255,6 @@ filesRoutes.post("/trash/folders/:id/restore", async (c) => {
   );
 });
 
-/**
- * This route creates catalog metadata only. It does not upload bytes or
- * write to R2.
- */
-filesRoutes.post("/items/metadata", async (c) => {
-  const rejected = mutationRejection(c);
-  if (rejected) return rejected;
-
-  const body = await strictJson(c.req.raw, [
-    "name",
-    "folderId",
-    "sizeBytes",
-    "contentType",
-  ]);
-  if (!body) return c.json(REQUEST_ERROR, 400);
-
-  return catalogResponse(
-    c,
-    await createCompositionRoot(c.env).files.createFileMetadata(
-      actorFor(c),
-      body,
-    ),
-    201,
-  );
-});
-
 filesRoutes.patch("/items/:id", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;

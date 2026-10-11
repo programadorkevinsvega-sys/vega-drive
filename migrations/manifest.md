@@ -17,11 +17,15 @@ Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
    - Tabla `files_catalog_names` con unicidad por propietario, padre y nombre normalizado; coordina los nombres activos entre carpetas y archivos.
    - Índices únicos parciales adicionales en ambas tablas de nodos.
 
-3. **Propietario: `identity`**
+3. **Propietario: `files`**
+   - Migración: `files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql`.
+   - Tabla e índices: `files_transfer_events`, `files_transfer_owner_kind_time_idx` y `files_transfer_time_idx`; registra límites temporales de transferencias dentro del módulo propietario.
+
+4. **Propietario: `identity`**
    - Migración: `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`.
    - Tablas: `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
 
-4. **Propietario: `identity`**
+5. **Propietario: `identity`**
    - Migración: `identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql`.
    - Tabla e índice: `identity_auth_attempts` e `identity_auth_attempts_locked_until_idx`; las claves de limitación se guardan como hashes.
 
@@ -48,7 +52,7 @@ El verificador estructural rechaza DDL que todavía no pueda modelar, objetos in
 
 ## Incidencia de verificación local resuelta
 
-El 2026-10-11, `pnpm run db:verify:schema:local` detectó objetos ausentes de las migraciones de `files` e `identity`. Se aplicaron únicamente en la D1 local las migraciones modulares pendientes `files/.../0002_files_catalog_names.sql` e `identity/.../0002_identity_auth_attempts.sql`. La verificación posterior pasó con `22 tables/indexes match migrations in vega_drive_db (local)`.
+El 2026-10-11, `pnpm run db:verify:schema:local` detectó objetos ausentes de las migraciones de `files` e `identity`. Se aplicaron únicamente en la D1 local las migraciones modulares pendientes `files/.../0002_files_catalog_names.sql` e `identity/.../0002_identity_auth_attempts.sql`. La verificación posterior pasó con `25 tables/indexes match migrations in vega_drive_db (local)`.
 
 El incidente y la evidencia se documentan en [FILES_PHASE_3.md](../FILES_PHASE_3.md). Esta reconciliación no modificó D1 remota ni demuestra por sí sola el cierre de la Fase 3; siguen siendo obligatorias las pruebas funcionales y de aislamiento descritas en el documento de fase.
 

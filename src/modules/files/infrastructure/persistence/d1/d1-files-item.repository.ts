@@ -144,6 +144,10 @@ export class D1FilesItemRepository implements FilesItemRepository {
       .run();
   }
 
+  async deletePermanently(id: string, ownerId: string): Promise<boolean> {
+    return (await this.db.prepare("DELETE FROM files_items WHERE id = ? AND owner_id = ?").bind(id, ownerId).run()).meta.changes > 0;
+  }
+
   async updateMetadata(
     id: string,
     ownerId: string,

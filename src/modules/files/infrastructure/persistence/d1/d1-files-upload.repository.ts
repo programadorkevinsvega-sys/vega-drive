@@ -11,6 +11,65 @@ const UPLOAD_COLUMNS =
 export class D1FilesUploadRepository implements FilesUploadRepository {
   constructor(private readonly db: D1Database) {}
 
+  async reserve(
+    upload: FilesUploadRecord,
+    maxUserStorageBytes: number,
+  ): Promise<boolean> {
+    const result = await this.db
+      .prepare(
+        "INSERT INTO files_uploads " +
+          "(id, owner_id, item_id, storage_key, expected_size_bytes, content_type, " +
+          "status, created_at, expires_at, completed_at) " +
+          "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE (" +
+          "COALESCE((SELECT SUM(size_bytes) FROM files_items WHERE owner_id = ?), 0) + " +
+          "COALESCE((SELECT SUM(expected_size_bytes) FROM files_uploads " +
+          "WHERE owner_id = ? AND status IN ('pending', 'failed')), 0) + ?) <= ?",
+      )
+      .bind(
+        upload.id,
+        upload.ownerId,
+        upload.itemId,
+        upload.storageKey,
+        upload.expectedSizeBytes,
+        upload.contentType,
+        upload.status,
+        upload.createdAt,
+        upload.expiresAt,
+        upload.completedAt,
+        upload.ownerId,
+        upload.ownerId,
+        upload.expectedSizeBytes,
+        maxUserStorageBytes,
+      )
+      .run();
+    return result.meta.changes > 0;
+  }
+
+  listNeedingCleanup(
+    now: string,
+    limit: number,
+  ): Promise<FilesUploadRecord[]> {
+    return this.db
+      .prepare(
+        "SELECT " +
+          UPLOAD_COLUMNS +
+          " FROM files_uploads WHERE status = 'failed' OR " +
+          "(status = 'pending' AND expires_at <= ?) " +
+          "ORDER BY created_at ASC LIMIT ?",
+      )
+      .bind(now, Math.min(100, Math.max(1, Math.trunc(limit))))
+      .all<FilesUploadRecord>()
+      .then((result) => result.results);
+  }
+
+  async deleteByIdForOwner(id: string, ownerId: string): Promise<boolean> {
+    const result = await this.db
+      .prepare("DELETE FROM files_uploads WHERE id = ? AND owner_id = ?")
+      .bind(id, ownerId)
+      .run();
+    return result.meta.changes > 0;
+  }
+
   findByIdForOwner(
     id: string,
     ownerId: string,

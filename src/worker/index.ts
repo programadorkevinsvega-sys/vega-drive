@@ -1,5 +1,6 @@
 import { app } from "../bff/app.js";
 import type { Env } from "./env.js";
+import { createCompositionRoot } from "./composition-root.js";
 
 export default {
   async fetch(
@@ -15,10 +16,13 @@ export default {
   },
 
   async scheduled(
-    _controller: ScheduledController,
-    _env: Env,
-    _ctx: ExecutionContext,
+    controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
   ): Promise<void> {
-    // No hay tareas programadas en Fase 0.
+    const nowIso = new Date(controller.scheduledTime).toISOString();
+    ctx.waitUntil(
+      createCompositionRoot(env).files.cleanupExpiredUploads(nowIso, 100),
+    );
   },
 };

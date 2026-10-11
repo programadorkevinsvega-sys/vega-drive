@@ -19,7 +19,7 @@ await runGuard(
       "";
     const api = contents.get("src/modules/files/module.public-api.ts") ?? "";
     const gatewayMatch = composition.match(
-      /export\s+interface\s+FilesGateway\s*\{([\s\S]*?)\n\}/,
+      /export\s+interface\s+FilesGateway(?:\s+extends\s+FilesPublicApi)?\s*\{([\s\S]*?)\n\}/,
     );
     const adapterMatch = composition.match(
       /export\s+class\s+InProcessFilesGateway\s+implements\s+FilesGateway\s*\{([\s\S]*?)\n\}/,

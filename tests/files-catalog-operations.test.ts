@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { FilesPublicApi } from "../src/modules/files/module.public-api.js";
 import { createFilesCatalogFixture } from "./helpers/files-catalog.js";
 
 const ownerA = { userId: "owner-a" };
 
 describe("files catalog operations", () => {
   let fixture: Awaited<ReturnType<typeof createFilesCatalogFixture>>;
-  let api: FilesPublicApi;
+  let api: Awaited<ReturnType<typeof createFilesCatalogFixture>>["api"];
 
   beforeEach(async () => {
     fixture = await createFilesCatalogFixture();

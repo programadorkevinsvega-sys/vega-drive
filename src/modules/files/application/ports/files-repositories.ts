@@ -47,6 +47,7 @@ export interface FilesItemRepository {
     cursor?: FilesTrashCursor | null,
   ): Promise<FilesItemRecord[]>;
   insert(item: FilesItemRecord): Promise<void>;
+  deletePermanently(id: string, ownerId: string): Promise<boolean>;
   updateMetadata(
     id: string,
     ownerId: string,
@@ -114,6 +115,8 @@ export interface FilesFolderRepository {
 
 export type FilesUploadStatus = "pending" | "completed" | "failed" | "expired";
 
+export type FilesTransferKind = "upload" | "download";
+
 export interface FilesUploadRecord {
   id: string;
   ownerId: string;
@@ -128,6 +131,9 @@ export interface FilesUploadRecord {
 }
 
 export interface FilesUploadRepository {
+  reserve(upload: FilesUploadRecord, maxUserStorageBytes: number): Promise<boolean>;
+  listNeedingCleanup(now: string, limit: number): Promise<FilesUploadRecord[]>;
+  deleteByIdForOwner(id: string, ownerId: string): Promise<boolean>;
   findByIdForOwner(
     id: string,
     ownerId: string,
@@ -139,6 +145,18 @@ export interface FilesUploadRepository {
     status: FilesUploadStatus,
     completedAt: string | null,
   ): Promise<boolean>;
+}
+
+export interface FilesTransferEventRepository {
+  consume(
+    id: string,
+    ownerId: string,
+    kind: FilesTransferKind,
+    occurredAt: string,
+    windowStart: string,
+    limit: number,
+  ): Promise<boolean>;
+  cleanupBefore(cutoff: string, limit: number): Promise<void>;
 }
 
 export interface FilesOutboxRecord {

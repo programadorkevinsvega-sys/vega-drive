@@ -5,6 +5,7 @@ import { app } from "../src/bff/app.js";
 import type { Env } from "../src/worker/env.js";
 import { sha256Hex } from "../src/modules/identity/application/sessions/session-tokens.js";
 import { createSqliteD1 } from "./helpers/sqlite-d1.js";
+import { createMemoryR2Bucket } from "./helpers/memory-r2-bucket.js";
 
 const ORIGIN = "https://vega-drive.test";
 const tokenA = "a".repeat(43);
@@ -28,6 +29,7 @@ async function createHttpFixture() {
     "src/modules/identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
+    "src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
   ]) {
     dbFixture.exec(await readFile(resolve(path), "utf8"));
   }
@@ -60,7 +62,7 @@ async function createHttpFixture() {
   const env = {
     ASSETS: { fetch: async () => new Response("asset") },
     VEGA_DRIVE_DB: dbFixture.db,
-    FILES_BUCKET: {},
+    FILES_BUCKET: createMemoryR2Bucket(),
     TURNSTILE_SECRET_KEY: "",
     TURNSTILE_SITE_KEY: "",
     TURNSTILE_HOSTNAMES: "vega-drive.test",
@@ -112,6 +114,25 @@ async function sendJson(
     },
     token,
     env,
+  );
+}
+
+async function sendFile(
+  name: string,
+  body: string,
+  token: string | null = fixture.tokenA,
+  folderId?: string,
+): Promise<Response> {
+  const headers = new Headers({
+    "Content-Type": "text/plain",
+    "X-File-Name": encodeURIComponent(name),
+    "X-File-Size": String(new TextEncoder().encode(body).byteLength),
+  });
+  if (folderId) headers.set("X-File-Folder-Id", folderId);
+  return send(
+    "/api/files",
+    { method: "POST", headers, body },
+    token,
   );
 }
 
@@ -214,15 +235,7 @@ describe("files catalog HTTP routes", () => {
       parentFolderId: destination.id,
     });
 
-    const metadataResponse = await sendJson(
-      "/api/files/items/metadata",
-      "POST",
-      {
-        name: "before.txt",
-        sizeBytes: 12,
-        contentType: "text/plain",
-      },
-    );
+    const metadataResponse = await sendFile("before.txt", "hello world!");
     expect(metadataResponse.status).toBe(201);
     const itemPayload = await json<Record<string, unknown>>(metadataResponse);
     expect(itemPayload.name).toBe("before.txt");
@@ -268,11 +281,7 @@ describe("files catalog HTTP routes", () => {
       name: "Trash folder",
     });
     const folder = await json<{ id: string }>(folderResponse);
-    const itemResponse = await sendJson("/api/files/items/metadata", "POST", {
-      name: "trash.txt",
-      sizeBytes: 0,
-      contentType: "text/plain",
-    });
+    const itemResponse = await sendFile("trash.txt", "");
     const item = await json<{ id: string }>(itemResponse);
 
     const deleteItem = await send("/api/files/items/" + item.id, {
@@ -406,12 +415,7 @@ describe("files catalog HTTP routes", () => {
     );
     const foreignFolder = await json<{ id: string }>(foreignFolderResponse);
 
-    const foreignItemResponse = await sendJson(
-      "/api/files/items/metadata",
-      "POST",
-      { name: "foreign.txt", sizeBytes: 4, contentType: "text/plain" },
-      fixture.tokenB,
-    );
+    const foreignItemResponse = await sendFile("foreign.txt", "file", fixture.tokenB);
     const foreignItem = await json<{ id: string }>(foreignItemResponse);
 
     const foreignFolderList = await send(
@@ -475,6 +479,56 @@ describe("files catalog HTTP routes", () => {
     const trash = await json<{ nodes: Array<{ id: string }> }>(ownerTrash);
     expect(trash.nodes.map((node) => node.id)).not.toContain(foreignFolder.id);
     expect(trash.nodes.map((node) => node.id)).not.toContain(foreignItem.id);
+  });
+
+  it("streams private uploads and downloads with ranges and owner isolation", async () => {
+    const upload = await sendFile("private report.txt", "abcdefghijklmnop");
+    expect(upload.status).toBe(201);
+    const file = await json<{ id: string; name: string; sizeBytes: number; storageKey?: string }>(upload);
+    expect(file).toMatchObject({ name: "private report.txt", sizeBytes: 16 });
+    expect(file).not.toHaveProperty("storageKey");
+
+    const download = await send("/api/files/" + file.id + "/download");
+    expect(download.status).toBe(200);
+    expect(download.headers.get("Content-Disposition")).toContain("attachment");
+    expect(download.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(await download.text()).toBe("abcdefghijklmnop");
+
+    const partial = await send("/api/files/" + file.id + "/download", {
+      headers: { Range: "bytes=2-5" },
+    });
+    expect(partial.status).toBe(206);
+    expect(partial.headers.get("Content-Range")).toBe("bytes 2-5/16");
+    expect(partial.headers.get("Content-Length")).toBe("4");
+    expect(await partial.text()).toBe("cdef");
+
+    const invalidRange = await send("/api/files/" + file.id + "/download", {
+      headers: { Range: "bytes=99-101" },
+    });
+    expect(invalidRange.status).toBe(416);
+    expect(invalidRange.headers.get("Content-Range")).toBe("bytes */16");
+
+    const foreignDownload = await send(
+      "/api/files/" + file.id + "/download",
+      {},
+      fixture.tokenB,
+    );
+    expect(foreignDownload.status).toBe(404);
+  });
+
+  it("rejects upload bodies whose actual byte count differs from the declaration", async () => {
+    const response = await send("/api/files", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain",
+        "X-File-Name": "incorrect.txt",
+        "X-File-Size": "3",
+      },
+      body: "longer",
+    });
+    expect(response.status).toBe(400);
+    const root = await send("/api/files");
+    expect(await json(root)).toMatchObject({ files: [] });
   });
 
   it("maps catalog infrastructure failures to safe HTTP 503 responses", async () => {
