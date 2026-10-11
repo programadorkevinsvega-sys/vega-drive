@@ -1,5 +1,6 @@
 import { MenuButton, type MenuItem } from "../ui/MenuButton";
 import { Icon } from "../ui/Icon";
+import { downloadFileUrl } from "../services/files-service";
 import type { FilesCatalogNode } from "../services/files-contract";
 
 interface CatalogNodeRowProps {
@@ -56,6 +57,15 @@ export function CatalogNodeRow({
         },
       ]
     : [
+        ...(!isFolder
+          ? [
+              {
+                id: "download",
+                label: "Descargar",
+                onSelect: () => window.location.assign(downloadFileUrl(node.id)),
+              } satisfies MenuItem,
+            ]
+          : []),
         {
           id: "rename",
           label: "Renombrar",

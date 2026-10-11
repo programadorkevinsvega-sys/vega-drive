@@ -21,7 +21,7 @@
 | POST   | /api/files              | Subida binaria autenticada; X-File-Name (URI-encoded), X-File-Size y opcionalmente X-File-Folder-Id; Content-Type declara el tipo del archivo. |
 | GET    | /api/files/:id/download | Descarga autenticada con streaming; acepta un único encabezado Range.                                                                          |
 
-Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera— siguen activas en /api/files. El frontend aún no incorpora el control visual para seleccionar/subir archivos; esa integración corresponde a la Fase 5 y no equivale a permitir acceso directo a R2.
+Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera— siguen activas en /api/files. La interfaz ya incorpora selección y subida binaria desde Mi unidad, y descarga mediante la ruta same-origin autenticada. El navegador no contacta R2 ni recibe claves o URLs de almacenamiento. La integración visual no sustituye las verificaciones operativas de privacidad, permisos, despliegue y E2E de esta fase.
 
 ## Límites iniciales
 
@@ -31,6 +31,14 @@ Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera�
 - El MIME se valida como tipo declarativo, no se considera una prueba de la naturaleza real del archivo. Las descargas siempre son attachment con nosniff.
 
 Estos valores son límites iniciales del producto en files; cuotas configurables y políticas adicionales siguen siendo trabajo de las Fases 6 y 8.
+
+## Integración de interfaz
+
+- [x] El navegador sube archivos binarios a `POST /api/files` usando `X-File-Name`, `X-File-Size`, el MIME declarativo y, cuando corresponde, `X-File-Folder-Id`.
+- [x] La interfaz limita la selección a 95 MiB por archivo para orientar al usuario; el backend mantiene la validación autoritativa.
+- [x] Las filas de archivos ofrecen descarga a través de `GET /api/files/:id/download`, que conserva la autorización y el streaming privado del Worker.
+- [x] Las transferencias usan mismo origen, cookies same-origin y `cache: no-store`; no se configura acceso a R2 desde el cliente.
+- [ ] La integración de interfaz no cierra la fase: la evidencia operativa al final de este documento sigue siendo obligatoria.
 
 ## Pruebas añadidas
 

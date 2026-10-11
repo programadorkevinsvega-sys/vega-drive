@@ -39,7 +39,13 @@ function messageForStatus(status: number): string {
     return "El elemento ya no está disponible o no pertenece a esta cuenta.";
   }
   if (status === 409) {
-    return "Ya existe un elemento con ese nombre o el movimiento no es válido.";
+    return "Ya existe un elemento con ese nombre, se alcanzó un límite de almacenamiento o el movimiento no es válido.";
+  }
+  if (status === 413) {
+    return "El archivo supera el tamaño máximo permitido de 95 MiB.";
+  }
+  if (status === 429) {
+    return "Se alcanzó el límite temporal de transferencias. Inténtalo más tarde.";
   }
   if (status === 503) {
     return "El catálogo no está disponible temporalmente. Inténtalo de nuevo.";
@@ -114,6 +120,63 @@ export function listTrash(cursor?: string): Promise<FilesTrashListing> {
   return requestJson<FilesTrashListing>(
     "/api/files/trash" + queryString({ limit: "50", cursor }),
   );
+}
+
+const MAX_FILE_SIZE_BYTES = 95 * 1024 * 1024;
+
+/** Sube bytes al Worker same-origin; el servidor sigue siendo autoridad de tamaño y permisos. */
+export async function uploadFile(
+  file: File,
+  folderId: string | null,
+): Promise<FilesFileView> {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new FilesApiError(
+      "El archivo supera el tamaño máximo permitido de 95 MiB.",
+      413,
+    );
+  }
+
+  let response: Response;
+  try {
+    response = await fetch("/api/files", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": file.type || "application/octet-stream",
+        "X-File-Name": encodeURIComponent(file.name),
+        "X-File-Size": String(file.size),
+        ...(folderId ? { "X-File-Folder-Id": folderId } : {}),
+      },
+      body: file,
+    });
+  } catch {
+    throw new FilesApiError(messageForStatus(0), 0);
+  }
+
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new FilesApiError(messageForStatus(response.status), response.status);
+  }
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    Array.isArray(payload) ||
+    (payload as { type?: unknown }).type !== "file" ||
+    typeof (payload as { id?: unknown }).id !== "string"
+  ) {
+    throw new FilesApiError(
+      "El servidor devolvió una respuesta de archivo inválida.",
+      response.status,
+    );
+  }
+  return payload as FilesFileView;
+}
+
+/** Ruta de descarga same-origin: el Worker autoriza y transmite el objeto privado. */
+export function downloadFileUrl(id: string): string {
+  return "/api/files/" + encodeURIComponent(id) + "/download";
 }
 
 export function createFolder(

@@ -8,6 +8,7 @@ import { CatalogNodeRow } from "./CatalogNodeRow";
 import { useCatalogActions } from "./useCatalogActions";
 import { useCatalogData, type CatalogView } from "./useCatalogData";
 import { navigate } from "../router/use-route";
+import { FileTransferControls } from "./FileTransferControls";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -43,12 +44,15 @@ export function FilesCatalogScreen({
           </p>
         </div>
         {view === "drive" ? (
-          <Button
-            icon="plus"
-            onClick={() => actions.setAction({ type: "create-folder" })}
-          >
-            Nueva carpeta
-          </Button>
+          <div className="vd-catalog__heading-actions">
+            <FileTransferControls folderId={folderId} onUploaded={data.refresh} />
+            <Button
+              icon="plus"
+              onClick={() => actions.setAction({ type: "create-folder" })}
+            >
+              Nueva carpeta
+            </Button>
+          </div>
         ) : null}
       </header>
 
