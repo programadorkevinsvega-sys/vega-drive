@@ -9,6 +9,7 @@ const env = {
   FILES_BUCKET: {},
   TURNSTILE_SECRET_KEY: "test-only-not-a-real-secret",
   TURNSTILE_SITE_KEY: "",
+  TURNSTILE_HOSTNAMES: "vega-drive.test",
   MAX_USERS: "10",
 } as unknown as Env;
 
