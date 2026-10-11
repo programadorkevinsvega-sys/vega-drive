@@ -86,10 +86,8 @@ describe("files catalog owner isolation", () => {
       ),
     ).toHaveLength(1);
   });
-  
-  it(
-    "rejects cross-owner moves and creation inside foreign folders",
-    async () => {
+
+  it("rejects cross-owner moves and creation inside foreign folders", async () => {
     const foreignFolder = await fixture.api.createFolder(ownerB, {
       name: "Foreign destination",
     });
@@ -173,9 +171,7 @@ describe("files catalog owner isolation", () => {
     }
   });
 
-  it(
-    "isolates trash and rejects restoration of another owner's deleted nodes",
-    async () => {
+  it("isolates trash and rejects restoration of another owner's deleted nodes", async () => {
     const foreignFolder = await fixture.api.createFolder(ownerB, {
       name: "Trashed foreign folder",
     });
@@ -201,9 +197,9 @@ describe("files catalog owner isolation", () => {
     expect(
       await fixture.api.restoreFolder(ownerA, foreignFolder.value.id),
     ).toEqual({ ok: false, reason: "not-found" });
-    expect(
-      await fixture.api.restoreFile(ownerA, foreignFile.value.id),
-    ).toEqual({ ok: false, reason: "not-found" });
+    expect(await fixture.api.restoreFile(ownerA, foreignFile.value.id)).toEqual(
+      { ok: false, reason: "not-found" },
+    );
 
     const ownerATrash = await fixture.api.listTrash(ownerA, { limit: 50 });
     expect(ownerATrash.ok).toBe(true);
@@ -221,5 +217,4 @@ describe("files catalog owner isolation", () => {
       expect(ids).toContain(foreignFile.value.id);
     }
   });
-
 });

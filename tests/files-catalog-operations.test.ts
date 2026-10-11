@@ -145,10 +145,8 @@ describe("files catalog operations", () => {
       value: { id: file.value.id, deletedAt: null },
     });
   });
-  
-  it(
-    "renames and moves folders and files while preserving navigable metadata",
-    async () => {
+
+  it("renames and moves folders and files while preserving navigable metadata", async () => {
     const parent = await api.createFolder(ownerA, { name: "Parent" });
     if (!parent.ok) throw new Error("Parent folder creation failed");
     const child = await api.createFolder(ownerA, { name: "Child" });
@@ -199,9 +197,7 @@ describe("files catalog operations", () => {
     }
   });
 
-  it(
-    "keeps active nodes unchanged when move or restore is rejected for duplicate names",
-    async () => {
+  it("keeps active nodes unchanged when move or restore is rejected for duplicate names", async () => {
     const destination = await api.createFolder(ownerA, { name: "Destination" });
     if (!destination.ok) throw new Error("Destination creation failed");
     const existingFolder = await api.createFolder(ownerA, {
@@ -265,5 +261,4 @@ describe("files catalog operations", () => {
       ]);
     }
   });
-
 });
