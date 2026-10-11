@@ -166,7 +166,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 3 — Módulo files: catálogo
 
-**Estado: IMPLEMENTACIÓN PARCIAL; NO CERRADA (revisión documental 2026-10-11).** Los casos de uso y repositorios D1 del catálogo están implementados en buena parte y las pruebas de CI reportadas aprobaron 126/126 tests. Sin embargo, la cobertura negativa de aislamiento aún no demuestra todas las operaciones entre propietarios, el gateway/BFF HTTP sigue perteneciendo a la Fase 5 y la verificación local inicial de esquema D1 falló, pero fue reconciliada el 2026-10-11; la comprobación posterior pasó con 22 tablas/índices. No declarar la fase cerrada hasta resolver los pendientes de [FILES_PHASE_3.md](./FILES_PHASE_3.md).
+**Estado: VALIDACIÓN DE CIERRE EN CURSO; aún no certificada (2026-10-11).** El catálogo y la verificación estructural local están implementados. Se añadieron pruebas explícitas de movimientos, conflictos, restauración y aislamiento por propietario en los commits [7844040](https://github.com/programadorkevinsvega-sys/vega-drive/commit/7844040acd4188b34fc97b4fa08199baafec0cc4) y [58a6f84](https://github.com/programadorkevinsvega-sys/vega-drive/commit/58a6f84dcaf4f0567de6be7684582328767ee528); falta confirmar el resultado de CI para la suite actualizada. La integración HTTP/BFF sigue siendo alcance de la Fase 5, no un bloqueador de la Fase 3 de catálogo. La verificación D1 local pasó el 2026-10-11 con 22 tablas/índices. No declarar la fase cerrada hasta que CI y los checks finales confirmen los criterios de [FILES_PHASE_3.md](./FILES_PHASE_3.md).
 
 ### 3.1 Carpetas y nodos
 
@@ -182,7 +182,8 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 - [x] Implementar borrado lógico, restauración, listado de papelera, paginación y breadcrumbs en el catálogo.
 - [ ] Añadir pruebas explícitas de aislamiento de la papelera, restauración de carpeta/archivo, movimiento hacia/desde carpetas ajenas y ausencia de cambios colaterales ante rechazo.
-- [ ] Definir y documentar el ciclo de vida/retención y el caso de uso de limpieza de metadatos y objetos. La limpieza física de objetos depende de R2 y no se considera implementada en esta fase.
+- [x] Delimitar el ciclo de vida en esta fase: borrado lógico/restauración solamente; sin purga permanente ni limpieza automática. Los metadatos de papelera se conservan hasta que exista una política explícita de retención y un caso de uso aprobado.
+- [x] Asignar la purga física, reintentos e idempotencia de objetos a la Fase 4, junto con el adaptador R2; no declarar esa capacidad implementada en Fase 3.
 - [x] Ejecutar y registrar `pnpm run db:verify:schema:local` satisfactoriamente tras aplicar las migraciones locales pendientes el 2026-10-11 (22 tablas/índices).
 - **Aceptación pendiente:** las pruebas de papelera no cruzan propietarios; esquema D1 local verificado contra migraciones (22 tablas/índices); ciclo de limpieza definido y asignado a una fase.
 - 🔒 SEC-ISO-03, SEC-ISO-05, SEC-LOG-01.
@@ -192,7 +193,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - CI previamente reportado como satisfactorio: [run 38114942365](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38114942365).
 - Verificación local reportada el 2026-10-11: Prettier, arquitectura, TypeScript y 126/126 tests aprobados; `pnpm run verify:architecture:all` completó sus controles. Tras ejecutar `pnpm run db:migrate:local`, `pnpm run db:verify:schema:local` pasó: 22 tablas/índices coinciden con las migraciones.
 - **Incidencia de esquema local resuelta:** las migraciones `0002` pendientes de `files` e `identity` se aplicaron a D1 local. No se modificaron migraciones ni se reporta cambio a D1 remota.
-- **Cierre de fase:** completar las pruebas de aislamiento pendientes, reconciliar el esquema local mediante el procedimiento documentado, confirmar el alcance de limpieza, actualizar esta lista con evidencia real y volver a ejecutar los checks. Fase 4 (R2), Fase 5 (BFF HTTP) y Fase 8 (certificación transversal) siguen siendo fases separadas.
+- **Cierre de fase:** las pruebas adicionales ya están en `main`; falta confirmar su ejecución en CI y volver a ejecutar los checks locales sobre el commit candidato. El esquema local está reconciliado y el alcance de limpieza está delimitado. Fase 4 (R2), Fase 5 (BFF HTTP) y Fase 8 (certificación transversal) siguen siendo fases separadas.
 
 ---
 
