@@ -157,7 +157,7 @@ export function createFileUpload(deps: FileTransferDependencies) {
           }),
         );
 
-        await deps.storage.put(storageKey, guardedBody, contentType);
+        await deps.storage.put(storageKey, guardedBody, contentType, sizeBytes);
         const stored = await deps.storage.head(storageKey);
         if (
           !stored ||
@@ -192,7 +192,8 @@ export function createFileUpload(deps: FileTransferDependencies) {
         )
           throw new Error("Upload completion record was not updated");
         return success(toFileView(item));
-      } catch {
+      } catch (error) {
+        console.error("[files] upload persistence failed", error);
         let metadataCleanupFailed = false;
         try {
           if (itemInserted)
@@ -232,7 +233,8 @@ export function createFileUpload(deps: FileTransferDependencies) {
         }
         return failure(streamFailure ?? "unavailable");
       }
-    } catch {
+    } catch (error) {
+      console.error("[files] upload preparation failed", error);
       return failure("unavailable");
     }
   };
