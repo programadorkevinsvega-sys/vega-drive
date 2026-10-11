@@ -93,7 +93,7 @@ async function verifyAuthConfiguration() {
     }
 
     throw new Error(
-      `Production authentication configuration is not ready: expected HTTP 200, ready=true and a public site key; received HTTP ${response.status}, ready=${String(body?.ready)}, siteKeyPresent=${siteKeyPresent}. Verify TURNSTILE_SITE_KEY and the TURNSTILE_SECRET_KEY Worker secret.`,
+      `Production authentication configuration is not ready: expected HTTP 200, ready=true and a public site key; received HTTP ${response.status}, ready=${String(body?.ready)}, siteKeyPresent=${siteKeyPresent}. Verify TURNSTILE_SITE_KEY, the TURNSTILE_SECRET_KEY Worker secret, and TURNSTILE_HOSTNAMES.`,
     );
   } finally {
     clearTimeout(timer);
