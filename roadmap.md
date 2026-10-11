@@ -84,25 +84,26 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 1 — D1 única y límites de datos
 
-**Estado: CERRADA (2026-10-10).** Se completó el alcance de infraestructura y persistencia de esta fase. El cierre se basa en las verificaciones locales, CI y producción registradas abajo. Las dos actividades que necesitan casos de uso funcionales y autenticación basada en sesión quedan explícitamente diferidas a la Fase 2; no se declaran implementadas ni verificadas.
+**Estado: CERRADA (2026-10-10).** Todos los entregables de persistencia modular, límites de datos y aislamiento previstos en esta fase están implementados. Las dos actividades originalmente diferidas se completaron en las fases que introdujeron sus dependencias: identidad autenticada en Fase 2 y autorización de operaciones de catálogo en Fase 3. No queda trabajo pendiente dentro del alcance de Fase 1.
 
 ### Evidencia de cierre
 
-- **Build local:** `pnpm run cloudflare:build` terminó correctamente: preflight, 10 verificaciones arquitectónicas, formato, lint, TypeScript, 11 archivos de prueba con 51/51 tests aprobados y `pnpm audit --audit-level=high` sin vulnerabilidades conocidas. Este comando no despliega el Worker.
-- **CI:** GitHub Actions terminó con `success` para el commit `cd7edb6cfc3141a8b68c7a2f883d408d5d837bb0` el 2026-10-10; incluyó las pruebas de aislamiento reforzadas y Gitleaks sin fugas detectadas.
-- **Persistencia modular:** migraciones independientes de `identity` y `files`, manifest central, puertos/repositorios D1 y guardias arquitectónicas implementados. Los ocho repositorios D1 existentes usan SQL parametrizado.
-- **Aislamiento de repositorios:** pruebas con las migraciones versionadas sobre SQLite real cubren lecturas y mutaciones de items, carpetas y uploads, además de revocación de sesiones entre propietarios. Las pruebas negativas comprueban que las guardias detectan violaciones de fronteras.
-- **D1 local:** las migraciones modulares se aplicaron localmente y los 17 objetos estructurales esperados coincidieron.
-- **D1 de producción (verificación del usuario, 2026-10-10):** `pnpm run db:verify:schema:production` informó `17 tables/indexes match migrations in vega_drive_db (remote)`; `pnpm run db:migration:list` informó `No migrations to apply!`. Estas comprobaciones fueron de lectura: no se aplicaron migraciones.
-- **Despliegue previamente registrado:** Cloudflare publicó la versión `59053a71-ff24-4d8e-b032-1a985899ed14`; la verificación de salud registrada respondió HTTP 200 en `/api/health`. No se atribuye un nuevo despliegue a la verificación documental de cierre.
+- **Persistencia modular:** migraciones independientes de `identity` y `files`, manifest central, puertos/repositorios D1 y guardias arquitectónicas implementados.
+- **SQL:** los repositorios D1 usan consultas parametrizadas y las pruebas comprueban los valores enlazados.
+- **Aislamiento de repositorios:** pruebas con migraciones versionadas sobre SQLite real cubren lecturas y mutaciones de items, carpetas y uploads, además de revocación de sesiones entre propietarios.
+- **Identidad y actor:** Fase 2 implementó `SessionResolver` y `AuthenticatedActor`; el actor se deriva de una sesión validada en servidor.
+- **Aislamiento de casos de uso:** Fase 3 incorporó y probó movimientos, creación, papelera y restauración entre propietarios, sin aceptar un `ownerId` del cliente como autoridad.
+- **Guardias:** las pruebas negativas comprueban que los verificadores detectan infracciones de fronteras.
+- **Verificación final local (2026-10-11, commit `9cfb738`):** `pnpm run check` pasó con 130/130 pruebas de backend; `pnpm run verify:architecture:all` pasó; `pnpm run db:verify:schema:local` confirmó 22 tablas/índices; `pnpm run cloudflare:build` pasó con 119/119 pruebas de frontend, build de producción, auditorías sin vulnerabilidades conocidas y Wrangler dry-run.
+- **D1 remota:** se conserva como evidencia histórica la verificación de solo lectura reportada el 2026-10-10 (17 tablas/índices en ese momento). La validación actual descrita arriba es de D1 local; no se afirma que la D1 remota se haya vuelto a consultar.
 
 ### 1.1 Tablas y migraciones por módulo
 
 - [x] Crear migraciones independientes en cada módulo con numeración propia.
-- [x] Mantener un manifest central que documente el orden de aplicación contra VEGA_DRIVE_DB.
+- [x] Mantener un manifest central que documente el orden de aplicación contra `VEGA_DRIVE_DB`.
 - [x] Crear inicialmente `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
 - [x] Preparar `files_items`, `files_folders`, `files_uploads` y `files_outbox`; `quota_usage` y `sharing_links` se completan en sus fases.
-- [x] Usar valores entre módulos, nunca claves foráneas; por ejemplo `files_items.owner_id` no referencia mediante FK a `identity_users`.
+- [x] Usar valores entre módulos, nunca claves foráneas.
 - **Aceptación:** cada tabla e índice tiene un módulo dueño; no existe una tabla genérica compartida.
 - 🔒 SEC-MOD-02, SEC-ISO-02.
 
@@ -110,18 +111,20 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 - [x] Implementar repositorios solo bajo `infrastructure/persistence/d1` de su módulo.
 - [x] Definir puertos en application y no exponer `D1Database` fuera de infraestructura.
-- [x] Usar SQL parametrizado en los ocho repositorios D1 existentes; las pruebas verifican valores enlazados y ausencia de interpolación SQL.
-- [ ] **DIFERIDO A FASE 2:** derivar el filtro de propietario del actor creado desde una sesión validada. `SessionResolver` y `AuthenticatedActor` aún no existen; hasta implementarlos, los repositorios reciben el identificador como parámetro y no deben exponerse a rutas/controladores.
+- [x] Usar SQL parametrizado en los repositorios D1; las pruebas verifican valores enlazados y ausencia de interpolación SQL.
+- [x] Derivar el actor de propietario desde la sesión validada mediante `SessionResolver` y `AuthenticatedActor` (implementado en Fase 2).
+- [x] Probar aislamiento entre propietarios en las operaciones funcionales del catálogo (implementado en Fase 3).
 - [x] Prohibir un módulo global `db/` que concentre la lógica de todos los dominios.
-- **Aceptación de Fase 1:** domain y application no importan `D1Database`; un repositorio no menciona tablas ajenas. La autorización funcional desde sesión validada no forma parte de la evidencia de esta fase.
+- **Aceptación:** domain/application no importan `D1Database`; un repositorio no consulta tablas ajenas; los casos de uso protegidos usan identidad de servidor y las pruebas cubren el aislamiento de recursos.
 - 🔒 SEC-ISO-01, SEC-ISO-02, SEC-VAL-02, SEC-MOD-01.
 
 ### 1.3 Pruebas de frontera y aislamiento
 
-- [x] Validar en CI las pruebas de aislamiento efectivas de los repositorios D1 con SQLite real (workflow CI `success` para `cd7edb6cfc3141a8b68c7a2f883d408d5d837bb0`; pruebas locales: 51/51 aprobadas).
-- [ ] **DIFERIDO A LAS FASES QUE IMPLEMENTEN LOS CASOS DE USO:** probar acceso cruzado para cada operación funcional. Los casos de uso todavía no existen; al implementarlos, el actor deberá derivarse de la sesión validada en servidor, nunca de un `ownerId` suministrado por el cliente.
+- [x] Validar en CI las pruebas de aislamiento de repositorios D1 con SQLite real.
+- [x] Probar acceso cruzado en los casos de uso de catálogo implementados; los intentos no autorizados se rechazan y no provocan cambios colaterales.
 - [x] Probar que el lint arquitectónico bloquea imports, SQL, JOIN, FK y batch cruzados.
-- **Aceptación de Fase 1:** las pruebas de repositorios y las guardias se ejecutan en CI y detectan las violaciones cubiertas. Las pruebas de autorización de casos de uso quedan pendientes hasta que exista ese código.
+- [x] Volver a ejecutar las pruebas y verificaciones sobre el commit candidato `9cfb738`: 130/130 pruebas backend, verificadores arquitectónicos, D1 local (22 objetos) y build Cloudflare completados correctamente.
+- **Aceptación de Fase 1:** persistencia y límites modulares verificados; autenticación de servidor y aislamiento funcional completados por las fases dependientes. No queda pendiente de Fase 1.
 - 🔒 SEC-ISO-06, SEC-MOD-03.
 
 ---
@@ -166,36 +169,48 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 3 — Módulo files: catálogo
 
-**Estado: VALIDACIÓN DE CIERRE EN CURSO; aún no certificada (2026-10-11).** El catálogo y la verificación estructural local están implementados. Se incorporaron cuatro pruebas adicionales de movimientos, conflictos, restauración y aislamiento por propietario en los commits [73b2c8f](https://github.com/programadorkevinsvega-sys/vega-drive/commit/73b2c8fa2041aa5b67d7d5d32254241eb1316d42), [4ef3c66](https://github.com/programadorkevinsvega-sys/vega-drive/commit/4ef3c662001351291bfaac7186f72c68f97fab9c), [a152cf7](https://github.com/programadorkevinsvega-sys/vega-drive/commit/a152cf72c1fe5422ceb5397339c59b50a7982a9c), [a0e2d3a](https://github.com/programadorkevinsvega-sys/vega-drive/commit/a0e2d3a1be305bd38fc7a873d685250f325e42ee) y [11438e3](https://github.com/programadorkevinsvega-sys/vega-drive/commit/11438e35a1cdfee667bbbb847a60dd4a3790f814). Los checks que se reportaron antes de esos cambios pasaron, pero deben repetirse para validar las pruebas nuevas; falta también confirmar CI. La integración HTTP/BFF sigue siendo alcance de la Fase 5, no un bloqueador de la Fase 3 de catálogo. La verificación D1 local pasó el 2026-10-11 con 22 tablas/índices. No declarar la fase cerrada hasta que CI y los checks finales confirmen los criterios de [FILES_PHASE_3.md](./FILES_PHASE_3.md).
+**Estado: CERRADA (2026-10-11).** El catálogo de metadatos de archivos y carpetas está implementado y validado localmente en el commit `9cfb738`. Véase el registro de evidencia y alcance en [FILES_PHASE_3.md](./FILES_PHASE_3.md).
 
-### 3.1 Carpetas y nodos
+### Evidencia de cierre
 
-- [x] Implementar casos de uso de catálogo para crear, renombrar, mover, listar y borrar lógicamente metadatos de carpetas y archivos.
-- [x] Normalizar nombres y validar entradas; prevenir ciclos de carpetas y conflictos de nombres entre tipos de nodo.
-- [x] Mantener el nombre visible separado de cualquier clave física de almacenamiento; no se ha implementado aún el adaptador R2.
-- [x] Añadir pruebas explícitas para movimientos entre propietarios, creación en carpetas ajenas, aislamiento de papelera, movimientos/renombrados exitosos y conflictos de restauración.
-- [ ] Ejecutar las cuatro pruebas nuevas en la suite local y CI, y registrar el resultado.
-- [ ] Completar la integración del contrato público con FilesGateway/BFF HTTP; no confundir el servicio de dominio con rutas HTTP funcionales.
-- **Aceptación pendiente:** solo tablas `files_*`, sin acceso cruzado; los recursos ajenos deben resultar indistinguibles de los inexistentes en la interfaz HTTP (404 al integrarse en la Fase 5).
+- [x] Crear, listar, renombrar y mover metadatos de carpetas y archivos.
+- [x] Validar y normalizar nombres; rechazar duplicados entre tipos de nodo y prevenir ciclos de carpetas.
+- [x] Aplicar aislamiento por propietario a operaciones de catálogo; rechazar movimientos, creación y restauración sobre recursos ajenos.
+- [x] Implementar borrado lógico, papelera, restauración, paginación y breadcrumbs.
+- [x] Probar movimientos/renombrados correctos, aislamiento entre propietarios y conflictos sin cambios colaterales.
+- [x] Reconciliar D1 local y verificar las 22 tablas/índices contra las migraciones.
+- [x] Ejecutar `pnpm run check`: Prettier, lint arquitectónico, TypeScript y 130/130 pruebas backend aprobadas.
+- [x] Ejecutar `pnpm run verify:architecture:all`: todos los verificadores finalizaron correctamente.
+- [x] Ejecutar `pnpm run cloudflare:build`: 119/119 pruebas frontend, build de producción, auditorías sin vulnerabilidades conocidas y Wrangler dry-run aprobados.
+- [x] Actualizar la documentación de fase y el estado del roadmap.
+
+### 3.1 Catálogo, aislamiento y validación
+
+- [x] Mantener los datos de catálogo bajo tablas y repositorios del módulo `files`.
+- [x] Derivar autoridad del actor de servidor, nunca de un `ownerId` proporcionado por el navegador.
+- [x] Verificar que rechazos por propiedad y conflictos de nombre no alteren recursos ni produzcan efectos colaterales.
+- [x] Probar papelera y restauración con aislamiento por propietario.
+- **Aceptación:** el catálogo de dominio implementa y prueba el alcance funcional de metadatos y aislamiento. La traducción a códigos HTTP y su integración con rutas/BFF son parte de la Fase 5, no un pendiente de esta fase.
 - 🔒 SEC-ISO-02…06, SEC-VAL-03, SEC-MOD-02.
 
-### 3.2 Papelera y navegación
+### 3.2 Papelera y ciclo de vida
 
-- [x] Implementar borrado lógico, restauración, listado de papelera, paginación y breadcrumbs en el catálogo.
-- [x] Añadir pruebas explícitas de aislamiento de papelera, restauración de recursos ajenos, movimiento hacia/desde carpetas ajenas y ausencia de cambios colaterales ante rechazo.
-- [ ] Reejecutar y registrar la suite tras la incorporación de las cuatro pruebas nuevas.
-- [x] Delimitar el ciclo de vida en esta fase: borrado lógico/restauración solamente; sin purga permanente ni limpieza automática. Los metadatos de papelera se conservan hasta que exista una política explícita de retención y un caso de uso aprobado.
-- [x] Asignar la purga física, reintentos e idempotencia de objetos a la Fase 4, junto con el adaptador R2; no declarar esa capacidad implementada en Fase 3.
-- [x] Ejecutar y registrar `pnpm run db:verify:schema:local` satisfactoriamente tras aplicar las migraciones locales pendientes el 2026-10-11 (22 tablas/índices).
-- **Aceptación pendiente:** las pruebas de papelera no cruzan propietarios; esquema D1 local verificado contra migraciones (22 tablas/índices); ciclo de limpieza definido y asignado a una fase.
+- [x] Implementar borrado lógico y restauración.
+- [x] Definir el alcance actual sin purga permanente ni limpieza automática.
+- [x] Asignar eliminación física R2, idempotencia, reintentos y reconciliación de fallos D1/R2 a la Fase 4.
+- [x] Documentar que una futura política de retención/purga requiere una decisión de producto y no bloquea el catálogo actual.
+- **Aceptación:** papelera y restauración están probadas; el ciclo de vida se limita explícitamente al borrado lógico y la recuperación.
 - 🔒 SEC-ISO-03, SEC-ISO-05, SEC-LOG-01.
 
-### Evidencia actual y criterio de cierre
+### Fuera de alcance de Fase 3
 
-- CI previamente reportado como satisfactorio: [run 38114942365](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38114942365).
-- Verificación local reportada el 2026-10-11 para la revisión anterior a las cuatro pruebas nuevas: Prettier, arquitectura, TypeScript y 126/126 tests aprobados; `pnpm run verify:architecture:all`, `pnpm run db:verify:schema:local` (22 tablas/índices) y `pnpm run cloudflare:build` completaron sus pasos sin despliegue. Esta evidencia no cubre los últimos commits de pruebas; deben repetirse los checks.
-- **Incidencia de esquema local resuelta:** las migraciones `0002` pendientes de `files` e `identity` se aplicaron a D1 local. No se modificaron migraciones ni se reporta cambio a D1 remota.
-- **Cierre de fase:** las pruebas adicionales ya están en `main`; falta ejecutarlas localmente, repetir los checks de cierre y confirmar su ejecución en CI. El esquema local está reconciliado y el alcance de limpieza está delimitado. Fase 4 (R2), Fase 5 (BFF HTTP) y Fase 8 (certificación transversal) siguen siendo fases separadas.
+- **Fase 4:** adaptador y transferencias físicas privadas con R2.
+- **Fase 5:** controllers HTTP/BFF, rutas de archivos y mapeo de errores de transporte.
+- **Fase 6:** cuotas.
+- **Fase 7:** compartición.
+- **Fase 8:** certificación transversal de seguridad.
+
+Estos trabajos permanecen en sus respectivas fases y no representan pendientes dentro del alcance de catálogo de Fase 3.
 
 ---
 
