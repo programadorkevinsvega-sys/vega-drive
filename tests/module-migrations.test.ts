@@ -64,6 +64,7 @@ describe("module-owned D1 migrations", () => {
     expect(paths).toEqual([
       "files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
       "files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
+      "files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
       "identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql",
     ]);
@@ -137,6 +138,9 @@ describe("module-owned D1 migrations", () => {
     );
     expect(manifest).toContain(
       "files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
+    );
+    expect(manifest).toContain(
+      "files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
     );
     expect(manifest).toContain(
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
