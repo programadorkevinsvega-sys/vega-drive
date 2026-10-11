@@ -14,8 +14,15 @@ export class R2FileStorage implements IFileStoragePort {
     key: string,
     body: ReadableStream<Uint8Array>,
     contentType: string,
+    sizeBytes: number,
   ): Promise<void> {
-    await this.bucket.put(key, body, { httpMetadata: { contentType } });
+    const fixedLength = new FixedLengthStream(sizeBytes);
+    await Promise.all([
+      body.pipeTo(fixedLength.writable),
+      this.bucket.put(key, fixedLength.readable, {
+        httpMetadata: { contentType },
+      }),
+    ]);
   }
 
   async head(key: string): Promise<FileStorageHead | null> {
