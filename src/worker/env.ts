@@ -4,6 +4,7 @@ export interface Env {
   FILES_BUCKET: R2Bucket;
   TURNSTILE_SECRET_KEY: string;
   TURNSTILE_SITE_KEY: string;
+  TURNSTILE_HOSTNAMES: string;
   MAX_USERS: string;
 }
 
