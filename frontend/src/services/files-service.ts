@@ -137,6 +137,10 @@ export function deleteFolderPermanently(id: string): Promise<{ ok: true }> {
   );
 }
 
+export function emptyTrash(): Promise<{ ok: true }> {
+  return sendNoBody<{ ok: true }>("/api/files/trash/empty", "POST");
+}
+
 export function restoreFolder(id: string): Promise<FilesFolderView> {
   return sendNoBody<FilesFolderView>(
     "/api/files/trash/folders/" + encodeURIComponent(id) + "/restore",

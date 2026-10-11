@@ -105,6 +105,33 @@ export function createTrashMutations(deps: TrashMutationDependencies) {
     }
   }
 
+  async function emptyTrash(actor: FilesActor): Promise<CatalogResult<void>> {
+    if (!hasValidActor(actor)) return failure("invalid-input");
+    try {
+      // Delete folders first; each folder deletion also removes descendants.
+      // Re-read the first page because deleting a parent can remove children.
+      while (true) {
+        const [folder] = await deps.folders.listTrashByOwner(actor.userId, 1);
+        if (!folder) break;
+        const result = await permanentlyDeleteFolder(actor, folder.id);
+        if (!result.ok && result.reason !== "not-found") {
+          return failure("unavailable");
+        }
+      }
+      while (true) {
+        const [item] = await deps.items.listTrashByOwner(actor.userId, 1);
+        if (!item) break;
+        const result = await permanentlyDeleteFile(actor, item.id);
+        if (!result.ok && result.reason !== "not-found") {
+          return failure("unavailable");
+        }
+      }
+      return success(undefined);
+    } catch {
+      return failure("unavailable");
+    }
+  }
+
   async function cleanupExpiredTrash(
     nowIso: string,
     limit: number,
@@ -142,6 +169,7 @@ export function createTrashMutations(deps: TrashMutationDependencies) {
   return {
     permanentlyDeleteFile,
     permanentlyDeleteFolder,
+    emptyTrash,
     cleanupExpiredTrash,
   };
 }

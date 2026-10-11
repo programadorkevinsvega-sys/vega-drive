@@ -394,6 +394,108 @@ describe("files catalog HTTP routes", () => {
     ).toBeNull();
   });
 
+  it("empties only the authenticated owner's trash, including nested R2 objects", async () => {
+    const parentResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Trash parent",
+    });
+    const parent = await json<{ id: string }>(parentResponse);
+    const childResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Trash child",
+      parentFolderId: parent.id,
+    });
+    const child = await json<{ id: string }>(childResponse);
+    const nestedUpload = await sendFile(
+      "nested-trash.txt",
+      "nested bytes",
+      fixture.tokenA,
+      child.id,
+    );
+    const nestedFile = await json<{ id: string }>(nestedUpload);
+    const standaloneUpload = await sendFile(
+      "standalone-trash.txt",
+      "trash bytes",
+    );
+    const standaloneFile = await json<{ id: string }>(standaloneUpload);
+    const activeUpload = await sendFile("keep-active.txt", "keep bytes");
+    const activeFile = await json<{ id: string }>(activeUpload);
+    const foreignUpload = await sendFile(
+      "foreign-trash.txt",
+      "foreign bytes",
+      fixture.tokenB,
+    );
+    const foreignFile = await json<{ id: string }>(foreignUpload);
+
+    const keys = await Promise.all(
+      [nestedFile.id, standaloneFile.id, foreignFile.id].map(async (id) => {
+        const record = await fixture.db
+          .prepare(
+            "SELECT storage_key AS storageKey FROM files_items WHERE id = ?",
+          )
+          .bind(id)
+          .first<{ storageKey: string }>();
+        expect(record).not.toBeNull();
+        return [id, record!.storageKey] as const;
+      }),
+    );
+    await send("/api/files/folders/" + parent.id, { method: "DELETE" });
+    await send("/api/files/items/" + standaloneFile.id, {
+      method: "DELETE",
+    });
+    await send(
+      "/api/files/items/" + foreignFile.id,
+      { method: "DELETE" },
+      fixture.tokenB,
+    );
+
+    const response = await send("/api/files/trash/empty", {
+      method: "POST",
+    });
+    expect(response.status).toBe(200);
+    expect(await json(response)).toEqual({ ok: true });
+
+    for (const [id, key] of keys.filter(([id]) => id !== foreignFile.id)) {
+      expect(await fixture.env.FILES_BUCKET.head(key)).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_items WHERE id = ?")
+          .bind(id)
+          .first(),
+      ).toBeNull();
+    }
+    expect(
+      await fixture.db
+        .prepare("SELECT id FROM files_folders WHERE id IN (?, ?)")
+        .bind(parent.id, child.id)
+        .all(),
+    ).toMatchObject({ results: [] });
+    expect(
+      await fixture.db
+        .prepare("SELECT id FROM files_items WHERE id = ?")
+        .bind(activeFile.id)
+        .first(),
+    ).not.toBeNull();
+    expect(
+      await fixture.env.FILES_BUCKET.head(
+        keys.find(([id]) => id === foreignFile.id)![1],
+      ),
+    ).not.toBeNull();
+
+    const ownerTrash = await send("/api/files/trash");
+    expect(
+      (await json<{ nodes: Array<{ id: string }> }>(ownerTrash)).nodes,
+    ).toEqual([]);
+    const foreignTrash = await send(
+      "/api/files/trash",
+      {},
+      fixture.tokenB,
+    );
+    expect(
+      (
+        await json<{ nodes: Array<{ id: string }> }>(foreignTrash)
+      ).nodes.map((node) => node.id),
+    ).toContain(foreignFile.id);
+  });
+
   it("soft-deletes, lists trash and restores folders and items", async () => {
     const folderResponse = await sendJson("/api/files/folders", "POST", {
       name: "Trash folder",

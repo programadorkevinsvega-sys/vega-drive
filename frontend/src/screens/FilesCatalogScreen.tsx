@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Breadcrumbs, type Crumb } from "../ui/Breadcrumbs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
 import { Spinner } from "../ui/Spinner";
+import { Modal } from "../ui/Modal";
 import { CatalogActionDialog } from "./CatalogActionDialog";
 import { CatalogDeleteDialog } from "./CatalogDeleteDialog";
 import { CatalogNodeRow } from "./CatalogNodeRow";
@@ -22,6 +24,7 @@ export function FilesCatalogScreen({
 }: FilesCatalogScreenProps) {
   const data = useCatalogData(view, folderId);
   const actions = useCatalogActions(folderId, data.refresh);
+  const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const breadcrumbs: Crumb[] =
     view === "trash"
       ? [{ label: "Mi unidad", href: "#/drive" }]
@@ -44,6 +47,17 @@ export function FilesCatalogScreen({
               : "Carpetas y metadatos sincronizados con tu catálogo privado."}
           </p>
         </div>
+        {view === "trash" && data.nodes.length > 0 ? (
+          <div className="vd-catalog__heading-actions">
+            <Button
+              icon="trash"
+              variant="danger"
+              onClick={() => setEmptyTrashOpen(true)}
+            >
+              Vaciar papelera
+            </Button>
+          </div>
+        ) : null}
         {view === "drive" ? (
           <div className="vd-catalog__heading-actions">
             <FileTransferControls
@@ -156,6 +170,43 @@ export function FilesCatalogScreen({
           ) : null}
         </section>
       ) : null}
+
+      <Modal
+        open={emptyTrashOpen}
+        onClose={() => {
+          if (!actions.emptyTrashLoading) setEmptyTrashOpen(false);
+        }}
+        title="¿Vaciar toda la papelera?"
+        description="Se eliminarán permanentemente todos los archivos y carpetas de la papelera. Esta acción no se puede deshacer."
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setEmptyTrashOpen(false)}
+              disabled={actions.emptyTrashLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              icon="trash"
+              loading={actions.emptyTrashLoading}
+              disabled={actions.emptyTrashLoading}
+              onClick={async () => {
+                if (await actions.emptyTrash()) setEmptyTrashOpen(false);
+              }}
+            >
+              Vaciar papelera
+            </Button>
+          </>
+        }
+      >
+        <p className="vd-modal__note" role="note">
+          Se borrarán también los contenidos de las carpetas. Los archivos que
+          no se puedan eliminar por un error del servidor permanecerán en la
+          papelera para que puedas volver a intentarlo.
+        </p>
+      </Modal>
 
       <CatalogActionDialog
         action={actions.action}

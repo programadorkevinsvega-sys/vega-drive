@@ -106,6 +106,10 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.permanentlyDeleteFolder(...args);
   }
 
+  emptyTrash(...args: Parameters<FilesPublicApi["emptyTrash"]>) {
+    return this.api.emptyTrash(...args);
+  }
+
   cleanupExpiredTrash(
     ...args: Parameters<FilesPublicApi["cleanupExpiredTrash"]>
   ) {

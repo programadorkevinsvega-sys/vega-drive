@@ -195,6 +195,17 @@ filesRoutes.get("/", listFolder);
 filesRoutes.get("", listFolder);
 filesRoutes.get("/trash", listTrash);
 
+filesRoutes.post("/trash/empty", async (c) => {
+  const rejected = mutationRejection(c);
+  if (rejected) return rejected;
+  if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
+
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.emptyTrash(actorFor(c)),
+  );
+});
+
 filesRoutes.post("/folders", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;

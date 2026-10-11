@@ -75,6 +75,7 @@ export interface FilesPublicApi {
     actor: FilesActor,
     id: unknown,
   ): Promise<CatalogResult<void>>;
+  emptyTrash(actor: FilesActor): Promise<CatalogResult<void>>;
   cleanupExpiredTrash(nowIso: string, limit: number): Promise<number>;
   restoreFile(
     actor: FilesActor,
@@ -162,6 +163,10 @@ export function createFilesModule(
     permanentlyDeleteFolder: (...args) =>
       trash
         ? trash.permanentlyDeleteFolder(...args)
+        : Promise.resolve({ ok: false, reason: "unavailable" }),
+    emptyTrash: (...args) =>
+      trash
+        ? trash.emptyTrash(...args)
         : Promise.resolve({ ok: false, reason: "unavailable" }),
     cleanupExpiredTrash: (nowIso, limit) =>
       trash ? trash.cleanupExpiredTrash(nowIso, limit) : Promise.resolve(0),

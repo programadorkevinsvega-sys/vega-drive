@@ -5,6 +5,7 @@ import {
   deleteFilePermanently,
   deleteFolder,
   deleteFolderPermanently,
+  emptyTrash,
   FilesApiError,
   moveFile,
   moveFolder,
@@ -33,6 +34,7 @@ export function useCatalogActions(
     trashed: boolean;
   } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [emptyTrashLoading, setEmptyTrashLoading] = useState(false);
   const { notify } = useToast();
 
   async function submitAction(value: string) {
@@ -108,6 +110,31 @@ export function useCatalogActions(
     }
   }
 
+  async function emptyTrashPermanently(): Promise<boolean> {
+    if (emptyTrashLoading) return false;
+    setEmptyTrashLoading(true);
+    try {
+      await emptyTrash();
+      notify({
+        tone: "success",
+        title: "Papelera vaciada",
+        description: "Los elementos eliminados permanentemente ya no ocupan espacio.",
+      });
+      refresh();
+      return true;
+    } catch (cause) {
+      notify({
+        tone: "error",
+        title: "No se pudo vaciar la papelera por completo",
+        description: publicError(cause),
+      });
+      refresh();
+      return false;
+    } finally {
+      setEmptyTrashLoading(false);
+    }
+  }
+
   async function restoreNode(node: FilesCatalogNode) {
     try {
       if (node.type === "folder") {
@@ -143,5 +170,7 @@ export function useCatalogActions(
       if (!deleteLoading) setDeleteTarget(null);
     },
     restoreNode,
+    emptyTrash: emptyTrashPermanently,
+    emptyTrashLoading,
   };
 }
