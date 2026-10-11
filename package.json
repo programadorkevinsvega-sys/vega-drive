@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test",
-    "cloudflare:build": "pnpm run deploy:preflight && pnpm run check && pnpm run frontend:check && pnpm audit --audit-level=high && pnpm run frontend:audit && pnpm exec wrangler deploy --dry-run",
+    "cloudflare:build": "pnpm run deploy:preflight && pnpm run check && pnpm run frontend:install && pnpm run frontend:check && pnpm audit --audit-level=high && pnpm run frontend:audit && pnpm exec wrangler deploy --dry-run",
     "db:verify:schema:local": "node scripts/verify-d1-schema.mjs --local",
     "db:verify:schema:production": "node scripts/verify-d1-schema.mjs --remote",
     "deploy:preflight": "node scripts/check-cloudflare-config.mjs && pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:architecture:all",

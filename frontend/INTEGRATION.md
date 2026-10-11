@@ -36,7 +36,6 @@ Desde la raíz del repositorio, con Node `>=22.13.0` y pnpm `10.18.3`:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm run frontend:install
 pnpm run cloudflare:build
 ```
 
@@ -48,8 +47,10 @@ servidor local después del build:
 pnpm run dev
 ```
 
-La CI ejecuta el mismo gate de build después de instalar ambas dependencias por
-separado y mantiene Gitleaks como job independiente. Ninguna de estas comprobaciones
+El gate `cloudflare:build` instala por sí mismo las dependencias del frontend con
+su lockfile independiente, por lo que también funciona en proveedores de build que
+solo instalan las dependencias de la raíz. La CI ejecuta ese mismo gate y mantiene
+Gitleaks como job independiente. Ninguna de estas comprobaciones
 por sí sola demuestra la aplicación de cabeceras o disponibilidad en producción.
 
 ## Evidencia pendiente antes de cerrar la subfase

@@ -64,7 +64,11 @@ describe("integración de assets frontend/Cloudflare", () => {
     }
     expect(cloudflareBuild).toMatch(/^pnpm run deploy:preflight &&/);
     expect(cloudflareBuild).toContain("pnpm run check");
+    expect(cloudflareBuild).toContain("pnpm run frontend:install");
     expect(cloudflareBuild).toContain("pnpm run frontend:check");
+    expect(cloudflareBuild.indexOf("pnpm run frontend:install")).toBeLessThan(
+      cloudflareBuild.indexOf("pnpm run frontend:check"),
+    );
     expect(cloudflareBuild).toContain("pnpm run frontend:audit");
     expect(cloudflareBuild).toContain("wrangler deploy --dry-run");
 
@@ -75,7 +79,6 @@ describe("integración de assets frontend/Cloudflare", () => {
       "pnpm run typecheck && pnpm run test && pnpm run build",
     );
     expect(workflow).toContain("frontend/pnpm-lock.yaml");
-    expect(workflow).toContain("pnpm run frontend:install");
     expect(workflow).toContain("pnpm run cloudflare:build");
   });
 });
