@@ -93,3 +93,13 @@ export function logout(): Promise<{ ok: true }> {
     body: JSON.stringify({}),
   });
 }
+
+export function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ ok: true }> {
+  return requestJson<{ ok: true }>("/api/auth/password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
