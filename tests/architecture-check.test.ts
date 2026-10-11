@@ -93,6 +93,15 @@ describe("architecture guard", () => {
     expectRejected(result, "JOIN no permitido");
   });
 
+  it("allows ordinary JavaScript string-join methods in modules", async () => {
+    const result = await runGuard({
+      "src/modules/files/strings.ts": 'const joined = ["a", "b"].join(",");',
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Fronteras arquitectónicas OK");
+  });
+
   it("rejects foreign keys in modules", async () => {
     const query = "FOREIGN KEY (owner_id) REFERENCES identity_users(id)";
     const source = "const query = " + JSON.stringify(query) + ";";
