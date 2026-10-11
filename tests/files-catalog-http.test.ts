@@ -15,7 +15,10 @@ async function runSql(
   sql: string,
   bindings: unknown[],
 ): Promise<void> {
-  await db.prepare(sql).bind(...bindings).run();
+  await db
+    .prepare(sql)
+    .bind(...bindings)
+    .run();
 }
 
 async function createHttpFixture() {
@@ -83,10 +86,7 @@ async function send(
   if (!["GET", "HEAD", "OPTIONS"].includes(method) && !headers.has("Origin")) {
     headers.set("Origin", ORIGIN);
   }
-  if (
-    typeof init.body === "string" &&
-    !headers.has("Content-Type")
-  ) {
+  if (typeof init.body === "string" && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -100,7 +100,7 @@ async function sendJson(
   path: string,
   method: string,
   body: unknown,
-  token: string = fixture.tokenA,
+  token: string | null = fixture.tokenA,
   env: Env = fixture.env,
 ): Promise<Response> {
   return send(
@@ -142,134 +142,126 @@ describe("files catalog HTTP routes", () => {
     expect(create.status).toBe(401);
   });
 
-  it(
-    "lists root and nested folders with server-provided breadcrumbs",
-    async () => {
-      const parentResponse = await sendJson("/api/files/folders", "POST", {
-        name: "Parent",
-      });
-      expect(parentResponse.status).toBe(201);
-      const parent = await json<{ id: string }>(parentResponse);
+  it("lists root and nested folders with server-provided breadcrumbs", async () => {
+    const parentResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Parent",
+    });
+    expect(parentResponse.status).toBe(201);
+    const parent = await json<{ id: string }>(parentResponse);
 
-      const childResponse = await sendJson("/api/files/folders", "POST", {
-        name: "Child",
-        parentFolderId: parent.id,
-      });
-      expect(childResponse.status).toBe(201);
-      const child = await json<{ id: string }>(childResponse);
+    const childResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Child",
+      parentFolderId: parent.id,
+    });
+    expect(childResponse.status).toBe(201);
+    const child = await json<{ id: string }>(childResponse);
 
-      const root = await send("/api/files");
-      expect(root.status).toBe(200);
-      expect(await json(root)).toMatchObject({
-        folder: null,
-        breadcrumbs: [{ id: null, name: "Mi unidad" }],
-        folders: [{ id: parent.id, name: "Parent" }],
-        files: [],
-        nextCursor: null,
-      });
+    const root = await send("/api/files");
+    expect(root.status).toBe(200);
+    expect(await json(root)).toMatchObject({
+      folder: null,
+      breadcrumbs: [{ id: null, name: "Mi unidad" }],
+      folders: [{ id: parent.id, name: "Parent" }],
+      files: [],
+      nextCursor: null,
+    });
 
-      const nested = await send(
-        "/api/files?folderId=" + encodeURIComponent(child.id),
-      );
-      expect(nested.status).toBe(200);
-      expect(await json(nested)).toMatchObject({
-        folder: { id: child.id, name: "Child" },
-        breadcrumbs: [
-          { id: null, name: "Mi unidad" },
-          { id: parent.id, name: "Parent" },
-          { id: child.id, name: "Child" },
-        ],
-        folders: [],
-        files: [],
-      });
-    },
-  );
+    const nested = await send(
+      "/api/files?folderId=" + encodeURIComponent(child.id),
+    );
+    expect(nested.status).toBe(200);
+    expect(await json(nested)).toMatchObject({
+      folder: { id: child.id, name: "Child" },
+      breadcrumbs: [
+        { id: null, name: "Mi unidad" },
+        { id: parent.id, name: "Parent" },
+        { id: child.id, name: "Child" },
+      ],
+      folders: [],
+      files: [],
+    });
+  });
 
-  it(
-    "creates, renames and moves folders and file metadata through HTTP",
-    async () => {
-      const destinationResponse = await sendJson("/api/files/folders", "POST", {
-        name: "Destination",
-      });
-      const destination = await json<{ id: string }>(destinationResponse);
-      const folderResponse = await sendJson("/api/files/folders", "POST", {
-        name: "Before",
-      });
-      const folder = await json<{ id: string }>(folderResponse);
+  it("creates, renames and moves folders and file metadata through HTTP", async () => {
+    const destinationResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Destination",
+    });
+    const destination = await json<{ id: string }>(destinationResponse);
+    const folderResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Before",
+    });
+    const folder = await json<{ id: string }>(folderResponse);
 
-      const renamedFolder = await sendJson(
-        "/api/files/folders/" + folder.id,
-        "PATCH",
-        { name: "Renamed" },
-      );
-      expect(renamedFolder.status).toBe(200);
-      expect(await json(renamedFolder)).toMatchObject({
-        id: folder.id,
-        name: "Renamed",
-      });
+    const renamedFolder = await sendJson(
+      "/api/files/folders/" + folder.id,
+      "PATCH",
+      { name: "Renamed" },
+    );
+    expect(renamedFolder.status).toBe(200);
+    expect(await json(renamedFolder)).toMatchObject({
+      id: folder.id,
+      name: "Renamed",
+    });
 
-      const movedFolder = await sendJson(
-        "/api/files/folders/" + folder.id + "/move",
-        "POST",
-        { parentFolderId: destination.id },
-      );
-      expect(movedFolder.status).toBe(200);
-      expect(await json(movedFolder)).toMatchObject({
-        id: folder.id,
-        parentFolderId: destination.id,
-      });
+    const movedFolder = await sendJson(
+      "/api/files/folders/" + folder.id + "/move",
+      "POST",
+      { parentFolderId: destination.id },
+    );
+    expect(movedFolder.status).toBe(200);
+    expect(await json(movedFolder)).toMatchObject({
+      id: folder.id,
+      parentFolderId: destination.id,
+    });
 
-      const metadataResponse = await sendJson(
-        "/api/files/items/metadata",
-        "POST",
-        {
-          name: "before.txt",
-          sizeBytes: 12,
-          contentType: "text/plain",
-        },
-      );
-      expect(metadataResponse.status).toBe(201);
-      const itemPayload = await json<Record<string, unknown>>(metadataResponse);
-      expect(itemPayload.name).toBe("before.txt");
-      expect(itemPayload).not.toHaveProperty("storageKey");
-      const item = itemPayload as { id: string; name: string };
+    const metadataResponse = await sendJson(
+      "/api/files/items/metadata",
+      "POST",
+      {
+        name: "before.txt",
+        sizeBytes: 12,
+        contentType: "text/plain",
+      },
+    );
+    expect(metadataResponse.status).toBe(201);
+    const itemPayload = await json<Record<string, unknown>>(metadataResponse);
+    expect(itemPayload.name).toBe("before.txt");
+    expect(itemPayload).not.toHaveProperty("storageKey");
+    const item = itemPayload as { id: string; name: string };
 
-      const renamedItem = await sendJson(
-        "/api/files/items/" + item.id,
-        "PATCH",
-        { name: "after.txt" },
-      );
-      expect(renamedItem.status).toBe(200);
-      expect(await json(renamedItem)).toMatchObject({
-        id: item.id,
-        name: "after.txt",
-      });
+    const renamedItem = await sendJson("/api/files/items/" + item.id, "PATCH", {
+      name: "after.txt",
+    });
+    expect(renamedItem.status).toBe(200);
+    expect(await json(renamedItem)).toMatchObject({
+      id: item.id,
+      name: "after.txt",
+    });
 
-      const movedItem = await sendJson(
-        "/api/files/items/" + item.id + "/move",
-        "POST",
-        { folderId: folder.id },
-      );
-      expect(movedItem.status).toBe(200);
-      expect(await json(movedItem)).toMatchObject({
-        id: item.id,
-        folderId: folder.id,
-      });
+    const movedItem = await sendJson(
+      "/api/files/items/" + item.id + "/move",
+      "POST",
+      { folderId: folder.id },
+    );
+    expect(movedItem.status).toBe(200);
+    expect(await json(movedItem)).toMatchObject({
+      id: item.id,
+      folderId: folder.id,
+    });
 
-      const nested = await send(
-        "/api/files?folderId=" + encodeURIComponent(folder.id),
-      );
-      expect(nested.status).toBe(200);
-      expect(await json(nested)).toMatchObject({
-        breadcrumbs: [
-          { id: null, name: "Mi unidad" },
-          { id: destination.id, name: "Destination" },
-          { id: folder.id, name: "Renamed" },
-        ],
-        files: [{ id: item.id, name: "after.txt" }],
-      });
-    },
-  );
+    const nested = await send(
+      "/api/files?folderId=" + encodeURIComponent(folder.id),
+    );
+    expect(nested.status).toBe(200);
+    expect(await json(nested)).toMatchObject({
+      breadcrumbs: [
+        { id: null, name: "Mi unidad" },
+        { id: destination.id, name: "Destination" },
+        { id: folder.id, name: "Renamed" },
+      ],
+      files: [{ id: item.id, name: "after.txt" }],
+    });
+  });
 
   it("soft-deletes, lists trash and restores folders and items", async () => {
     const folderResponse = await sendJson("/api/files/folders", "POST", {
@@ -328,200 +320,183 @@ describe("files catalog HTTP routes", () => {
     });
   });
 
-  it(
-    "validates query parameters, JSON shape, identifiers, Origin and name conflicts",
-    async () => {
-      const unexpectedQuery = await send("/api/files?ownerId=owner-b");
-      expect(unexpectedQuery.status).toBe(400);
+  it("validates query parameters, JSON shape, identifiers, Origin and name conflicts", async () => {
+    const unexpectedQuery = await send("/api/files?ownerId=owner-b");
+    expect(unexpectedQuery.status).toBe(400);
 
-      const spoofedOwnerBody = await sendJson("/api/files/folders", "POST", {
-        name: "Spoofed owner",
-        ownerId: "owner-b",
-      });
-      expect(spoofedOwnerBody.status).toBe(400);
+    const spoofedOwnerBody = await sendJson("/api/files/folders", "POST", {
+      name: "Spoofed owner",
+      ownerId: "owner-b",
+    });
+    expect(spoofedOwnerBody.status).toBe(400);
 
-      const spoofedUserBody = await sendJson("/api/files/folders", "POST", {
-        name: "Spoofed user",
-        userId: "owner-b",
-      });
-      expect(spoofedUserBody.status).toBe(400);
+    const spoofedUserBody = await sendJson("/api/files/folders", "POST", {
+      name: "Spoofed user",
+      userId: "owner-b",
+    });
+    expect(spoofedUserBody.status).toBe(400);
 
-      const spoofedUserQuery = await send("/api/files?userId=owner-b");
-      expect(spoofedUserQuery.status).toBe(400);
+    const spoofedUserQuery = await send("/api/files?userId=owner-b");
+    expect(spoofedUserQuery.status).toBe(400);
 
-      const wrongContentType = await send(
-        "/api/files/folders",
-        {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ name: "Wrong type" }),
-        },
-      );
-      expect(wrongContentType.status).toBe(400);
+    const wrongContentType = await send("/api/files/folders", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ name: "Wrong type" }),
+    });
+    expect(wrongContentType.status).toBe(400);
 
-      const invalidCursor = await send("/api/files?cursor=not-a-cursor");
-      expect(invalidCursor.status).toBe(400);
+    const invalidCursor = await send("/api/files?cursor=not-a-cursor");
+    expect(invalidCursor.status).toBe(400);
 
-      const malformedJson = await send("/api/files/folders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{invalid",
-      });
-      expect(malformedJson.status).toBe(400);
+    const malformedJson = await send("/api/files/folders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{invalid",
+    });
+    expect(malformedJson.status).toBe(400);
 
-      const tooLarge = await sendJson("/api/files/folders", "POST", {
-        name: "x".repeat(70 * 1024),
-      });
-      expect(tooLarge.status).toBe(400);
+    const tooLarge = await sendJson("/api/files/folders", "POST", {
+      name: "x".repeat(70 * 1024),
+    });
+    expect(tooLarge.status).toBe(400);
 
-      const crossOrigin = await send(
-        "/api/files/folders",
-        {
-          method: "POST",
-          headers: {
-            Origin: "https://attacker.example",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: "Cross origin" }),
-        },
-      );
-      expect(crossOrigin.status).toBe(403);
+    const crossOrigin = await send("/api/files/folders", {
+      method: "POST",
+      headers: {
+        Origin: "https://attacker.example",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: "Cross origin" }),
+    });
+    expect(crossOrigin.status).toBe(403);
 
-      const invalidId = await sendJson("/api/files/items/bad!/move", "POST", {
-        folderId: null,
-      });
-      expect(invalidId.status).toBe(400);
+    const invalidId = await sendJson("/api/files/items/bad!/move", "POST", {
+      folderId: null,
+    });
+    expect(invalidId.status).toBe(400);
 
-      const first = await sendJson("/api/files/folders", "POST", {
-        name: "Duplicate",
-      });
-      expect(first.status).toBe(201);
-      const duplicate = await sendJson("/api/files/folders", "POST", {
-        name: "Duplicate",
-      });
-      expect(duplicate.status).toBe(409);
-      expect(await json(duplicate)).toEqual({
-        error: "A catalog item with that name already exists",
-      });
+    const first = await sendJson("/api/files/folders", "POST", {
+      name: "Duplicate",
+    });
+    expect(first.status).toBe(201);
+    const duplicate = await sendJson("/api/files/folders", "POST", {
+      name: "Duplicate",
+    });
+    expect(duplicate.status).toBe(409);
+    expect(await json(duplicate)).toEqual({
+      error: "A catalog item with that name already exists",
+    });
 
-      const missing = await sendJson(
-        "/api/files/folders/missing-folder",
-        "PATCH",
-        { name: "Renamed" },
-      );
-      expect(missing.status).toBe(404);
-      expect(await json(missing)).toEqual({ error: "Catalog item not found" });
-    },
-  );
+    const missing = await sendJson(
+      "/api/files/folders/missing-folder",
+      "PATCH",
+      { name: "Renamed" },
+    );
+    expect(missing.status).toBe(404);
+    expect(await json(missing)).toEqual({ error: "Catalog item not found" });
+  });
 
-  it(
-    "prevents cross-owner reads and mutations and isolates the trash",
-    async () => {
-      const foreignFolderResponse = await sendJson(
-        "/api/files/folders",
-        "POST",
-        { name: "Foreign folder" },
-        fixture.tokenB,
-      );
-      const foreignFolder = await json<{ id: string }>(foreignFolderResponse);
+  it("prevents cross-owner reads and mutations and isolates the trash", async () => {
+    const foreignFolderResponse = await sendJson(
+      "/api/files/folders",
+      "POST",
+      { name: "Foreign folder" },
+      fixture.tokenB,
+    );
+    const foreignFolder = await json<{ id: string }>(foreignFolderResponse);
 
-      const foreignItemResponse = await sendJson(
-        "/api/files/items/metadata",
-        "POST",
-        { name: "foreign.txt", sizeBytes: 4, contentType: "text/plain" },
-        fixture.tokenB,
-      );
-      const foreignItem = await json<{ id: string }>(foreignItemResponse);
+    const foreignItemResponse = await sendJson(
+      "/api/files/items/metadata",
+      "POST",
+      { name: "foreign.txt", sizeBytes: 4, contentType: "text/plain" },
+      fixture.tokenB,
+    );
+    const foreignItem = await json<{ id: string }>(foreignItemResponse);
 
-      const foreignFolderList = await send(
-        "/api/files?folderId=" + encodeURIComponent(foreignFolder.id),
-      );
-      expect(foreignFolderList.status).toBe(404);
+    const foreignFolderList = await send(
+      "/api/files?folderId=" + encodeURIComponent(foreignFolder.id),
+    );
+    expect(foreignFolderList.status).toBe(404);
 
-      const renameForeignFolder = await sendJson(
-        "/api/files/folders/" + foreignFolder.id,
-        "PATCH",
-        { name: "Stolen" },
-      );
-      expect(renameForeignFolder.status).toBe(404);
+    const renameForeignFolder = await sendJson(
+      "/api/files/folders/" + foreignFolder.id,
+      "PATCH",
+      { name: "Stolen" },
+    );
+    expect(renameForeignFolder.status).toBe(404);
 
-      const deleteForeignFolder = await send(
-        "/api/files/folders/" + foreignFolder.id,
-        { method: "DELETE" },
-      );
-      expect(deleteForeignFolder.status).toBe(404);
+    const deleteForeignFolder = await send(
+      "/api/files/folders/" + foreignFolder.id,
+      { method: "DELETE" },
+    );
+    expect(deleteForeignFolder.status).toBe(404);
 
-      const renameForeignItem = await sendJson(
-        "/api/files/items/" + foreignItem.id,
-        "PATCH",
-        { name: "stolen.txt" },
-      );
-      expect(renameForeignItem.status).toBe(404);
+    const renameForeignItem = await sendJson(
+      "/api/files/items/" + foreignItem.id,
+      "PATCH",
+      { name: "stolen.txt" },
+    );
+    expect(renameForeignItem.status).toBe(404);
 
-      const moveForeignItem = await sendJson(
-        "/api/files/items/" + foreignItem.id + "/move",
-        "POST",
-        { folderId: null },
-      );
-      expect(moveForeignItem.status).toBe(404);
+    const moveForeignItem = await sendJson(
+      "/api/files/items/" + foreignItem.id + "/move",
+      "POST",
+      { folderId: null },
+    );
+    expect(moveForeignItem.status).toBe(404);
 
-      const deleteItemAsOwner = await send(
-        "/api/files/items/" + foreignItem.id,
-        { method: "DELETE" },
-        fixture.tokenB,
-      );
-      expect(deleteItemAsOwner.status).toBe(200);
-      const deleteFolderAsOwner = await send(
-        "/api/files/folders/" + foreignFolder.id,
-        { method: "DELETE" },
-        fixture.tokenB,
-      );
-      expect(deleteFolderAsOwner.status).toBe(200);
+    const deleteItemAsOwner = await send(
+      "/api/files/items/" + foreignItem.id,
+      { method: "DELETE" },
+      fixture.tokenB,
+    );
+    expect(deleteItemAsOwner.status).toBe(200);
+    const deleteFolderAsOwner = await send(
+      "/api/files/folders/" + foreignFolder.id,
+      { method: "DELETE" },
+      fixture.tokenB,
+    );
+    expect(deleteFolderAsOwner.status).toBe(200);
 
-      const restoreForeignItem = await send(
-        "/api/files/trash/items/" + foreignItem.id + "/restore",
-        { method: "POST" },
-      );
-      expect(restoreForeignItem.status).toBe(404);
-      const restoreForeignFolder = await send(
-        "/api/files/trash/folders/" + foreignFolder.id + "/restore",
-        { method: "POST" },
-      );
-      expect(restoreForeignFolder.status).toBe(404);
+    const restoreForeignItem = await send(
+      "/api/files/trash/items/" + foreignItem.id + "/restore",
+      { method: "POST" },
+    );
+    expect(restoreForeignItem.status).toBe(404);
+    const restoreForeignFolder = await send(
+      "/api/files/trash/folders/" + foreignFolder.id + "/restore",
+      { method: "POST" },
+    );
+    expect(restoreForeignFolder.status).toBe(404);
 
-      const ownerTrash = await send("/api/files/trash");
-      expect(ownerTrash.status).toBe(200);
-      const trash = await json<{ nodes: Array<{ id: string }> }>(ownerTrash);
-      expect(trash.nodes.map((node) => node.id)).not.toContain(
-        foreignFolder.id,
-      );
-      expect(trash.nodes.map((node) => node.id)).not.toContain(foreignItem.id);
-    },
-  );
+    const ownerTrash = await send("/api/files/trash");
+    expect(ownerTrash.status).toBe(200);
+    const trash = await json<{ nodes: Array<{ id: string }> }>(ownerTrash);
+    expect(trash.nodes.map((node) => node.id)).not.toContain(foreignFolder.id);
+    expect(trash.nodes.map((node) => node.id)).not.toContain(foreignItem.id);
+  });
 
-  it(
-    "maps catalog infrastructure failures to safe HTTP 503 responses",
-    async () => {
-      const failingDb = {
-        prepare(sql: string) {
-          if (/FROM files_folders|FROM files_items/.test(sql)) {
-            throw new Error("PRIVATE SQL AND INTERNAL DETAILS");
-          }
-          return fixture.db.prepare(sql);
-        },
-      } as unknown as D1Database;
-      const failingEnv = {
-        ...fixture.env,
-        VEGA_DRIVE_DB: failingDb,
-      } as Env;
+  it("maps catalog infrastructure failures to safe HTTP 503 responses", async () => {
+    const failingDb = {
+      prepare(sql: string) {
+        if (/FROM files_folders|FROM files_items/.test(sql)) {
+          throw new Error("PRIVATE SQL AND INTERNAL DETAILS");
+        }
+        return fixture.db.prepare(sql);
+      },
+    } as unknown as D1Database;
+    const failingEnv = {
+      ...fixture.env,
+      VEGA_DRIVE_DB: failingDb,
+    } as Env;
 
-      const response = await send("/api/files", {}, fixture.tokenA, failingEnv);
-      expect(response.status).toBe(503);
-      const responseText = await response.text();
-      expect(responseText).toBe(
-        JSON.stringify({ error: "Catalog temporarily unavailable" }),
-      );
-      expect(responseText).not.toContain("PRIVATE SQL");
-    },
-  );
+    const response = await send("/api/files", {}, fixture.tokenA, failingEnv);
+    expect(response.status).toBe(503);
+    const responseText = await response.text();
+    expect(responseText).toBe(
+      JSON.stringify({ error: "Catalog temporarily unavailable" }),
+    );
+    expect(responseText).not.toContain("PRIVATE SQL");
+  });
 });

@@ -20,15 +20,15 @@ El propietario se deriva del actor autenticado entregado por la capa de aplicaci
 
 El propietario ejecutó los comandos siguientes en `main`, en el commit `9cfb738`, el 2026-10-11. Todas las ejecuciones finalizaron correctamente:
 
-| Verificación | Resultado |
-| --- | --- |
-| `pnpm run check` | Prettier, guardia arquitectónica, TypeScript y 130/130 pruebas de backend aprobadas |
-| Pruebas de catálogo | 4/4 pruebas de aislamiento y 8/8 de operaciones aprobadas; 3 pruebas de listado también aprobadas |
-| `pnpm run verify:architecture:all` | Todos los verificadores terminaron correctamente |
-| `pnpm run db:verify:schema:local` | 22 tablas/índices coinciden con las migraciones de D1 local |
-| `pnpm run cloudflare:build` | Preflight, suite backend, 119/119 pruebas de frontend, TypeScript, build de producción, auditorías y Wrangler dry-run aprobados |
-| Auditoría de dependencias | Backend y frontend: ninguna vulnerabilidad conocida encontrada |
-| Estado Git | `HEAD`, `main` y `origin/main` sincronizados en `9cfb738`; `git status --short` sin cambios |
+| Verificación                       | Resultado                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run check`                   | Prettier, guardia arquitectónica, TypeScript y 130/130 pruebas de backend aprobadas                                             |
+| Pruebas de catálogo                | 4/4 pruebas de aislamiento y 8/8 de operaciones aprobadas; 3 pruebas de listado también aprobadas                               |
+| `pnpm run verify:architecture:all` | Todos los verificadores terminaron correctamente                                                                                |
+| `pnpm run db:verify:schema:local`  | 22 tablas/índices coinciden con las migraciones de D1 local                                                                     |
+| `pnpm run cloudflare:build`        | Preflight, suite backend, 119/119 pruebas de frontend, TypeScript, build de producción, auditorías y Wrangler dry-run aprobados |
+| Auditoría de dependencias          | Backend y frontend: ninguna vulnerabilidad conocida encontrada                                                                  |
+| Estado Git                         | `HEAD`, `main` y `origin/main` sincronizados en `9cfb738`; `git status --short` sin cambios                                     |
 
 La prueba de catálogo incluye intentos de mover carpetas/archivos entre propietarios, crear elementos dentro de carpetas ajenas, restaurar recursos ajenos, movimientos y renombrados exitosos, breadcrumbs y conflictos de nombre sin cambios colaterales.
 

@@ -28,11 +28,6 @@ jobs:
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run verify:module-migrations
-      - name: Temporary formatter diagnostic
-        if: startsWith(github.event.head_commit.message, 'debug(format):')
-        run: |
-          pnpm exec prettier --write FILES_PHASE_3.md tests/files-catalog-http.test.ts
-          git diff -- FILES_PHASE_3.md tests/files-catalog-http.test.ts
       - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest
