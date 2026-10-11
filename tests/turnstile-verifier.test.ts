@@ -173,12 +173,15 @@ describe("Cloudflare Turnstile verifier", () => {
     expect(diagnostic).not.toContain("token-never-log");
   });
 
-  it("logs safe network exception metadata and the failing stage only", async () => {
+  it("logs sanitized network exception messages and the failing stage", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const networkError = new Error("secret-never-log and token-never-log");
-    const networkCause = Object.assign(new Error("private network detail"), {
-      code: "UND_ERR_CONNECT_TIMEOUT",
-    });
+    const networkError = new TypeError(
+      "fetch failed for secret-never-log and token-never-log",
+    );
+    const networkCause = Object.assign(
+      new Error("private network detail with secret-never-log and token-never-log"),
+      { code: "UND_ERR_CONNECT_TIMEOUT" },
+    );
     Object.defineProperty(networkError, "cause", {
       value: networkCause,
       configurable: true,
@@ -192,17 +195,21 @@ describe("Cloudflare Turnstile verifier", () => {
       },
     );
 
-    await expect(verifier.verify("token-never-log", "register")).resolves.toBe(
-      false,
-    );
+    await expect(
+      verifier.verify("token-never-log", "register", "203.0.113.10"),
+    ).resolves.toBe(false);
 
     const diagnostic = JSON.stringify(warn.mock.calls);
     expect(diagnostic).toContain("Siteverify exception");
     expect(diagnostic).toContain("siteverify-fetch");
     expect(diagnostic).toContain("UND_ERR_CONNECT_TIMEOUT");
+    expect(diagnostic).toContain("fetch failed for [redacted] and [redacted]");
+    expect(diagnostic).toContain(
+      "private network detail with [redacted] and [redacted]",
+    );
     expect(diagnostic).not.toContain("secret-never-log");
     expect(diagnostic).not.toContain("token-never-log");
-    expect(diagnostic).not.toContain("private network detail");
+    expect(diagnostic).not.toContain("203.0.113.10");
   });
 
   it("reports invalid JSON responses with HTTP and Cloudflare metadata", async () => {
