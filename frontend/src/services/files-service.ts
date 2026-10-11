@@ -1,5 +1,4 @@
 import type {
-  FilesCatalogNode,
   FilesFileView,
   FilesFolderListing,
   FilesFolderView,
