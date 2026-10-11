@@ -6,17 +6,18 @@ Las dependencias del frontend se mantienen aisladas con su propio `package.json`
 
 ## Estado
 
-| Incluido en la Entrega 2                                    | Fuera de alcance (entregas posteriores)        |
-| ----------------------------------------------------------- | ---------------------------------------------- |
-| Identidad visual (símbolo, logotipo, favicon)               | Dashboard, carpetas, búsqueda y ajustes reales |
-| Tokens CSS, tema claro y oscuro                             | Formularios de login y registro                |
-| Componentes base: botón, campo, menú, diálogo, avisos, etc. | Cualquier llamada de red                       |
-| Esqueleto de navegación con enrutado por hash               | Autenticación, sesiones, autorización, Fase 2  |
-| Navegación por hash y tema claro/oscuro                     | Servicios HTTP reales                          |
+| Incluido hoy                                                   | Pendiente                                                      |
+| ------------------------------------------------------------- | -------------------------------------------------------------- |
+| Identidad visual, tokens CSS y temas claro/oscuro              | Explorador real de archivos, carpetas, recientes, favoritos y papelera |
+| Componentes base accesibles y navegación por hash              | Operaciones reales de archivos y transferencias privadas con R2 |
+| Login, registro y sesiones conectados al Worker                | Búsqueda funcional sobre los datos de archivos                 |
+| Turnstile en login y registro                                  | Perfil y preferencias adicionales en Ajustes                  |
+| Formulario de cambio de contraseña en `#/settings`            | Pruebas de aceptación y publicación autorizada de este cambio  |
 
-Las pantallas del producto existen en la navegación como **marcadores
-honestos** ("Pantalla en preparación · Entrega N"). Todo dato visible es
-simulado y la interfaz lo declara con un aviso permanente.
+Las pantallas de archivos y búsqueda siguen siendo **marcadores** con datos
+simulados. Login, registro, sesiones y cambio de contraseña usan las rutas reales
+de identidad del Worker; el frontend todavía no implementa las operaciones de
+archivos.
 
 ## Requisitos
 
@@ -40,10 +41,10 @@ lockfiles. Las rutas por hash son estado del navegador y no requieren un fallbac
 
 Qué revisar primero:
 
-1. `#/drive`: la estructura general (barra lateral, buscador y perfil simulado).
-2. Cambiar el tema con el selector de la barra superior.
-3. Reducir la ventana a menos de 900 px: la barra lateral pasa a cajón.
-4. `#/login` y `#/register`: marcos visuales, todavía sin formularios funcionales.
+1. `#/settings`: formulario real para cambiar la contraseña de la cuenta.
+2. `#/login` y `#/register`: formularios conectados al Worker con Turnstile.
+3. Cambiar el tema con el selector de la barra superior.
+4. Reducir la ventana a menos de 900 px: la barra lateral pasa a cajón.
 
 ## Rutas
 
@@ -55,9 +56,9 @@ Qué revisar primero:
 | `#/favorites`         | Marcador                            | Entrega 3       |
 | `#/trash`             | Marcador                            | Entrega 3       |
 | `#/search?q=...`      | Marcador (el buscador ya navega)    | Entrega 5       |
-| `#/settings`          | Marcador                            | Entrega 5       |
-| `#/login`             | Marco de acceso (sin formulario)    | Entrega 4       |
-| `#/register`          | Marco de acceso (sin formulario)    | Entrega 4       |
+| `#/settings`          | Cambio de contraseña                | Fase 2          |
+| `#/login`             | Formulario real + Turnstile         | Fase 2          |
+| `#/register`          | Formulario real + Turnstile         | Fase 2          |
 
 Una ruta hash desconocida o un identificador de carpeta no válido muestran
 "Página no encontrada". Las rutas por hash no llegan al servidor HTTP. Wrangler usa
@@ -107,12 +108,13 @@ frontend/
 
 ## Seguridad y límites
 
-- Sin `fetch`, XHR, sockets, cookies, `sessionStorage` ni `innerHTML`; sin
-  CDNs ni fuentes externas; sin referencias a R2/S3. Lo comprueban
-  `src/policy.test.ts` y las guardias del repo (ver abajo).
-- Único almacenamiento: la preferencia de tema (`light|dark|system`) en
-  `localStorage`, a través de `lib/safe-storage.ts`. Nunca credenciales,
-  tokens ni datos de usuario.
+- Las solicitudes de identidad usan solo `fetch` al mismo origen bajo
+  `/api/auth/*`; no se incorporan XHR, sockets ni referencias a R2/S3.
+  Las guardias del repo comprueban que la capa de UI no asuma autorización.
+- Único almacenamiento persistente del frontend: la preferencia de tema
+  (`light|dark|system`) en `localStorage`, a través de `lib/safe-storage.ts`.
+  Las contraseñas no se guardan en almacenamiento local y el token de sesión
+  permanece en una cookie HttpOnly controlada por el navegador.
 - Los identificadores de ruta se validan solo como ayuda de UX. La
   autorización es del backend.
 - Toda acción simulada se rotula como tal en la interfaz ("Simulado").
