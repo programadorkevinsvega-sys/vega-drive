@@ -176,11 +176,11 @@ export function AuthLayout({ route }: AuthLayoutProps) {
             required
             minLength={12}
             maxLength={128}
-            hint={
-              isLogin
-                ? undefined
-                : "Usa entre 12 y 128 caracteres. Evita contraseñas comunes."
-            }
+            {...(!isLogin
+              ? {
+                  hint: "Usa entre 12 y 128 caracteres. Evita contraseñas comunes.",
+                }
+              : {})}
             disabled={loading}
             trailing={
               <button
