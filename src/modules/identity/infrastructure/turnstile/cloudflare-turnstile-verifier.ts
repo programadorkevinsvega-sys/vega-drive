@@ -132,8 +132,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
         },
       );
 
-      const diagnostics = responseDiagnostics(response, startedAt);
-      cloudflareRayId = diagnostics.cloudflareRayId;
+      cloudflareRayId = safeCloudflareRayId(response.headers.get("cf-ray"));
 
       if (!response.ok) {
         let errorCodes: string[] = [];
@@ -152,7 +151,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
           // HTTP status and headers remain useful when the body is not JSON.
         }
         console.warn("[turnstile] Siteverify HTTP failure", {
-          ...diagnostics,
+          ...responseDiagnostics(response, startedAt),
           expectedAction,
           errorCodes,
         });
@@ -165,7 +164,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
         payload = await response.json();
       } catch {
         console.warn("[turnstile] Siteverify returned invalid JSON", {
-          ...diagnostics,
+          ...responseDiagnostics(response, startedAt),
           expectedAction,
         });
         return false;
@@ -173,7 +172,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
 
       if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
         console.warn("[turnstile] Siteverify returned malformed response", {
-          ...diagnostics,
+          ...responseDiagnostics(response, startedAt),
           expectedAction,
         });
         return false;
@@ -182,7 +181,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
       const result = payload as SiteverifyResponse;
       if (result.success !== true) {
         console.warn("[turnstile] Siteverify rejected token", {
-          ...diagnostics,
+          ...responseDiagnostics(response, startedAt),
           expectedAction,
           errorCodes: safeErrorCodes(result["error-codes"]),
         });
@@ -195,7 +194,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
           : "";
       if (!this.expectedHostnames.has(hostname)) {
         console.warn("[turnstile] Siteverify hostname mismatch", {
-          ...diagnostics,
+          ...responseDiagnostics(response, startedAt),
           hostname: hostname || null,
           expectedHostnames: [...this.expectedHostnames],
           expectedAction,
@@ -209,7 +208,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
 
       if (result.action !== expectedAction) {
         console.warn("[turnstile] Siteverify action mismatch", {
-          ...diagnostics,
+          ...responseDiagnostics(response, startedAt),
           hostname,
           action:
             typeof result.action === "string"
