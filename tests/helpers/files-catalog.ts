@@ -21,7 +21,7 @@ export async function createFilesCatalogFixture() {
   }
   const objects = new Map<string, { bytes: Uint8Array; contentType: string }>();
   const storage: IFileStoragePort = {
-    async put(key, body, contentType) {
+    async put(key, body, contentType, _sizeBytes) {
       const reader = body.getReader();
       const chunks: Uint8Array[] = [];
       let size = 0;
