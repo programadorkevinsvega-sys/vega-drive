@@ -1,117 +1,72 @@
 # Cierre de Fase 3 — Catálogo de archivos y carpetas
 
-**Estado: abierto; no certificado para cierre.**  
-**Última actualización:** 2026-10-11.  
-**Roadmap relacionado:** [roadmap.md, Fase 3](./roadmap.md).
+**Estado: CERRADA (2026-10-11).** El alcance definido para el catálogo de metadatos está implementado y validado localmente en el commit `9cfb738` (`test: strengthen architecture boundary checks`). La fase no incluye transferencias físicas R2, controllers HTTP/BFF ni certificación transversal de seguridad; esas capacidades pertenecen a fases posteriores.
 
-Este documento separa lo que está implementado de lo que está demostrado por pruebas. Un caso de uso existente no equivale a una aceptación completa de seguridad, ni una verificación arquitectónica sustituye a la verificación estructural de D1.
+## 1. Alcance implementado
 
-## 1. Alcance funcional
+El módulo `src/modules/files` contiene casos de uso, contratos y persistencia D1 para:
 
-El catálogo de `src/modules/files` contiene casos de uso y persistencia D1 para operaciones de metadatos, entre ellas:
+- Crear, listar, renombrar y mover carpetas y archivos por metadatos.
+- Validar y normalizar nombres y rechazar nombres duplicados entre tipos de nodo.
+- Prevenir ciclos y validar carpetas destino y ancestros activos.
+- Aislar operaciones por propietario; impedir movimientos, creación y restauración en recursos ajenos.
+- Realizar borrado lógico, listar la papelera y restaurar nodos.
+- Proporcionar paginación estable y breadcrumbs navegables.
+- Mantener el nombre visible del catálogo separado de la clave física de almacenamiento.
 
-- Crear, renombrar, mover y listar carpetas/archivos.
-- Validar y normalizar nombres; detectar duplicados entre carpetas y archivos.
-- Evitar ciclos y validar rutas de carpetas activas.
-- Borrado lógico, papelera, restauración, paginación y breadcrumbs.
-- Mantener los metadatos del catálogo separados de la clave física de almacenamiento.
+El propietario se deriva del actor autenticado entregado por la capa de aplicación; no se confía en un `ownerId` del navegador como autoridad. Los recursos ajenos se tratan como no encontrados en los casos de uso. La traducción HTTP a 404 será responsabilidad de los controllers de la Fase 5, que todavía no forman parte de esta fase.
 
-Los tests de catálogo y repositorios existen. La ejecución local reportada el 2026-10-11 terminó con **126/126 tests aprobados**, además de Prettier, arquitectura, TypeScript y `pnpm run verify:architecture:all`. Esto no demuestra por sí solo la cobertura de todos los escenarios de aislamiento que siguen enumerados abajo.
+## 2. Evidencia de pruebas y verificaciones
 
-**Fuera del cierre de esta fase:** adaptador/transferencias R2 (Fase 4), controllers HTTP y experiencia de frontend/BFF (Fase 5), certificación transversal de seguridad (Fase 8). El catálogo de dominio no debe documentarse como una API HTTP completa hasta que se integre por los gateways y controllers previstos.
+El propietario ejecutó los comandos siguientes en `main`, en el commit `9cfb738`, el 2026-10-11. Todas las ejecuciones finalizaron correctamente:
 
-## 2. Aislamiento por propietario: evidencia y pendientes
+| Verificación | Resultado |
+| --- | --- |
+| `pnpm run check` | Prettier, guardia arquitectónica, TypeScript y 130/130 pruebas de backend aprobadas |
+| Pruebas de catálogo | 4/4 pruebas de aislamiento y 8/8 de operaciones aprobadas; 3 pruebas de listado también aprobadas |
+| `pnpm run verify:architecture:all` | Todos los verificadores terminaron correctamente |
+| `pnpm run db:verify:schema:local` | 22 tablas/índices coinciden con las migraciones de D1 local |
+| `pnpm run cloudflare:build` | Preflight, suite backend, 119/119 pruebas de frontend, TypeScript, build de producción, auditorías y Wrangler dry-run aprobados |
+| Auditoría de dependencias | Backend y frontend: ninguna vulnerabilidad conocida encontrada |
+| Estado Git | `HEAD`, `main` y `origin/main` sincronizados en `9cfb738`; `git status --short` sin cambios |
 
-El código revisado deriva el propietario de la identidad de actor que recibe el caso de uso y filtra recursos mediante propietario; los caminos de carpeta también comprueban la propiedad y el estado de los ancestros. Los tests actuales cubren aislamiento de algunas operaciones de lectura, renombrado y borrado, así como la concurrencia de creación de nombres.
+La prueba de catálogo incluye intentos de mover carpetas/archivos entre propietarios, crear elementos dentro de carpetas ajenas, restaurar recursos ajenos, movimientos y renombrados exitosos, breadcrumbs y conflictos de nombre sin cambios colaterales.
 
-La cobertura adicional quedó incorporada directamente a `main` en [73b2c8f](https://github.com/programadorkevinsvega-sys/vega-drive/commit/73b2c8fa2041aa5b67d7d5d32254241eb1316d42), [4ef3c66](https://github.com/programadorkevinsvega-sys/vega-drive/commit/4ef3c662001351291bfaac7186f72c68f97fab9c), [a152cf7](https://github.com/programadorkevinsvega-sys/vega-drive/commit/a152cf72c1fe5422ceb5397339c59b50a7982a9c), [a0e2d3a](https://github.com/programadorkevinsvega-sys/vega-drive/commit/a0e2d3a1be305bd38fc7a873d685250f325e42ee) y [11438e3](https://github.com/programadorkevinsvega-sys/vega-drive/commit/11438e35a1cdfee667bbbb847a60dd4a3790f814). La ejecución local que se reportó antes de incorporar estas pruebas adicionales pasó 126/126; aún se debe volver a ejecutar la suite sobre la versión actual para validar las cuatro pruebas nuevas. Incluye pruebas para:
+El build de Cloudflare se ejecutó con `--dry-run`: **no se publicó un despliegue** y no se ejecutaron migraciones remotas. La D1 local se verificó estructuralmente; la salida no afirma que se haya vuelto a verificar la D1 remota.
 
-- [x] Intentar mover una carpeta ajena y mover una carpeta propia a una carpeta ajena.
-- [x] Intentar mover un archivo ajeno y mover un archivo propio a una carpeta ajena.
-- [x] Rechazar creación de carpeta/archivo dentro de una carpeta ajena.
-- [x] Restaurar recursos ajenos y comprobar que no aparecen en la papelera del otro propietario.
-- [x] Comprobar que los rechazos no mueven nodos y que conflictos de nombre no alteran la ubicación ni la reserva del nodo existente.
-- [x] Cubrir movimientos y renombrados exitosos, breadcrumbs y conflicto al restaurar un archivo.
-- [ ] Volver a ejecutar los checks locales sobre la versión que contiene las cuatro pruebas nuevas y registrar el resultado.
-- [ ] Ejecutar la suite actualizada en CI y registrar el resultado antes de certificar el cierre.
+## 3. D1 y migraciones
 
-Estos puntos eran **brechas de evidencia de pruebas**; no se describen como vulnerabilidades confirmadas. Las respuestas HTTP 404 para recursos ajenos se deben verificar cuando el BFF/controller esté implementado en la Fase 5.
+Las migraciones modulares permanecen en `src/modules/<module>/infrastructure/persistence/d1/migrations/`. La reconciliación local del 2026-10-11 aplicó las migraciones pendientes de `files` e `identity` mediante el flujo local documentado. Después, `pnpm run db:verify:schema:local` confirmó que los 22 objetos estructurales coinciden con las migraciones.
 
-## 3. Migraciones y verificación estructural de D1
+No se modificaron migraciones históricas para ocultar la diferencia, y esta validación no cambió el esquema remoto.
 
-Las migraciones modulares esperadas documentadas en [migrations/manifest.md](./migrations/manifest.md) incluyen:
+## 4. Alcance del ciclo de vida
 
-- `files/infrastructure/persistence/d1/migrations/0001_files_initial.sql`
-- `files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql`
-- `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`
-- `identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql`
+La Fase 3 implementa borrado lógico y restauración. No promete borrado permanente ni purga automática. Los metadatos eliminados permanecen recuperables en la papelera; una política de retención y una purga futura son decisiones de producto separadas y **no son pendientes para cerrar el alcance actual de Fase 3**.
 
-### Incidencia local resuelta el 2026-10-11
+La eliminación física de objetos R2, su idempotencia, reintentos y reconciliación de fallos D1/R2 pertenecen a la Fase 4, cuando exista el adaptador de almacenamiento.
 
-Comando ejecutado por el propietario:
+## 5. Criterios de cierre
 
-```text
-pnpm run db:verify:schema:local
-D1 structural verification FAILED.
-Missing objects:
-table:files_catalog_names,
-index:files_folders_owner_parent_name_active_idx,
-index:files_items_owner_folder_name_active_idx,
-table:identity_auth_attempts,
-index:identity_auth_attempts_locked_until_idx
-Deployment must stop.
-```
+- [x] Operaciones de catálogo de carpetas y archivos implementadas.
+- [x] Validación de nombres, duplicados, ciclos y destinos implementada.
+- [x] Aislamiento por propietario y rechazo de recursos ajenos cubiertos por pruebas.
+- [x] Papelera, restauración, paginación y breadcrumbs implementados y probados.
+- [x] Conflictos de movimiento/restauración no producen cambios colaterales.
+- [x] Migraciones modulares y esquema D1 local verificados.
+- [x] Suite completa de backend, verificaciones arquitectónicas y build de Cloudflare aprobados en el commit candidato.
+- [x] Alcance de borrado lógico documentado y responsabilidades de fases posteriores delimitadas.
+- [x] Roadmap y documentación actualizados para reflejar el cierre.
 
-La salida inicial demostró que la D1 **local** no coincidía con los objetos esperados. La causa inmediata quedó resuelta al aplicar las dos migraciones pendientes de `files` e `identity` localmente; no fue necesario modificar las migraciones ni el verificador.
+## 6. Fuera de alcance y fases posteriores
 
-### Procedimiento de reconciliación local
+El cierre de Fase 3 **no** certifica ni marca como completados:
 
-1. Inspeccionar el estado de los archivos de migración modulares y el patrón activo en `wrangler.toml`; no editar una migración ya aplicada en un entorno compartido.
-2. Aplicar las migraciones **solo a la D1 local** con `pnpm run db:migrate:local`.
-3. Volver a ejecutar `pnpm run db:verify:schema:local`.
-4. Si aún falla, conservar la salida completa y comparar los objetos/DDL reales con las migraciones y con `scripts/verify-d1-schema.mjs`. Corregir intencionalmente la causa; no debilitar ni desactivar el verificador para que pase.
-5. Registrar aquí el comando, resultado y commit que resuelve el problema. **Resultado registrado:** `pnpm run db:migrate:local` aplicó `files/.../0002_files_catalog_names.sql` e `identity/.../0002_identity_auth_attempts.sql`; a continuación `pnpm run db:verify:schema:local` pasó con `22 tables/indexes match migrations in vega_drive_db (local)`. La reconciliación fue local; no se ejecutó una migración remota.
+- **Fase 4:** adaptador y transferencias de archivos con R2.
+- **Fase 5:** integración de las operaciones de catálogo en rutas HTTP/BFF y presentación de errores HTTP.
+- **Fase 6:** cuotas.
+- **Fase 7:** compartición.
+- **Fase 8:** certificación transversal de seguridad.
+- **Fase 9:** staging, operación, recuperación y rollback certificados.
 
-No ejecutar `pnpm run db:migrate:production`, `pnpm run deploy` ni otros comandos que cambien D1 remota como parte de esta reconciliación local. Cualquier operación remota requiere revisión y autorización explícita separadas.
-
-### Estado de la incidencia
-
-- [x] Migraciones locales aplicadas o causa alternativa identificada: se aplicaron las dos migraciones pendientes localmente.
-- [x] `pnpm run db:verify:schema:local` pasa después de la reconciliación: 22 tablas/índices.
-- [x] Se registra evidencia del resultado en la salida del usuario, 2026-10-11; no hubo commit de código porque el árbol estaba limpio.
-- [x] No se ha alterado el esquema remoto como parte de esta comprobación.
-
-## 4. Papelera y limpieza
-
-El borrado lógico y la restauración forman parte del catálogo. La limpieza permanente de metadatos y objetos físicos requiere una política explícita de retención, idempotencia y tratamiento de fallos. La limpieza de objetos R2 depende del adaptador de la Fase 4; no se debe marcar como implementada en el catálogo mientras no exista un caso de uso integrado y probado.
-
-- [x] Alcance de Fase 3 definido: solo borrado lógico y restauración; no hay borrado permanente ni purga automática por antigüedad.
-- [x] Hasta que se apruebe una política de retención y exista un caso de uso de purga explícito, los metadatos eliminados permanecen recuperables en la papelera; no se elimina automáticamente ningún metadato ni objeto.
-- [x] La eliminación física de objetos, reintentos/idempotencia y reconciliación de fallos D1/R2 se asignan a la Fase 4, cuando exista el adaptador R2. No se simula ni se marca como implementada esta capacidad en Fase 3.
-- [ ] La política de retención de producto y cualquier borrado permanente futuro requieren una decisión explícita antes de implementar la purga.
-
-## 5. Evidencia de checks
-
-Evidencia comunicada el 2026-10-11:
-
-- [x] Ejecución local anterior a las últimas cuatro pruebas adicionales: `pnpm run check` aprobó Prettier, guardia arquitectónica, TypeScript y 126/126 tests.
-- [ ] Repetir `pnpm run check` después de los commits de cobertura adicionales; los resultados 126/126 no se atribuyen a esa revisión más reciente.
-- [x] `pnpm run verify:architecture:all`: los verificadores ejecutados finalizaron correctamente, con notas explícitas de capacidades R2/gateway aún no implementadas.
-- [x] `pnpm run db:verify:schema:local`: pasó tras `pnpm run db:migrate:local`; 22 tablas/índices coinciden con las migraciones.
-- [x] `pnpm run cloudflare:build` en la revisión anterior: frontend 119/119 tests, build de producción, auditorías sin vulnerabilidades conocidas y Wrangler dry-run completados.
-- [ ] Repetir `pnpm run cloudflare:build` tras la última edición de las pruebas; no desplegar.
-- [x] CI previamente reportado como satisfactorio: [GitHub Actions run 38114942365](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38114942365).
-
-Las casillas indican evidencia reportada, no una afirmación de que estos comandos se hayan vuelto a ejecutar durante la edición de este documento.
-
-## 6. Criterio para cerrar la Fase 3
-
-La fase permanece abierta hasta que:
-
-1. La cobertura de aislamiento y movimientos/restauraciones está incorporada; falta que las cuatro pruebas nuevas pasen en la suite actual y que el resultado de CI se registre.
-2. (Resuelto) Se reconcilie D1 local y se registre una verificación estructural satisfactoria; esto ya se completó el 2026-10-11.
-3. Se documente el alcance de limpieza: Fase 3 no hace purga permanente ni automática; el ciclo de borrado físico y la reconciliación D1/R2 pertenecen a Fase 4. Esta delimitación de alcance ya está documentada; la política de retención de producto sigue pendiente y bloquea cualquier purga futura, no el catálogo de Fase 3.
-4. Se actualicen los checks del roadmap únicamente cuando exista evidencia.
-5. Se vuelvan a ejecutar los checks locales y CI sobre el commit candidato.
-
-El cierre de esta fase no certifica las transferencias R2, la integración HTTP/BFF ni la certificación global de seguridad.
+Estas son tareas explícitas de otras fases, no defectos ni pendientes de implementación del alcance de catálogo de Fase 3.
