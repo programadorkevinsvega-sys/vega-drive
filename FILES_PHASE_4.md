@@ -10,7 +10,10 @@
 - El contenido se transmite como stream, limitado a 95 MiB por archivo. El backend genera claves con u/{userId}/{uuid}, verifica el tamaño real mediante HEAD y solo registra los metadatos tras completar un objeto del tamaño esperado.
 - Una reserva D1 impide superar el límite inicial de 1 GiB por propietario. files_transfer_events aplica límites de 20 subidas y 120 descargas por hora por propietario.
 - GET /api/files/:id/download comprueba sesión, propiedad y carpeta activa antes de obtener el contenido. Soporta un único rango HTTP de bytes, responde con attachment, nosniff y no-store; no devuelve URLs de R2.
-- Un cron horario reconcilia reservas de subida vencidas/fallidas y poda eventos de limitación antiguos. Si la eliminación de un objeto falla, se mantiene el registro para reintentar.
+- Un cron horario reconcilia reservas de subida vencidas/fallidas, poda eventos de limitación antiguos y purga elementos de la papelera con más de 30 días.
+- Los elementos de la papelera siguen ocupando cuota; al eliminarlos permanentemente se borra el objeto R2 y luego su registro D1.
+- La eliminación permanente de una carpeta recorre sus subcarpetas y elimina también los objetos de archivo que contiene.
+- Si falla la eliminación física, se conserva el registro restante para que la operación pueda reintentarse en otra ejecución.
 - Se eliminó la ruta antigua POST /api/files/items/metadata, que permitía crear solo metadatos sin bytes. La API ya no crea archivos descargables ficticios.
 - Los controles arquitectónicos exigen el puerto y adaptador y prohíben usar el binding de R2 fuera del adaptador autorizado.
 
