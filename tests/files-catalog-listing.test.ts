@@ -77,50 +77,48 @@ describe("files catalog listings", () => {
         cursor: "%7B%22name%22%3A%22bad%22%7D",
       }),
     ).toEqual({ ok: false, reason: "invalid-input" });
-    expect(
-      await fixture.api.listTrash(actor, { limit: 101 }),
-    ).toEqual({ ok: false, reason: "invalid-input" });
+    expect(await fixture.api.listTrash(actor, { limit: 101 })).toEqual({
+      ok: false,
+      reason: "invalid-input",
+    });
   });
 
-  it(
-    "paginates trash and keeps deleted entries out of active listings",
-    async () => {
-      const folder = await fixture.api.createFolder(actor, {
-        name: "Old folder",
-      });
-      if (!folder.ok) throw new Error("Folder creation failed");
-      const file = await fixture.api.createFileMetadata(actor, {
-        name: "old.txt",
-        sizeBytes: 8,
-        contentType: "text/plain",
-      });
-      if (!file.ok) throw new Error("File creation failed");
+  it("paginates trash and keeps deleted entries out of active listings", async () => {
+    const folder = await fixture.api.createFolder(actor, {
+      name: "Old folder",
+    });
+    if (!folder.ok) throw new Error("Folder creation failed");
+    const file = await fixture.api.createFileMetadata(actor, {
+      name: "old.txt",
+      sizeBytes: 8,
+      contentType: "text/plain",
+    });
+    if (!file.ok) throw new Error("File creation failed");
 
-      await fixture.api.deleteFolder(actor, folder.value.id);
-      await fixture.api.deleteFile(actor, file.value.id);
+    await fixture.api.deleteFolder(actor, folder.value.id);
+    await fixture.api.deleteFile(actor, file.value.id);
 
-      const active = await fixture.api.listFolder(actor, {});
-      expect(active.ok).toBe(true);
-      if (active.ok) {
-        expect(active.value.folders).toHaveLength(0);
-        expect(active.value.files).toHaveLength(0);
-      }
+    const active = await fixture.api.listFolder(actor, {});
+    expect(active.ok).toBe(true);
+    if (active.ok) {
+      expect(active.value.folders).toHaveLength(0);
+      expect(active.value.files).toHaveLength(0);
+    }
 
-      const trash = await fixture.api.listTrash(actor, { limit: 1 });
-      expect(trash.ok).toBe(true);
-      if (!trash.ok) return;
-      expect(trash.value.nodes).toHaveLength(1);
-      expect(trash.value.nextCursor).toBeTruthy();
+    const trash = await fixture.api.listTrash(actor, { limit: 1 });
+    expect(trash.ok).toBe(true);
+    if (!trash.ok) return;
+    expect(trash.value.nodes).toHaveLength(1);
+    expect(trash.value.nextCursor).toBeTruthy();
 
-      const next = await fixture.api.listTrash(actor, {
-        limit: 1,
-        cursor: trash.value.nextCursor,
-      });
-      expect(next.ok).toBe(true);
-      if (next.ok) {
-        expect(next.value.nodes).toHaveLength(1);
-        expect(next.value.nextCursor).toBeNull();
-      }
-    },
-  );
+    const next = await fixture.api.listTrash(actor, {
+      limit: 1,
+      cursor: trash.value.nextCursor,
+    });
+    expect(next.ok).toBe(true);
+    if (next.ok) {
+      expect(next.value.nodes).toHaveLength(1);
+      expect(next.value.nextCursor).toBeNull();
+    }
+  });
 });

@@ -114,10 +114,14 @@ describe("module-owned D1 migrations", () => {
     }
 
     expect(
-      allActiveDefinitions.has("index:files_folders_owner_parent_name_active_idx"),
+      allActiveDefinitions.has(
+        "index:files_folders_owner_parent_name_active_idx",
+      ),
     ).toBe(true);
     expect(
-      allActiveDefinitions.has("index:files_items_owner_folder_name_active_idx"),
+      allActiveDefinitions.has(
+        "index:files_items_owner_folder_name_active_idx",
+      ),
     ).toBe(true);
     expect(allActiveDefinitions.has("table:files_catalog_names")).toBe(true);
     expect(allActiveDefinitions.has("table:identity_auth_attempts")).toBe(true);
