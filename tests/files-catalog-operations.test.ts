@@ -145,4 +145,103 @@ describe("files catalog operations", () => {
       value: { id: file.value.id, deletedAt: null },
     });
   });
+  
+  it("renames and moves folders and files while preserving navigable metadata", async () => {
+    const parent = await api.createFolder(ownerA, { name: "Parent" });
+    if (!parent.ok) throw new Error("Parent folder creation failed");
+    const child = await api.createFolder(ownerA, { name: "Child" });
+    if (!child.ok) throw new Error("Child folder creation failed");
+    const file = await api.createFileMetadata(ownerA, {
+      name: "before.txt",
+      sizeBytes: 12,
+      contentType: "text/plain",
+    });
+    if (!file.ok) throw new Error("File metadata creation failed");
+
+    expect(await api.renameFolder(ownerA, child.value.id, "Renamed child")).toMatchObject({
+      ok: true,
+      value: { id: child.value.id, name: "Renamed child" },
+    });
+    expect(await api.moveFolder(ownerA, child.value.id, parent.value.id)).toMatchObject({
+      ok: true,
+      value: { id: child.value.id, parentFolderId: parent.value.id },
+    });
+    expect(await api.renameFile(ownerA, file.value.id, "after.txt")).toMatchObject({
+      ok: true,
+      value: { id: file.value.id, name: "after.txt" },
+    });
+    expect(await api.moveFile(ownerA, file.value.id, child.value.id)).toMatchObject({
+      ok: true,
+      value: { id: file.value.id, folderId: child.value.id },
+    });
+
+    const nested = await api.listFolder(ownerA, { folderId: child.value.id });
+    expect(nested.ok).toBe(true);
+    if (nested.ok) {
+      expect(nested.value.breadcrumbs.map((entry) => entry.name)).toEqual([
+        "Mi unidad",
+        "Parent",
+        "Renamed child",
+      ]);
+      expect(nested.value.files.map((entry) => entry.id)).toContain(file.value.id);
+    }
+  });
+
+  it("keeps active nodes unchanged when move or restore is rejected for duplicate names", async () => {
+    const destination = await api.createFolder(ownerA, { name: "Destination" });
+    if (!destination.ok) throw new Error("Destination creation failed");
+    const existingFolder = await api.createFolder(ownerA, {
+      name: "Duplicate folder",
+      parentFolderId: destination.value.id,
+    });
+    if (!existingFolder.ok) throw new Error("Existing folder creation failed");
+    const movingFolder = await api.createFolder(ownerA, { name: "Duplicate folder" });
+    if (!movingFolder.ok) throw new Error("Moving folder creation failed");
+
+    expect(
+      await api.moveFolder(ownerA, movingFolder.value.id, destination.value.id),
+    ).toEqual({ ok: false, reason: "duplicate-name" });
+
+    const originalFile = await api.createFileMetadata(ownerA, {
+      name: "restore-conflict.txt",
+      sizeBytes: 1,
+      contentType: "text/plain",
+    });
+    if (!originalFile.ok) throw new Error("Original file creation failed");
+    expect(await api.deleteFile(ownerA, originalFile.value.id)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    const replacementFile = await api.createFileMetadata(ownerA, {
+      name: "restore-conflict.txt",
+      sizeBytes: 2,
+      contentType: "text/plain",
+    });
+    if (!replacementFile.ok) throw new Error("Replacement file creation failed");
+
+    expect(await api.restoreFile(ownerA, originalFile.value.id)).toEqual({
+      ok: false,
+      reason: "duplicate-name",
+    });
+
+    const root = await api.listFolder(ownerA, { folderId: null });
+    expect(root.ok).toBe(true);
+    if (root.ok) {
+      expect(root.value.folders.map((entry) => entry.id)).toContain(
+        movingFolder.value.id,
+      );
+      expect(root.value.files.map((entry) => entry.id)).toContain(replacementFile.value.id);
+      expect(root.value.files.map((entry) => entry.id)).not.toContain(originalFile.value.id);
+    }
+    const destinationView = await api.listFolder(ownerA, {
+      folderId: destination.value.id,
+    });
+    expect(destinationView.ok).toBe(true);
+    if (destinationView.ok) {
+      expect(destinationView.value.folders.map((entry) => entry.id)).toEqual([
+        existingFolder.value.id,
+      ]);
+    }
+  });
+
 });
