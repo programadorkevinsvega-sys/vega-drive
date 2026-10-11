@@ -168,7 +168,9 @@ export class D1FilesFolderRepository implements FilesFolderRepository {
     }
 
     return descendants
-      .sort((a, b) => b.depth - a.depth || a.folder.id.localeCompare(b.folder.id))
+      .sort(
+        (a, b) => b.depth - a.depth || a.folder.id.localeCompare(b.folder.id),
+      )
       .map(({ folder }) => folder);
   }
 
