@@ -146,7 +146,9 @@ describe("files catalog operations", () => {
     });
   });
   
-  it("renames and moves folders and files while preserving navigable metadata", async () => {
+  it(
+    "renames and moves folders and files while preserving navigable metadata",
+    async () => {
     const parent = await api.createFolder(ownerA, { name: "Parent" });
     if (!parent.ok) throw new Error("Parent folder creation failed");
     const child = await api.createFolder(ownerA, { name: "Child" });
@@ -158,19 +160,27 @@ describe("files catalog operations", () => {
     });
     if (!file.ok) throw new Error("File metadata creation failed");
 
-    expect(await api.renameFolder(ownerA, child.value.id, "Renamed child")).toMatchObject({
+    expect(
+      await api.renameFolder(ownerA, child.value.id, "Renamed child"),
+    ).toMatchObject({
       ok: true,
       value: { id: child.value.id, name: "Renamed child" },
     });
-    expect(await api.moveFolder(ownerA, child.value.id, parent.value.id)).toMatchObject({
+    expect(
+      await api.moveFolder(ownerA, child.value.id, parent.value.id),
+    ).toMatchObject({
       ok: true,
       value: { id: child.value.id, parentFolderId: parent.value.id },
     });
-    expect(await api.renameFile(ownerA, file.value.id, "after.txt")).toMatchObject({
+    expect(
+      await api.renameFile(ownerA, file.value.id, "after.txt"),
+    ).toMatchObject({
       ok: true,
       value: { id: file.value.id, name: "after.txt" },
     });
-    expect(await api.moveFile(ownerA, file.value.id, child.value.id)).toMatchObject({
+    expect(
+      await api.moveFile(ownerA, file.value.id, child.value.id),
+    ).toMatchObject({
       ok: true,
       value: { id: file.value.id, folderId: child.value.id },
     });
@@ -183,11 +193,15 @@ describe("files catalog operations", () => {
         "Parent",
         "Renamed child",
       ]);
-      expect(nested.value.files.map((entry) => entry.id)).toContain(file.value.id);
+      expect(nested.value.files.map((entry) => entry.id)).toContain(
+        file.value.id,
+      );
     }
   });
 
-  it("keeps active nodes unchanged when move or restore is rejected for duplicate names", async () => {
+  it(
+    "keeps active nodes unchanged when move or restore is rejected for duplicate names",
+    async () => {
     const destination = await api.createFolder(ownerA, { name: "Destination" });
     if (!destination.ok) throw new Error("Destination creation failed");
     const existingFolder = await api.createFolder(ownerA, {
@@ -195,7 +209,9 @@ describe("files catalog operations", () => {
       parentFolderId: destination.value.id,
     });
     if (!existingFolder.ok) throw new Error("Existing folder creation failed");
-    const movingFolder = await api.createFolder(ownerA, { name: "Duplicate folder" });
+    const movingFolder = await api.createFolder(ownerA, {
+      name: "Duplicate folder",
+    });
     if (!movingFolder.ok) throw new Error("Moving folder creation failed");
 
     expect(
@@ -230,8 +246,12 @@ describe("files catalog operations", () => {
       expect(root.value.folders.map((entry) => entry.id)).toContain(
         movingFolder.value.id,
       );
-      expect(root.value.files.map((entry) => entry.id)).toContain(replacementFile.value.id);
-      expect(root.value.files.map((entry) => entry.id)).not.toContain(originalFile.value.id);
+      expect(root.value.files.map((entry) => entry.id)).toContain(
+        replacementFile.value.id,
+      );
+      expect(root.value.files.map((entry) => entry.id)).not.toContain(
+        originalFile.value.id,
+      );
     }
     const destinationView = await api.listFolder(ownerA, {
       folderId: destination.value.id,
