@@ -117,10 +117,11 @@ export function PasswordSettingsScreen() {
               value={currentPassword}
               onChange={(event) => {
                 setCurrentPassword(event.target.value);
-                setFieldErrors((previous) => ({
-                  ...previous,
-                  currentPassword: undefined,
-                }));
+                setFieldErrors((previous) => {
+                  const next = { ...previous };
+                  delete next.currentPassword;
+                  return next;
+                });
               }}
               required
               maxLength={128}
@@ -152,11 +153,12 @@ export function PasswordSettingsScreen() {
               value={newPassword}
               onChange={(event) => {
                 setNewPassword(event.target.value);
-                setFieldErrors((previous) => ({
-                  ...previous,
-                  newPassword: undefined,
-                  confirmPassword: undefined,
-                }));
+                setFieldErrors((previous) => {
+                  const next = { ...previous };
+                  delete next.newPassword;
+                  delete next.confirmPassword;
+                  return next;
+                });
               }}
               required
               minLength={12}
@@ -190,10 +192,11 @@ export function PasswordSettingsScreen() {
               value={confirmPassword}
               onChange={(event) => {
                 setConfirmPassword(event.target.value);
-                setFieldErrors((previous) => ({
-                  ...previous,
-                  confirmPassword: undefined,
-                }));
+                setFieldErrors((previous) => {
+                  const next = { ...previous };
+                  delete next.confirmPassword;
+                  return next;
+                });
               }}
               required
               minLength={12}
