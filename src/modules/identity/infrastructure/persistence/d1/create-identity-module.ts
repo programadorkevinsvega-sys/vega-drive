@@ -7,14 +7,23 @@ import { D1IdentityUserRepository } from "./d1-identity-user.repository.js";
 import { CloudflareTurnstileVerifier } from "../../turnstile/cloudflare-turnstile-verifier.js";
 
 export function createIdentityModuleFromD1(env: Env) {
+  const turnstileHostnames = String(env.TURNSTILE_HOSTNAMES ?? "")
+    .split(",")
+    .map((hostname) => hostname.trim().toLowerCase())
+    .filter(Boolean);
+
   return createIdentityModule({
     users: new D1IdentityUserRepository(env.VEGA_DRIVE_DB),
     sessions: new D1IdentitySessionRepository(env.VEGA_DRIVE_DB),
     attempts: new D1IdentityAuthAttemptRepository(env.VEGA_DRIVE_DB),
     outbox: new D1IdentityOutboxRepository(env.VEGA_DRIVE_DB),
-    turnstile: new CloudflareTurnstileVerifier(env.TURNSTILE_SECRET_KEY),
+    turnstile: new CloudflareTurnstileVerifier(
+      env.TURNSTILE_SECRET_KEY,
+      turnstileHostnames,
+    ),
     maxUsers: Number(env.MAX_USERS),
     turnstileSiteKey: env.TURNSTILE_SITE_KEY,
     turnstileSecretConfigured: Boolean(env.TURNSTILE_SECRET_KEY),
+    turnstileHostnamesConfigured: turnstileHostnames.length > 0,
   });
 }
