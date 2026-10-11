@@ -104,7 +104,7 @@ export function AuthLayout({ route }: AuthLayoutProps) {
           trailing={<button type="button" className="vd-auth__password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword} disabled={loading}>{showPassword ? "Ocultar" : "Mostrar"}</button>}
         />
         {configReady ? <TurnstileWidget key={resetKey} siteKey={siteKey} onToken={handleToken} onError={handleWidgetError} resetKey={resetKey} /> : <p className="vd-auth__notice" role="status">Cargando verificación de seguridad…</p>}
-        <Button type="submit" fullWidth loading={loading} disabled={loading || !configReady || !token}>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</Button>
+        <Button type="submit" fullWidth loading={loading} disabled={loading || status === "loading" || !configReady || !token}>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</Button>
       </form>
       <p className="vd-auth__footer">{isLogin ? "¿Todavía no tienes cuenta?" : "¿Ya tienes una cuenta?"}{" "}<a href={isLogin ? "#/register" : "#/login"}>{isLogin ? "Crear cuenta" : "Iniciar sesión"}</a></p>
     </main>
