@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PasswordChangeField } from "./password-change-validation";
 import { TextField } from "../ui/TextField";
 
@@ -28,6 +28,11 @@ export function PasswordField({
   hint,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!loading) setVisible(false);
+  }, [loading]);
+
   return (
     <TextField
       label={label}
