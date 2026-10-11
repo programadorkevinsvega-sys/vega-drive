@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
+import { changePassword, IdentityApiError } from "../services/identity-service";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Button } from "../ui/Button";
-import { TextField } from "../ui/TextField";
-import { changePassword, IdentityApiError } from "../services/identity-service";
+import { PasswordField } from "./PasswordField";
 import {
   validatePasswordChange,
   type PasswordChangeField,
@@ -14,9 +14,6 @@ export function PasswordSettingsScreen() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -56,11 +53,17 @@ export function PasswordSettingsScreen() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setShowCurrent(false);
-      setShowNew(false);
-      setShowConfirm(false);
       setLoading(false);
     }
+  }
+
+  function clearFieldError(field: PasswordChangeField) {
+    setFieldErrors((previous) => {
+      const next = { ...previous };
+      delete next[field];
+      if (field === "newPassword") delete next.confirmPassword;
+      return next;
+    });
   }
 
   return (
@@ -116,116 +119,52 @@ export function PasswordSettingsScreen() {
             onSubmit={(event) => void handleSubmit(event)}
             noValidate
           >
-            <TextField
+            <PasswordField
               label="Contraseña actual"
               name="currentPassword"
-              type={showCurrent ? "text" : "password"}
-              autoComplete="current-password"
               value={currentPassword}
-              onChange={(event) => {
-                setCurrentPassword(event.target.value);
-                setFieldErrors((previous) => {
-                  const next = { ...previous };
-                  delete next.currentPassword;
-                  return next;
-                });
+              autoComplete="current-password"
+              onChange={(value) => {
+                setCurrentPassword(value);
+                clearFieldError("currentPassword");
               }}
-              required
-              maxLength={128}
-              disabled={loading}
+              loading={loading}
               error={fieldErrors.currentPassword}
-              trailing={
-                <button
-                  type="button"
-                  className="vd-auth__password-toggle"
-                  onClick={() => setShowCurrent((value) => !value)}
-                  aria-label={
-                    showCurrent
-                      ? "Ocultar contraseña actual"
-                      : "Mostrar contraseña actual"
-                  }
-                  aria-pressed={showCurrent}
-                  disabled={loading}
-                >
-                  {showCurrent ? "Ocultar" : "Mostrar"}
-                </button>
-              }
+              hint={undefined}
+              showLabel="Mostrar contraseña actual"
+              hideLabel="Ocultar contraseña actual"
             />
 
-            <TextField
+            <PasswordField
               label="Nueva contraseña"
               name="newPassword"
-              type={showNew ? "text" : "password"}
-              autoComplete="new-password"
               value={newPassword}
-              onChange={(event) => {
-                setNewPassword(event.target.value);
-                setFieldErrors((previous) => {
-                  const next = { ...previous };
-                  delete next.newPassword;
-                  delete next.confirmPassword;
-                  return next;
-                });
+              autoComplete="new-password"
+              onChange={(value) => {
+                setNewPassword(value);
+                clearFieldError("newPassword");
               }}
-              required
-              minLength={12}
-              maxLength={128}
-              disabled={loading}
+              loading={loading}
               error={fieldErrors.newPassword}
               hint="Usa entre 12 y 128 caracteres y evita contraseñas comunes o fáciles de adivinar."
-              trailing={
-                <button
-                  type="button"
-                  className="vd-auth__password-toggle"
-                  onClick={() => setShowNew((value) => !value)}
-                  aria-label={
-                    showNew
-                      ? "Ocultar nueva contraseña"
-                      : "Mostrar nueva contraseña"
-                  }
-                  aria-pressed={showNew}
-                  disabled={loading}
-                >
-                  {showNew ? "Ocultar" : "Mostrar"}
-                </button>
-              }
+              showLabel="Mostrar nueva contraseña"
+              hideLabel="Ocultar nueva contraseña"
             />
 
-            <TextField
+            <PasswordField
               label="Confirmar nueva contraseña"
               name="confirmPassword"
-              type={showConfirm ? "text" : "password"}
-              autoComplete="new-password"
               value={confirmPassword}
-              onChange={(event) => {
-                setConfirmPassword(event.target.value);
-                setFieldErrors((previous) => {
-                  const next = { ...previous };
-                  delete next.confirmPassword;
-                  return next;
-                });
+              autoComplete="new-password"
+              onChange={(value) => {
+                setConfirmPassword(value);
+                clearFieldError("confirmPassword");
               }}
-              required
-              minLength={12}
-              maxLength={128}
-              disabled={loading}
+              loading={loading}
               error={fieldErrors.confirmPassword}
-              trailing={
-                <button
-                  type="button"
-                  className="vd-auth__password-toggle"
-                  onClick={() => setShowConfirm((value) => !value)}
-                  aria-label={
-                    showConfirm
-                      ? "Ocultar confirmación"
-                      : "Mostrar confirmación"
-                  }
-                  aria-pressed={showConfirm}
-                  disabled={loading}
-                >
-                  {showConfirm ? "Ocultar" : "Mostrar"}
-                </button>
-              }
+              hint={undefined}
+              showLabel="Mostrar confirmación"
+              hideLabel="Ocultar confirmación"
             />
 
             <Button
