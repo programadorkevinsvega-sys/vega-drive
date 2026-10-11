@@ -1,7 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { getSession, login as loginRequest, logout as logoutRequest, type AuthenticatedUser } from "./identity-service";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  getSession,
+  login as loginRequest,
+  logout as logoutRequest,
+  type AuthenticatedUser,
+} from "./identity-service";
 
-export type AuthStatus = "loading" | "authenticated" | "anonymous" | "unavailable";
+export type AuthStatus =
+  | "loading"
+  | "authenticated"
+  | "anonymous"
+  | "unavailable";
 interface AuthContextValue {
   status: AuthStatus;
   user: AuthenticatedUser | null;
@@ -30,20 +46,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStatus("unavailable");
     }
   }, []);
-  useEffect(() => { void refreshSession(); }, [refreshSession]);
+  useEffect(() => {
+    void refreshSession();
+  }, [refreshSession]);
 
-  const signIn = useCallback(async (email: string, password: string, token: string) => {
-    const authenticatedUser = await loginRequest(email, password, token);
-    setUser(authenticatedUser);
-    setStatus("authenticated");
-  }, []);
+  const signIn = useCallback(
+    async (email: string, password: string, token: string) => {
+      const authenticatedUser = await loginRequest(email, password, token);
+      setUser(authenticatedUser);
+      setStatus("authenticated");
+    },
+    [],
+  );
   const signOut = useCallback(async () => {
     await logoutRequest();
     setUser(null);
     setStatus("anonymous");
   }, []);
 
-  return <AuthContext.Provider value={{ status, user, signIn, signOut, refreshSession }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ status, user, signIn, signOut, refreshSession }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 export function useAuth(): AuthContextValue {
   const value = useContext(AuthContext);

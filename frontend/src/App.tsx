@@ -15,7 +15,10 @@ function Routes() {
   const auth = useAuth();
   const isAuthRoute = routeMeta(route).layout === "auth";
   useEffect(() => {
-    if (!isAuthRoute && (auth.status === "anonymous" || auth.status === "unavailable")) {
+    if (
+      !isAuthRoute &&
+      (auth.status === "anonymous" || auth.status === "unavailable")
+    ) {
       navigate({ name: "login" });
     } else if (isAuthRoute && auth.status === "authenticated") {
       navigate({ name: "drive", folderId: null });
@@ -23,17 +26,27 @@ function Routes() {
   }, [auth.status, isAuthRoute]);
 
   if (isAuthRoute) return <AuthLayout route={route} />;
-  if (auth.status === "loading") return <div className="vd-auth__loading" role="status">Comprobando sesión…</div>;
-  if (auth.status !== "authenticated") return <AuthLayout route={{ name: "login" }} />;
+  if (auth.status === "loading")
+    return (
+      <div className="vd-auth__loading" role="status">
+        Comprobando sesión…
+      </div>
+    );
+  if (auth.status !== "authenticated")
+    return <AuthLayout route={{ name: "login" }} />;
   return <AppShell route={route}>{renderScreen(route)}</AppShell>;
 }
 
 export function App({ services }: { services: Services }) {
-  return <ThemeProvider>
-    <ServicesProvider services={services}>
-      <AuthProvider>
-        <ToastProvider><Routes /></ToastProvider>
-      </AuthProvider>
-    </ServicesProvider>
-  </ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <ServicesProvider services={services}>
+        <AuthProvider>
+          <ToastProvider>
+            <Routes />
+          </ToastProvider>
+        </AuthProvider>
+      </ServicesProvider>
+    </ThemeProvider>
+  );
 }
