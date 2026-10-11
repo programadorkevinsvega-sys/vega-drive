@@ -122,7 +122,9 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
       if (result.action !== expectedAction) {
         console.warn("[turnstile] Siteverify action mismatch", {
           action:
-            typeof result.action === "string" ? result.action.slice(0, 32) : null,
+            typeof result.action === "string"
+              ? result.action.slice(0, 32)
+              : null,
           expectedAction,
         });
         return false;
