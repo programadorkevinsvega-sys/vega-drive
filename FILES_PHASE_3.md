@@ -101,7 +101,7 @@ Las respuestas de listado, creación, renombrado, movimiento y restauración con
 - Los resultados `invalid-input`, `not-found`, `duplicate-name`, `cycle` y `unavailable` se traducen respectivamente a HTTP 400, 404, 409, 409 y 503. La respuesta de error no revela SQL, trazas ni mensajes internos.
 - Se conservan las cabeceras existentes y `Cache-Control: no-store` en las respuestas `/api/*`.
 
-No se exponen rutas de subida o descarga física, búsqueda, favoritos ni transferencias R2: el contrato actual no implementa esas operaciones. El frontend sigue sin estar conectado al catálogo mediante un cliente de API.
+No se exponen rutas de subida o descarga física, búsqueda ni favoritos: el contrato actual no implementa esas operaciones. Mi unidad y la papelera ya consumen las rutas del catálogo mediante `frontend/src/services/files-service.ts`; la existencia de metadatos no equivale a una transferencia de bytes.
 
 ## 8. Evidencia del hito HTTP del backend
 

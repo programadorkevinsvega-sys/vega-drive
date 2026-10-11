@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend de Vega Drive con login, registro y sesiones conectados al Worker; las funciones de archivos siguen siendo demostrativas.",
+  "description": "Frontend de Vega Drive con identidad conectada y catálogo real de carpetas/metadatos; las transferencias R2 siguen pendientes.",
   "engines": {
     "node": ">=22.13.0"
   },

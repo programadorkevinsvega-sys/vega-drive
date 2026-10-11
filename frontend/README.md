@@ -6,19 +6,15 @@ Las dependencias del frontend se mantienen aisladas con su propio `package.json`
 
 ## Estado
 
-| Incluido hoy                                       | Pendiente                                                              |
-| -------------------------------------------------- | ---------------------------------------------------------------------- |
-| Identidad visual, tokens CSS y temas claro/oscuro  | Explorador real de archivos, carpetas, recientes, favoritos y papelera |
-| Componentes base accesibles y navegación por hash  | Operaciones reales de archivos y transferencias privadas con R2        |
-| Login, registro y sesiones conectados al Worker    | Búsqueda funcional sobre los datos de archivos                         |
-| Turnstile en login y registro                      | —                                                                      |
-| Formulario de cambio de contraseña en `#/settings` | Perfil y preferencias adicionales en Ajustes                           |
+| Incluido hoy | Pendiente |
+| --- | --- |
+| Identidad visual, tokens y temas claro/oscuro | Transferencias privadas de bytes a/desde R2 |
+| Login, registro, sesiones y cambio de contraseña conectados al Worker | Recientes, favoritos y búsqueda sobre el catálogo |
+| Mi unidad, carpetas, renombrado, movimiento y papelera conectados al catálogo HTTP | Subida y descarga de contenido real |
+| Restauración, paginación y breadcrumbs del servidor | Perfil y preferencias adicionales en Ajustes |
+| Turnstile en login y registro | — |
 
-Las pantallas de archivos y búsqueda siguen siendo **marcadores** con datos
-simulados. Login, registro, sesiones y cambio de contraseña usan las rutas reales
-de identidad del Worker; el propietario confirmó en producción Turnstile válido e
-inválido, el uso de la nueva contraseña, el rechazo de la anterior y la revocación
-de sesiones previas. El frontend todavía no implementa las operaciones de archivos.
+Mi unidad, las carpetas y la papelera ya consumen el catálogo real del Worker mediante `/api/files`: crear carpetas, listar, renombrar, mover, enviar a papelera y restaurar. Se muestran los metadatos que devuelve el servidor y se usan sus breadcrumbs y cursores. Esto no carga ni descarga bytes: el botón de subida permanece deshabilitado hasta que exista la integración física con R2. Recientes, favoritos y búsqueda continúan como marcadores. Login, registro, sesiones y cambio de contraseña usan las rutas reales de identidad del Worker.
 
 ## Requisitos
 
@@ -42,20 +38,20 @@ lockfiles. Las rutas por hash son estado del navegador y no requieren un fallbac
 
 Qué revisar primero:
 
-1. `#/settings`: formulario real para cambiar la contraseña de la cuenta.
-2. `#/login` y `#/register`: formularios conectados al Worker con Turnstile.
-3. Cambiar el tema con el selector de la barra superior.
-4. Reducir la ventana a menos de 900 px: la barra lateral pasa a cajón.
+1. `#/drive`: crea una carpeta, entra, renómbrala, muévela y envíala a la papelera.
+2. `#/trash`: restaura los elementos; los cambios deben sobrevivir a una recarga.
+3. `#/settings`, `#/login` y `#/register`: flujos reales de identidad.
+4. Cambiar el tema y probar el diseño estrecho; las transferencias físicas aún no están habilitadas.
 
 ## Rutas
 
 | Hash                  | Contenido hoy                       | Se construye en |
 | --------------------- | ----------------------------------- | --------------- |
-| `#/drive`             | Marcador de Mi unidad               | Entrega 3       |
-| `#/drive/folder/<id>` | Marcador de carpeta (`id` validado) | Entrega 3       |
-| `#/recent`            | Marcador                            | Entrega 3       |
-| `#/favorites`         | Marcador                            | Entrega 3       |
-| `#/trash`             | Marcador                            | Entrega 3       |
+| `#/drive`             | Catálogo real de Mi unidad          | Entrega 3 + BFF |
+| `#/drive/folder/<id>` | Contenido real de una carpeta       | Entrega 3 + BFF |
+| `#/recent`            | Marcador                            | Pendiente       |
+| `#/favorites`         | Marcador                            | Pendiente       |
+| `#/trash`             | Papelera real y restauración        | Entrega 3 + BFF |
 | `#/search?q=...`      | Marcador (el buscador ya navega)    | Entrega 5       |
 | `#/settings`          | Cambio de contraseña                | Fase 2          |
 | `#/login`             | Formulario real + Turnstile         | Fase 2          |
@@ -82,9 +78,9 @@ frontend/
     router/             rutas, parseo/construcción de hash, NavLink
     theme/              preferencia de tema (pura) + proveedor + selector
     domain/             tipos de presentación (UserProfile)
-    services/           contratos (ProfileService) + contexto de inyección
+    services/           clientes same-origin para identidad y catálogo + ProfileService
     mock/               adaptadores SIMULADOS
-    screens/            marcadores y layout visual de acceso
+    screens/            catálogo real y marcadores explícitos de funciones pendientes
     *.test.ts           pruebas junto al código
 ```
 

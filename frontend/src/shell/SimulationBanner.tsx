@@ -1,14 +1,14 @@
 import { Icon } from "../ui/Icon";
 
-/** Aclara qué partes de la aplicación siguen siendo demostrativas. */
+/** Aclara qué operaciones ya son reales y cuáles siguen pendientes. */
 export function SimulationBanner() {
   return (
     <div className="vd-banner" role="note">
       <Icon name="info" size="sm" />
       <p>
-        <strong>Autenticación conectada.</strong> Las pantallas y los datos de
-        archivos siguen siendo demostrativos mientras se implementan sus
-        entregas.
+        <strong>Sesión y catálogo conectados.</strong> Mi unidad y la papelera
+        consultan el servidor. Las subidas de archivos, recientes, favoritos y
+        búsqueda siguen pendientes.
       </p>
     </div>
   );

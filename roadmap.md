@@ -248,9 +248,9 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 ### 5.1 Assets y presentación
 
-- [ ] Servir frontend y API desde el mismo Worker/origen.
-- [ ] Implementar componentes de presentación, accesibilidad, CSP y manejo visual de estados.
-- [ ] Prohibir SDKs, endpoint, bucket o configuración de R2 en assets.
+- [x] Servir frontend y API desde el mismo Worker/origen.
+- [ ] Completar los componentes de presentación, accesibilidad y manejo visual de estados; el catálogo inicial ya tiene estados de carga, error y vacío.
+- [x] Mantener los assets sin SDKs, endpoint, bucket ni configuración de R2.
 - **Aceptación:** frontend solo usa /api y no contiene lógica de autorización, cuota ni almacenamiento.
 - 🔒 SEC-FE-01, SEC-FE-02, SEC-WEB-01, SEC-WEB-02.
 
@@ -258,7 +258,9 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 - [x] Implementar rutas Hono delgadas para el catálogo de metadatos: validan transporte y llaman `FilesGateway` sin importar capas internas.
 - [x] Traducir resultados del catálogo a 400/404/409/503, rechazar sesiones ausentes con 401 y evitar exponer detalles internos.
-- [ ] Completar la integración visual del frontend y las evidencias de presentación, assets y operación exigidas por la Fase 5.
+- [x] Conectar Mi unidad, carpetas y papelera del frontend al BFF: listado, breadcrumbs, paginación, creación/renombrado/movimiento, papelera y restauración.
+- [ ] Conectar recientes, favoritos y búsqueda cuando existan los contratos de producto respectivos; implementar transferencias físicas en la Fase 4.
+- [ ] Completar las evidencias de presentación, assets, cabeceras y operación exigidas por la Fase 5.
 - [ ] Mantener los gateways del composition root como punto de entrada modular para las funciones que se implementen después.
 - **Aceptación:** controllers no importan domain, application, infrastructure, D1 ni R2; este hito no implica el cierre de la Fase 5.
 - 🔒 SEC-MOD-01, SEC-MOD-04, SEC-LOG-03.

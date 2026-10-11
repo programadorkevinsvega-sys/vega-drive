@@ -3,7 +3,6 @@ import { NavLink } from "../router/NavLink";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 import { IconButton } from "../ui/IconButton";
-import { useToast } from "../ui/toast-context";
 import { PRIMARY_NAV, SETTINGS_NAV, type NavItem } from "./nav-items";
 
 function NavEntry({ item }: { item: NavItem }) {
@@ -21,8 +20,6 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { notifySimulated } = useToast();
-
   return (
     <aside
       className={open ? "vd-sidebar is-open" : "vd-sidebar"}
@@ -48,16 +45,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         icon="upload"
         size="lg"
         fullWidth
-        onClick={() =>
-          notifySimulated({
-            tone: "info",
-            title: "Subida simulada",
-            description:
-              "No se subió ningún archivo: es solo una vista previa.",
-          })
-        }
+        disabled
+        title="Las transferencias reales con R2 todavía no están disponibles"
       >
-        Subir archivos
+        Subir archivos · Próximamente
       </Button>
       <nav className="vd-nav" aria-label="Navegación principal">
         {PRIMARY_NAV.map((item) => (

@@ -77,6 +77,13 @@ const PATHS = {
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   close: <path d="m6 6 12 12M18 6 6 18" />,
   check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  edit: (
+    <>
+      <path d="m4 16.5-.8 4.3 4.3-.8L19 7.5a2.1 2.1 0 0 0-3-3z" />
+      <path d="m14.8 5.7 3.5 3.5" />
+    </>
+  ),
+  undo: <path d="M9 14 4.5 9.5 9 5M5 9.5h8a6 6 0 0 1 0 12h-2" />,
   plus: <path d="M12 5v14M5 12h14" />,
   "chevron-right": <path d="m9.5 6 6 6-6 6" />,
   "chevron-down": <path d="m6 9.5 6 6 6-6" />,

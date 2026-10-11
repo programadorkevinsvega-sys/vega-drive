@@ -4,45 +4,29 @@ import type { Route } from "../router/routes";
 import { NotFoundScreen } from "./NotFoundScreen";
 import { ScreenPlaceholder } from "./ScreenPlaceholder";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
+import { FilesCatalogScreen } from "./FilesCatalogScreen";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
-/** Tabla ruta -> pantalla. Las pantallas reales sustituiran a los marcadores. */
+/** Tabla ruta -> pantalla, con el catálogo real conectado al BFF. */
 export function renderScreen(route: Route): ReactNode {
   const title = routeMeta(route).title;
   switch (route.name) {
     case "not-found":
       return <NotFoundScreen />;
     case "drive":
-      return (
-        <ScreenPlaceholder
-          icon="folder"
-          title={route.folderId ? "Carpeta" : title}
-          crumbs={
-            route.folderId
-              ? [DRIVE_HOME, { label: "Carpeta" }]
-              : [{ label: title }]
-          }
-          delivery="Entrega 3"
-          description="El explorador de archivos y carpetas, con datos simulados, llega en la Entrega 3."
-        />
-      );
+      return <FilesCatalogScreen view="drive" folderId={route.folderId} />;
+    case "trash":
+      return <FilesCatalogScreen view="trash" folderId={null} />;
     case "recent":
     case "favorites":
-    case "trash":
       return (
         <ScreenPlaceholder
-          icon={
-            route.name === "recent"
-              ? "clock"
-              : route.name === "trash"
-                ? "trash"
-                : "star"
-          }
+          icon={route.name === "recent" ? "clock" : "star"}
           title={title}
           crumbs={[DRIVE_HOME, { label: title }]}
           delivery="Entrega 3"
-          description="Esta vista usará los mismos componentes del dashboard con datos simulados."
+          description="Esta vista todavía no está conectada al catálogo del servidor."
         />
       );
     case "search":
@@ -52,7 +36,7 @@ export function renderScreen(route: Route): ReactNode {
           title={title}
           crumbs={[DRIVE_HOME, { label: title }]}
           delivery="Entrega 5"
-          description="La búsqueda local sobre datos simulados llega en la Entrega 5."
+          description="La búsqueda sobre el catálogo llegará en una entrega posterior."
         />
       );
     case "settings":
