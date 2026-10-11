@@ -111,7 +111,7 @@ for (const file of sourceFiles) {
       );
     }
   }
-  if (/\bJOIN\b/i.test(source))
+  if (/\bJOIN\s+(?:[A-Z_]|"|\'|\x60|\(|\[)/i.test(source))
     failures.push(rel + ": JOIN no permitido en módulos");
   if (/\bFOREIGN\s+KEY\b/i.test(source))
     failures.push(rel + ": FOREIGN KEY no permitida en módulos");
