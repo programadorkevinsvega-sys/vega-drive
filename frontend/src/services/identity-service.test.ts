@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getAuthConfig,
   getSession,
+  changePassword,
   IdentityApiError,
   login,
   logout,
@@ -108,6 +109,50 @@ describe("cliente HTTP de identidad", () => {
       message: "Credenciales inválidas",
       status: 401,
     });
+  });
+  it("envía los campos permitidos al endpoint de cambio de contraseña", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(changePassword("old-test", "new-test-value")).resolves.toEqual({
+      ok: true,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auth/password",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify({
+          currentPassword: "old-test",
+          newPassword: "new-test-value",
+        }),
+      }),
+    );
+  });
+  it("propaga el estado HTTP al fallar el cambio de contraseña", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "Unable to change password" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(changePassword("old-test", "new-test-value")).rejects
+      .toMatchObject<Partial<IdentityApiError>>({
+        name: "IdentityApiError",
+        status: 400,
+        message: "Unable to change password",
+      });
   });
   it("consulta la sesión con credenciales same-origin", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
