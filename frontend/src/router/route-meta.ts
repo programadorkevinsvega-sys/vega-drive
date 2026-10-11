@@ -25,8 +25,6 @@ export function routeMeta(route: Route): RouteMeta {
       return { title: "Búsqueda", layout: "shell" };
     case "settings":
       return { title: "Ajustes", layout: "shell" };
-    case "kit":
-      return { title: "Guía visual", layout: "shell" };
     case "not-found":
       return { title: "Página no encontrada", layout: "shell" };
   }

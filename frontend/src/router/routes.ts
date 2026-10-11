@@ -8,7 +8,6 @@ export type Route =
   | { name: "trash" }
   | { name: "search"; query: string }
   | { name: "settings" }
-  | { name: "kit" }
   | { name: "not-found" };
 
 export type RouteName = Route["name"];
@@ -26,7 +25,6 @@ const SIMPLE_ROUTES: Record<string, Route> = {
   settings: { name: "settings" },
   login: { name: "login" },
   register: { name: "register" },
-  kit: { name: "kit" },
 };
 
 export function parseHash(hash: string): Route {

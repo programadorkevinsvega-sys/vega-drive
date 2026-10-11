@@ -1,8 +1,8 @@
-# Vega Drive · frontend (Entrega 2)
+# Vega Drive · frontend integrado
 
-Base visual y esqueleto de navegación del frontend de Vega Drive.
-**Paquete aislado**: no modifica nada del repositorio oficial y se puede
-descartar borrando la carpeta `frontend/`.
+Base visual y esqueleto de navegación de Vega Drive, servidos por el Worker existente.
+Las dependencias del frontend se mantienen aisladas con su propio `package.json` y
+`pnpm-lock.yaml`; no se fusionan con el workspace ni con el lockfile raíz.
 
 ## Estado
 
@@ -12,7 +12,7 @@ descartar borrando la carpeta `frontend/`.
 | Tokens CSS, tema claro y oscuro                             | Formularios de login y registro                |
 | Componentes base: botón, campo, menú, diálogo, avisos, etc. | Cualquier llamada de red                       |
 | Esqueleto de navegación con enrutado por hash               | Autenticación, sesiones, autorización, Fase 2  |
-| Guía visual temporal en `#/kit`                             | Servicios HTTP reales                          |
+| Navegación por hash y tema claro/oscuro                     | Servicios HTTP reales                          |
 
 Las pantallas del producto existen en la navegación como **marcadores
 honestos** ("Pantalla en preparación · Entrega N"). Todo dato visible es
@@ -22,27 +22,28 @@ simulado y la interfaz lo declara con un aviso permanente.
 
 - Node 22 (`>=22.13.0`, probado con 22.22.2) y pnpm 10.18.3, igual que el repo.
 
-## Probarlo de forma aislada
+## Instalar, comprobar y ejecutar dentro del repositorio
 
-Descomprime **fuera** del repositorio y, dentro de `frontend/`:
+Desde la raíz de Vega Drive:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm run dev       # http://127.0.0.1:5173/#/drive
-pnpm run check     # typecheck + pruebas + build
-pnpm run preview   # build de producción bajo la CSP del Worker (puerto 4173)
+pnpm run frontend:install
+pnpm run frontend:check       # typecheck + pruebas + build del frontend
+pnpm run cloudflare:build     # guardias, checks, auditorías y build dry-run de Wrangler
+pnpm run dev                  # Worker local; requiere el build de assets anterior
 ```
 
-> Si lo copias **dentro** del repo, usa `pnpm install --ignore-workspace`: sin
-> esa bandera pnpm instala el proyecto raíz y no el frontend.
+Para ejecutar únicamente Vite durante trabajo visual: `pnpm --dir frontend run dev`.
+El frontend conserva una instalación aislada; no borres ni combines ninguno de los
+lockfiles. Las rutas por hash son estado del navegador y no requieren un fallback HTTP.
 
 Qué revisar primero:
 
-1. `#/kit`: guía de color, tipografía, botones, campos, menú, diálogos,
-   avisos, estados e iconos (cambia el tema con el icono de la barra superior).
-2. `#/drive`: la estructura general (barra lateral, buscador, perfil simulado).
-3. Reducir la ventana a < 900 px: la barra lateral pasa a cajón.
-4. `#/login` y `#/register`: marco de las pantallas de acceso (sin formulario).
+1. `#/drive`: la estructura general (barra lateral, buscador y perfil simulado).
+2. Cambiar el tema con el selector de la barra superior.
+3. Reducir la ventana a menos de 900 px: la barra lateral pasa a cajón.
+4. `#/login` y `#/register`: marcos visuales, todavía sin formularios funcionales.
 
 ## Rutas
 
@@ -57,11 +58,11 @@ Qué revisar primero:
 | `#/settings`          | Marcador                            | Entrega 5       |
 | `#/login`             | Marco de acceso (sin formulario)    | Entrega 4       |
 | `#/register`          | Marco de acceso (sin formulario)    | Entrega 4       |
-| `#/kit`               | Guía visual **temporal**            | se retira       |
 
-Una ruta desconocida o un identificador de carpeta no válido muestran
-"Página no encontrada". El enrutado por hash evita tocar la configuración de
-Cloudflare (no hay fallback de SPA en `wrangler.toml`).
+Una ruta hash desconocida o un identificador de carpeta no válido muestran
+"Página no encontrada". Las rutas por hash no llegan al servidor HTTP. Wrangler usa
+`not_found_handling = "none"`: los assets que faltan conservan 404 y la API no recibe
+un fallback HTML.
 
 ## Estructura
 
@@ -81,7 +82,7 @@ frontend/
     domain/             tipos de presentación (UserProfile)
     services/           contratos (ProfileService) + contexto de inyección
     mock/               adaptadores SIMULADOS
-    screens/            marcadores, layout de acceso, guía visual (kit/)
+    screens/            marcadores y layout visual de acceso
     *.test.ts           pruebas junto al código
 ```
 
@@ -116,7 +117,7 @@ frontend/
   autorización es del backend.
 - Toda acción simulada se rotula como tal en la interfaz ("Simulado").
 
-## Verificación realizada (comandos reales)
+## Historial de verificación de la entrega visual (previo a la integración)
 
 | Comprobación                                                            | Resultado                                      |
 | ----------------------------------------------------------------------- | ---------------------------------------------- |
@@ -140,15 +141,14 @@ el buscador desbordaba la barra superior a 360 px.
 - Tablet y orientación horizontal en dispositivos reales.
 - Pruebas de componentes con DOM (jsdom/Testing Library): no se añadieron para
   no sumar dependencias; la lógica pura sí está cubierta.
-- `prettier --check`: **no se ejecutó** (lo pediste así). El código está
-  escrito con su estilo, pero habrá que correr `pnpm run format` en el repo.
-- `pnpm audit` y CI del repo: no ejecutados (sin auditorías remotas).
-- Tras `pnpm run format`, volver a ejecutar `pnpm run test`: Prettier puede
-  alargar archivos y la prueba de 200 líneas lo comprobará.
+- El check aislado del frontend descrito arriba no demuestra que el Worker lo
+  sirva ni que la política `_headers` se aplique en Cloudflare. Para esos puntos se
+  necesita el build integrado y smoke tests en un entorno desplegado.
+- La CI y la auditoría de dependencias del frontend se incorporan al flujo principal
+  mediante `pnpm run cloudflare:build`; deben volver a verificarse tras estos cambios.
 
 ## Problemas conocidos
 
-- `#/kit` es temporal y debe retirarse al integrar.
 - En `#/drive` el título repite la ruta ("Mi unidad" dos veces); se resolverá
   con el dashboard real.
 - Sin apple-touch-icon (requiere PNG; se puede generar en la integración).

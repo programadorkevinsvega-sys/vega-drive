@@ -17,7 +17,6 @@ describe("parseHash", () => {
       "settings",
       "login",
       "register",
-      "kit",
     ] as const) {
       expect(parseHash(`#/${name}`)).toEqual({ name });
     }
@@ -91,7 +90,6 @@ describe("buildHash", () => {
     { name: "search", query: "informe & final" },
     { name: "search", query: "" },
     { name: "settings" },
-    { name: "kit" },
   ];
 
   it("es la inversa de parseHash", () => {

@@ -1,75 +1,71 @@
-# Integración futura (requiere aprobación)
+# Integración del frontend con el Worker existente
 
-Esta entrega **no cambia nada** fuera de `frontend/`. Aquí se listan los
-cambios externos que harían falta más adelante. Ninguno está aplicado.
+## Decisiones aplicadas en el código
 
-## Cambios externos propuestos
+- Un solo Worker y un solo origen. La API sigue en Hono bajo `/api/*` y la raíz
+  de assets de Wrangler apunta a `./frontend/dist`.
+- El enrutado del producto usa hash (`#/drive`, `#/recent`, etc.). Se mantiene
+  `not_found_handling = "none"`; ni los assets inexistentes ni las rutas API
+  desconocidas deben responder con `index.html`.
+- Se mantienen separados `pnpm-lock.yaml` y `frontend/pnpm-lock.yaml`. La raíz
+  ofrece `frontend:install`, `frontend:check` y `frontend:audit` para reproducir
+  la instalación y validación del paquete independiente.
+- Vite copia `frontend/public/_headers` a `frontend/dist`. Workers Static Assets
+  aplica desde ese archivo CSP, `nosniff`, Referrer-Policy, X-Frame-Options y
+  HSTS a las respuestas estáticas. Hono conserva esas cabeceras en las respuestas
+  API y `Cache-Control: no-store` para `/api/*`.
+- `cloudflare:build` valida arquitectura, formato, lint, typecheck, tests,
+  dependencias de ambos paquetes y `wrangler deploy --dry-run`. El script `deploy`
+  ejecuta este gate antes de migraciones o publicación; no se ejecuta como parte
+  de estas instrucciones de integración.
+- La guía temporal `#/kit` y sus componentes/estilos se retiran. No se modifican
+  los contratos de servicio ni los adaptadores simulados.
 
-| #   | Dónde                                     | Cambio                                                                                                                         | Riesgo / nota                                                                   |
-| --- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| 1   | `pnpm-workspace.yaml`                     | Añadir `packages: ["frontend"]` **o** mantener instalación independiente                                                       | Hoy un `pnpm install` en `frontend/` instala el proyecto raíz (verificado)      |
-| 2   | `pnpm-lock.yaml` (raíz)                   | Se actualiza al elegir workspace; borrar `frontend/pnpm-lock.yaml`                                                             | Revisar el diff del lockfile; SEC-DEP-01                                        |
-| 3   | `package.json` (raíz)                     | Scripts `frontend:check` y `frontend:build` (p. ej. `pnpm --dir frontend ...`)                                                 | Sin tocar `check` existente hasta decidir                                       |
-| 4   | `wrangler.toml` `[assets]`                | Apuntar `directory` a `./frontend/dist` **o** copiar `dist/` a `public/` en el build                                           | Reemplaza el `public/index.html` provisional; cambio de despliegue              |
-| 5   | Despliegue (`deploy`, `cloudflare:build`) | Ejecutar el build del frontend antes de `wrangler deploy`                                                                      | Hoy ningún script compila un frontend                                           |
-| 6   | Cabeceras de los assets                   | Aplicar la misma CSP/nosniff/Referrer-Policy a los assets                                                                      | Hoy el middleware Hono solo cubre `/api/*`; el HTML lo sirve `ASSETS` sin ellas |
-| 7   | CI (`.github/workflows`)                  | Añadir typecheck, pruebas y build del frontend                                                                                 | `pnpm audit` cubrirá las dependencias nuevas                                    |
-| 8   | Formato                                   | Ejecutar `pnpm run format` tras copiar                                                                                         | `format:check` fallará hasta entonces                                           |
-| 9   | Retirar guía visual                       | Borrar `src/screens/kit/`, `styles/kit.css`, su `@import`, la ruta `kit` y su caso en `screen-for-route.tsx` y `route-meta.ts` | Pantalla temporal                                                               |
-| 10  | Rutas limpias (opcional)                  | `not_found_handling = "single-page-application"` y pasar de hash a History API                                                 | Decisión posterior; mientras tanto el hash funciona sin cambios de config       |
+## Datos y alcance funcional
 
-Sobre el punto 6: la CSP vigente del Worker es
-`default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`
-(`src/bff/app.ts`). El frontend ya funciona bajo ella (`pnpm run preview`
-la aplica). Cómo servirla a los assets (Worker o archivo `_headers`) es una
-decisión del propietario y debe verificarse.
+Los datos visibles siguen siendo explícitamente simulados. No se añaden llamadas
+HTTP desde el frontend, endpoints nuevos, sesiones falsas ni formularios de
+autenticación funcionales. La lógica de identidad que ya existe en el backend no
+se cambia en esta integración. Las pantallas de drive, carpetas, recientes,
+favoritos, papelera, búsqueda, ajustes y acceso continúan siendo marcadores visuales
+hasta que sus fases del roadmap implementen sus contratos reales.
 
-## Dependencias nuevas y justificación (SEC-DEP-01)
+## Comandos de instalación y validación
 
-Versiones **exactas**, todas publicadas hace más de 14 días.
+Desde la raíz del repositorio, con Node `>=22.13.0` y pnpm `10.18.3`:
 
-| Paquete                            | Versión | Tipo | Motivo                                         |
-| ---------------------------------- | ------- | ---- | ---------------------------------------------- |
-| `react`, `react-dom`               | 19.3.0  | prod | Biblioteca de interfaz acordada (opción A)     |
-| `vite`                             | 8.3.1   | dev  | Empaquetado y servidor de desarrollo           |
-| `@vitejs/plugin-react`             | 6.1.1   | dev  | Transformación JSX                             |
-| `@types/react`, `@types/react-dom` | 19.3.0  | dev  | Tipos                                          |
-| `@types/node`                      | 26.6.3  | dev  | Tipos para las pruebas (lectura de archivos)   |
-| `typescript`                       | 5.9.3   | dev  | Misma versión que el repo                      |
-| `vitest`                           | 5.0.2   | dev  | Mismo ejecutor que el repo (el repo usa 5.0.3) |
+```bash
+pnpm install --frozen-lockfile
+pnpm run frontend:install
+pnpm run cloudflare:build
+```
 
-No se usan librerías de componentes, iconos, estado ni enrutado.
+`cloudflare:build` no despliega ni migra recursos remotos. Produce el build de assets,
+corre las comprobaciones y ejecuta el dry-run del build Worker/Assets. Para probar el
+servidor local después del build:
 
-## Cómo sustituir los datos simulados
+```bash
+pnpm run dev
+```
 
-1. Crear un adaptador que implemente `ProfileService` (`src/services/`) con
-   `fetch("/api/...")` **solo cuando el endpoint exista**.
-2. Elegir el adaptador en `src/main.tsx` (único punto de composición) y ampliar
-   `DataMode` (`src/services/services.ts`) para que el aviso de simulación
-   desaparezca solo con datos reales.
-3. Las pantallas no cambian: consumen contratos, no `mock/`.
+La CI ejecuta el mismo gate de build después de instalar ambas dependencias por
+separado y mantiene Gitleaks como job independiente. Ninguna de estas comprobaciones
+por sí sola demuestra la aplicación de cabeceras o disponibilidad en producción.
 
-La autorización, la propiedad y las cuotas seguirán siendo del servidor; el
-cliente no envía ni acepta `ownerId`, roles ni permisos.
+## Evidencia pendiente antes de cerrar la subfase
 
-## Supuestos
-
-- La Fase 2 no está iniciada: no hay endpoints de identidad ni de archivos.
-- Esta entrega adelanta la presentación de la Fase 5.1; **no** se marca ninguna
-  fase del roadmap como completada.
-- Los estilos, textos y rutas pueden ajustarse en las entregas 3-6 sin romper
-  la arquitectura.
-
-## Pasos de integración (cuando se apruebe)
-
-1. Verificar que el árbol de trabajo está en `main` y limpio.
-2. Copiar `frontend/` al repositorio (sin `node_modules`, `dist` ni lockfile).
-3. Decidir los puntos 1-5 y 8 de la tabla; aplicarlos en commits pequeños.
-4. `pnpm install` (según la decisión 1) y `pnpm run format`.
-5. Ejecutar `pnpm run check` del repo, las guardias de arquitectura y el check
-   del frontend.
-6. Probar en staging según `Rollback.md` antes de producción.
+- Ejecutar el gate completo sobre el commit integrado y revisar el diff.
+- Probar localmente `/`, archivos JS/CSS/favicon, 404 de assets, `/api/health` y un
+  endpoint API inexistente; comprobar tipo de contenido, CSP y las demás cabeceras.
+- Verificar las cabeceras y la interfaz desplegada en un entorno aprobado antes de
+  considerar la integración publicada.
+- Cumplir `Security.md` y el procedimiento `Rollback.md`; staging y el ensayo de
+  rollback siguen pendientes en la documentación operativa.
+- No marcar la fase 5 como cerrada ni modificar `roadmap.md` sin la evidencia exigida.
 
 ## Reversión
 
-Borrar `frontend/`. No hay ningún otro archivo modificado.
+No borrar `frontend/` como procedimiento genérico: ahora forma parte del artefacto
+integrado. Antes de revertir, revisar el diff y restaurar de forma coordinada la
+configuración de Wrangler, scripts, cabeceras, CI, rutas y la antigua página estática.
+Cualquier rollback de un release desplegado debe seguir `Rollback.md`.

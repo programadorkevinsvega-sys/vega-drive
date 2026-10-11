@@ -23,14 +23,12 @@ jobs:
         with:
           node-version: 22.13.0
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run format:check
-      - run: pnpm run verify:module-migrations
-      - run: pnpm run verify:architecture:all
-      - run: pnpm run lint
-      - run: pnpm run typecheck
-      - run: pnpm test
-      - run: pnpm audit --audit-level=high
+      - run: pnpm run frontend:install
+      - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest
     permissions:

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { SECURITY_HEADERS } from "./security-headers.js";
 import { identityRoutes } from "./identity-routes.js";
 import {
   requireAuthenticatedActor,
@@ -9,14 +10,9 @@ export const app = new Hono<AuthenticatedEnv>();
 
 app.use("*", async (c, next) => {
   await next();
-  c.header("X-Content-Type-Options", "nosniff");
-  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
-  c.header("X-Frame-Options", "DENY");
-  c.header(
-    "Content-Security-Policy",
-    "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-  );
-  c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    c.header(name, value);
+  }
   if (c.req.path.startsWith("/api/")) c.header("Cache-Control", "no-store");
 });
 

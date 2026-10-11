@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { routeMeta } from "../router/route-meta";
 import type { Route } from "../router/routes";
-import { KitScreen } from "./kit/KitScreen";
 import { NotFoundScreen } from "./NotFoundScreen";
 import { ScreenPlaceholder } from "./ScreenPlaceholder";
 
@@ -11,8 +10,6 @@ const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 export function renderScreen(route: Route): ReactNode {
   const title = routeMeta(route).title;
   switch (route.name) {
-    case "kit":
-      return <KitScreen />;
     case "not-found":
       return <NotFoundScreen />;
     case "drive":

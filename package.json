@@ -13,14 +13,14 @@
     "db:migration:list": "wrangler d1 migrations list vega_drive_db --remote",
     "db:verify:production": "pnpm run db:migration:list && pnpm run db:verify:schema:production",
     "verify:production": "node scripts/verify-production.mjs",
-    "deploy": "pnpm run deploy:preflight && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
+    "deploy": "pnpm run cloudflare:build && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "node scripts/architecture-check.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test",
-    "cloudflare:build": "pnpm run deploy:preflight && pnpm run check && pnpm audit --audit-level=high",
+    "cloudflare:build": "pnpm run deploy:preflight && pnpm run check && pnpm run frontend:check && pnpm audit --audit-level=high && pnpm run frontend:audit && pnpm exec wrangler deploy --dry-run",
     "db:verify:schema:local": "node scripts/verify-d1-schema.mjs --local",
     "db:verify:schema:production": "node scripts/verify-d1-schema.mjs --remote",
     "deploy:preflight": "node scripts/check-cloudflare-config.mjs && pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:architecture:all",
@@ -35,7 +35,10 @@
     "verify:bff-boundary": "node scripts/architecture/verify-bff-boundary.mjs",
     "verify:authenticated-actor": "node scripts/architecture/verify-authenticated-actor.mjs",
     "verify:files-gateway-contract": "node scripts/architecture/verify-files-gateway-contract.mjs",
-    "verify:architecture:all": "pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:module-ownership && pnpm run verify:sql-boundaries && pnpm run verify:r2-port-boundary && pnpm run verify:frontend-boundary && pnpm run verify:module-extraction && pnpm run verify:r2-privacy && pnpm run verify:bff-boundary && pnpm run verify:authenticated-actor && pnpm run verify:files-gateway-contract"
+    "verify:architecture:all": "pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:module-ownership && pnpm run verify:sql-boundaries && pnpm run verify:r2-port-boundary && pnpm run verify:frontend-boundary && pnpm run verify:module-extraction && pnpm run verify:r2-privacy && pnpm run verify:bff-boundary && pnpm run verify:authenticated-actor && pnpm run verify:files-gateway-contract",
+    "frontend:install": "pnpm --dir frontend install --ignore-workspace --frozen-lockfile",
+    "frontend:check": "pnpm --dir frontend run check",
+    "frontend:audit": "pnpm --dir frontend --ignore-workspace audit --audit-level=high"
   },
   "dependencies": {
     "hono": "4.13.13"
