@@ -1,5 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CloudflareTurnstileVerifier } from "../src/modules/identity/infrastructure/turnstile/cloudflare-turnstile-verifier.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("Cloudflare Turnstile verifier", () => {
   it("posts the token and secret to Siteverify and accepts only success=true", async () => {
@@ -24,6 +28,7 @@ describe("Cloudflare Turnstile verifier", () => {
   });
 
   it("fails closed for missing configuration, HTTP failures, invalid results and network errors", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     const fetcher = vi.fn(
       async () =>
         new Response(JSON.stringify({ success: true }), { status: 200 }),
@@ -55,7 +60,35 @@ describe("Cloudflare Turnstile verifier", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("logs allowlisted Siteverify error codes without exposing secrets or tokens", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const verifier = new CloudflareTurnstileVerifier(
+      "sensitive-secret",
+      async () =>
+        new Response(
+          JSON.stringify({
+            success: false,
+            "error-codes": [
+              "invalid-input-secret",
+              "timeout-or-duplicate",
+              "sensitive-token-value",
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    await expect(verifier.verify("sensitive-token-value")).resolves.toBe(false);
+
+    const diagnostic = JSON.stringify(warn.mock.calls);
+    expect(diagnostic).toContain("invalid-input-secret");
+    expect(diagnostic).toContain("timeout-or-duplicate");
+    expect(diagnostic).not.toContain("sensitive-secret");
+    expect(diagnostic).not.toContain("sensitive-token-value");
+  });
+
   it("rejects oversized tokens before making a request", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     const fetcher = vi.fn(
       async () =>
         new Response(JSON.stringify({ success: true }), { status: 200 }),
