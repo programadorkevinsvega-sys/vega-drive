@@ -67,8 +67,14 @@ export interface FilesPublicApi {
     folderId: unknown,
   ): Promise<CatalogResult<FilesFileView>>;
   deleteFile(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
-  permanentlyDeleteFile(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
-  permanentlyDeleteFolder(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
+  permanentlyDeleteFile(
+    actor: FilesActor,
+    id: unknown,
+  ): Promise<CatalogResult<void>>;
+  permanentlyDeleteFolder(
+    actor: FilesActor,
+    id: unknown,
+  ): Promise<CatalogResult<void>>;
   cleanupExpiredTrash(nowIso: string, limit: number): Promise<number>;
   restoreFile(
     actor: FilesActor,
@@ -104,10 +110,15 @@ export function createFilesModule(
   const itemCatalog = createItemCatalog(deps);
   const itemMutations = createItemMutations(deps);
   const listing = createCatalogListing(deps);
-  const trash = deps.storage ? createTrashMutations({
-    folders: deps.folders, items: deps.items, names: deps.names, storage: deps.storage,
-    ...(deps.now ? { now: deps.now } : {}),
-  }) : null;
+  const trash = deps.storage
+    ? createTrashMutations({
+        folders: deps.folders,
+        items: deps.items,
+        names: deps.names,
+        storage: deps.storage,
+        ...(deps.now ? { now: deps.now } : {}),
+      })
+    : null;
   const transfers =
     deps.uploads && deps.transferEvents && deps.storage
       ? createFileTransfers({
@@ -144,13 +155,15 @@ export function createFilesModule(
       transfers
         ? transfers.cleanupExpiredUploads(nowIso, limit)
         : Promise.resolve(0),
-    permanentlyDeleteFile: (...args) => trash
-      ? trash.permanentlyDeleteFile(...args)
-      : Promise.resolve({ ok: false, reason: "unavailable" }),
-    permanentlyDeleteFolder: (...args) => trash
-      ? trash.permanentlyDeleteFolder(...args)
-      : Promise.resolve({ ok: false, reason: "unavailable" }),
-    cleanupExpiredTrash: (nowIso, limit) => trash
-      ? trash.cleanupExpiredTrash(nowIso, limit) : Promise.resolve(0),
+    permanentlyDeleteFile: (...args) =>
+      trash
+        ? trash.permanentlyDeleteFile(...args)
+        : Promise.resolve({ ok: false, reason: "unavailable" }),
+    permanentlyDeleteFolder: (...args) =>
+      trash
+        ? trash.permanentlyDeleteFolder(...args)
+        : Promise.resolve({ ok: false, reason: "unavailable" }),
+    cleanupExpiredTrash: (nowIso, limit) =>
+      trash ? trash.cleanupExpiredTrash(nowIso, limit) : Promise.resolve(0),
   };
 }
