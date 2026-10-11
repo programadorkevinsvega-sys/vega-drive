@@ -157,7 +157,7 @@ export function createFileUpload(deps: FileTransferDependencies) {
           }),
         );
 
-        await deps.storage.put(storageKey, guardedBody, contentType);
+        await deps.storage.put(storageKey, guardedBody, contentType, sizeBytes);
         const stored = await deps.storage.head(storageKey);
         if (
           !stored ||
