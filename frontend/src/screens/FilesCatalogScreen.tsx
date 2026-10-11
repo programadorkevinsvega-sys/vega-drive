@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
@@ -22,6 +23,7 @@ export function FilesCatalogScreen({
 }: FilesCatalogScreenProps) {
   const data = useCatalogData(view, folderId);
   const actions = useCatalogActions(folderId, data.refresh);
+  const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const breadcrumbs = buildCatalogBreadcrumbs(
     view,
     folderId,
@@ -164,7 +166,12 @@ export function FilesCatalogScreen({
         </section>
       ) : null}
 
-      <CatalogDialogs actions={actions} folderTargets={data.folderTargets} />
+      <CatalogDialogs
+        actions={actions}
+        folderTargets={data.folderTargets}
+        emptyTrashOpen={emptyTrashOpen}
+        setEmptyTrashOpen={setEmptyTrashOpen}
+      />
     </div>
   );
 }
