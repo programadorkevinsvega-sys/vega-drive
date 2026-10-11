@@ -30,7 +30,14 @@ describe("identity registration HTTP integration", () => {
       "fetch",
       vi.fn(
         async () =>
-          new Response(JSON.stringify({ success: true }), { status: 200 }),
+          new Response(
+            JSON.stringify({
+              success: true,
+              action: "register",
+              hostname: "vega-drive.test",
+            }),
+            { status: 200 },
+          ),
       ),
     );
     const env = {
@@ -39,6 +46,7 @@ describe("identity registration HTTP integration", () => {
       FILES_BUCKET: {},
       TURNSTILE_SECRET_KEY: "test-secret",
       TURNSTILE_SITE_KEY: "test-site-key",
+      TURNSTILE_HOSTNAMES: "vega-drive.test",
       MAX_USERS: "10",
     } as unknown as Env;
     const password = "A strong passphrase 42!";
