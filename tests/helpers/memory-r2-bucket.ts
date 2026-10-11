@@ -35,7 +35,9 @@ function ensureFixedLengthStreamForNodeTests(): void {
         },
         close() {
           if (written !== expectedLength) {
-            const error = new RangeError("Stream did not match its declared length");
+            const error = new RangeError(
+              "Stream did not match its declared length",
+            );
             return writer.abort(error).then(() => {
               throw error;
             });
