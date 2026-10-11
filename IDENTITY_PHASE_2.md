@@ -75,3 +75,24 @@ La suite incluye pruebas de registro y límite atómico, política/derivación d
 El código en `main` ahora configura una allowlist de hostnames, etiqueta los tokens con la acción `register` o `login`, y el verificador exige que Siteverify confirme `success: true`, la acción esperada y el hostname esperado. También registra errores de Siteverify con códigos permitidos sin exponer tokens ni secretos.
 
 Estos commits no despliegan el Worker activo. La captura de producción sigue mostrando cero solicitudes de Siteverify, así que no se puede afirmar que el problema esté resuelto en producción ni que el secreto configurado corresponda a esta site key. Después del despliegue autorizado, los nuevos logs deben distinguir una clave secreta inválida, un token rechazado/duplicado, un hostname inesperado y un fallo de red. Sigue pendiente el E2E real con un token nuevo válido e inválido en un entorno apropiado; no se debe crear una cuenta de producción solo para validar sin un plan de limpieza aprobado.
+
+
+## Diagnóstico operativo de Turnstile / Siteverify
+
+El verificador registra eventos estructurados bajo el prefijo `[turnstile]` en Cloudflare Worker Logs. Cada evento omite deliberadamente el token, la clave secreta, la IP del cliente, el cuerpo de respuesta y los mensajes de excepción sin filtrar.
+
+| Evento | Interpretación |
+| --- | --- |
+| `Siteverify accepted token` | Siteverify respondió correctamente y `success`, `hostname` y `action` pasaron las validaciones locales. |
+| `Siteverify rejected token` | Siteverify respondió, pero no aceptó el token. `errorCodes` contiene solo códigos oficiales permitidos. |
+| `Siteverify HTTP failure` | Siteverify devolvió un estado HTTP no exitoso; revisar `status`, `contentType`, `cloudflareRayId` y `errorCodes`. |
+| `Siteverify exception` | La llamada o preparación de la petición lanzó una excepción. `stage`, `errorName`, `causeName` y `causeCode` permiten localizar la clase de fallo sin exponer el mensaje original. |
+| `Siteverify returned invalid JSON` / `malformed response` | Se recibió respuesta HTTP pero su cuerpo no tenía el formato JSON esperado. |
+| `Siteverify hostname mismatch` / `action mismatch` | Siteverify respondió con éxito, pero la validación adicional del backend rechazó el hostname o la acción. |
+| `Siteverify skipped` | No se hizo una llamada de red por configuración o entrada inválida; `reason` explica la condición. |
+
+Los eventos de respuesta incluyen `status`, `durationMs`, `contentType` y `cloudflareRayId` cuando están disponibles. El `cloudflareRayId` es el encabezado `cf-ray` de la respuesta a Siteverify, no el Ray ID de la petición entrante al Worker. Si hay una respuesta HTTP, este ID ayuda a identificar la transacción del lado de Cloudflare; una excepción de red puede no tener ID porque no se recibió respuesta.
+
+Para investigar un registro fallido, abre el evento `POST /api/auth/register` en Workers > Logs y revisa las líneas `[turnstile]` de la misma invocación. Si aparece `Siteverify exception` con `stage: siteverify-fetch` y sin `cloudflareRayId`, el Worker no obtuvo una respuesta de Siteverify; el `causeCode` puede ayudar a distinguir timeout/socket/DNS. Si aparece `Siteverify rejected token` o `Siteverify HTTP failure`, sí hubo respuesta y se deben analizar el estado y los códigos. Si no aparece ninguna línea `[turnstile]`, revisar si el request fue rechazado antes del verificador o si el Worker activo no ejecuta esta versión del código.
+
+Estos logs ayudan a localizar la frontera del fallo, pero por sí solos no atribuyen automáticamente la culpa a Cloudflare: una excepción de red puede originarse en la conectividad o runtime del Worker, y un código de rechazo puede indicar un secreto equivocado, un token vencido/reutilizado o una solicitud inválida. No activar el registro del cuerpo completo ni agregar tokens, secretos, contraseñas o mensajes de excepción sin filtrar a los logs.
