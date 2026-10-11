@@ -28,6 +28,10 @@ jobs:
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run verify:module-migrations
+      - name: Apply D1 migrations to ephemeral local database
+        run: pnpm run db:migrate:local
+      - name: Verify local D1 schema
+        run: pnpm run db:verify:schema:local
       - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest

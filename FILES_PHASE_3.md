@@ -102,3 +102,20 @@ Las respuestas de listado, creación, renombrado, movimiento y restauración con
 - Se conservan las cabeceras existentes y `Cache-Control: no-store` en las respuestas `/api/*`.
 
 No se exponen rutas de subida o descarga física, búsqueda, favoritos ni transferencias R2: el contrato actual no implementa esas operaciones. El frontend sigue sin estar conectado al catálogo mediante un cliente de API.
+
+## 8. Evidencia del hito HTTP del backend
+
+La integración HTTP se incorporó en el commit `83e4aa07065c654fa7a4c879c9dc378851f7cad0` de `main`. La ejecución de GitHub Actions [CI #366](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38118044863) terminó correctamente:
+
+- `pnpm run verify:module-migrations`: correcta.
+- `pnpm run format:check` y `pnpm run lint`: correctos.
+- `pnpm run typecheck`: correcto.
+- `pnpm test`: 137/137 tests de backend aprobados; `tests/files-catalog-http.test.ts` aporta 7 pruebas de integración HTTP con SQLite y sesiones sembradas.
+- `pnpm run verify:architecture:all`: los verificadores ejecutados por el preflight terminaron correctamente.
+- Comprobación del frontend incluida en `cloudflare:build`: typecheck y 119/119 tests aprobados; build Vite correcto.
+- Auditoría de dependencias de backend y frontend: sin vulnerabilidades conocidas.
+- `pnpm run cloudflare:build`: correcto, con `wrangler deploy --dry-run`; no publicó ningún Worker.
+
+La CI incorpora además una verificación explícita de D1 local: aplica las migraciones versionadas a la base local efímera y compara `sqlite_schema` con las migraciones del módulo. Esta comprobación no usa `--remote`. Su resultado específico se registrará tras completar la siguiente ejecución de CI.
+
+Este hito valida el backend HTTP y no acredita que el frontend consuma estas rutas. No se ejecutaron migraciones remotas ni despliegues; Fase 4 y las fases 5–9 siguen abiertas según su alcance documentado.
