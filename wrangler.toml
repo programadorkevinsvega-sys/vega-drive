@@ -23,6 +23,7 @@ bucket_name = "vega-drive-files"
 [vars]
 MAX_USERS = "10"
 TURNSTILE_SITE_KEY = "0x4AAAAAAFTcVz9owrEuYzEP"
+TURNSTILE_HOSTNAMES = "vega-drive.programadorkevinsvega.workers.dev"
 
 [observability.logs]
 enabled = true
