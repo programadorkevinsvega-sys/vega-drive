@@ -52,6 +52,7 @@ export interface IdentityModuleDependencies {
   maxUsers: number;
   turnstileSiteKey: string;
   turnstileSecretConfigured: boolean;
+  turnstileHostnamesConfigured: boolean;
 }
 
 export function createIdentityModule(
@@ -66,6 +67,7 @@ export function createIdentityModule(
     maxUsers,
     turnstileSiteKey,
     turnstileSecretConfigured,
+    turnstileHostnamesConfigured,
   } = deps;
   const register = createRegisterUser({
     users,
@@ -83,7 +85,11 @@ export function createIdentityModule(
   });
   const resolveSession = createSessionResolver({ sessions, users });
   const changePassword = createChangePassword({ users, sessions, outbox });
-  const ready = Boolean(turnstileSiteKey && turnstileSecretConfigured);
+  const ready = Boolean(
+    turnstileSiteKey &&
+      turnstileSecretConfigured &&
+      turnstileHostnamesConfigured,
+  );
   return {
     status: () => ({ module: "identity", ready }),
     authConfig: () => ({ turnstileSiteKey, ready }),
