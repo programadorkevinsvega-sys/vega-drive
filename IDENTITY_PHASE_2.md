@@ -70,11 +70,17 @@ Tras el formateo manual acordado por el responsable del repositorio, ejecutar en
 
 La suite incluye pruebas de registro y límite atómico, política/derivación de contraseñas, login y rotación, expiración/revocación de sesiones, middleware del actor autenticado, adaptador Turnstile, persistencia del bloqueo progresivo, cambio de contraseña, límites de cuerpo y origen de mutaciones. Los tests unitarios usan dobles/fakes; no sustituyen la prueba E2E con Turnstile real ni la verificación del Worker desplegado.
 
+## Cambio de contraseña desde Ajustes
+
+El frontend incorpora la pantalla real en `#/settings`, con contraseña actual, nueva contraseña, confirmación, controles de mostrar/ocultar, validación de longitud y coincidencia, estados accesibles de error/éxito y limpieza de los campos tras cada intento enviado. El cliente llama a `POST /api/auth/password` en el mismo origen y no persiste los valores en almacenamiento local. La validación del navegador mejora la experiencia, pero el backend sigue siendo la autoridad para las reglas de contraseña y la contraseña actual.
+
+El endpoint existente renueva la cookie de la sesión actual y revoca las demás sesiones del usuario. La incorporación de esta pantalla en `main` no implica que esté desplegada; el despliegue autorizado del frontend y la comprobación de cambio real de contraseña siguen pendientes.
+
 ## Estado honesto
 
-El código en `main` ahora configura una allowlist de hostnames, etiqueta los tokens con la acción `register` o `login`, y el verificador exige que Siteverify confirme `success: true`, la acción esperada y el hostname esperado. También registra errores de Siteverify con códigos permitidos sin exponer tokens ni secretos.
+El verificador de Turnstile exige que Siteverify confirme `success: true`, la acción esperada (`register` o `login`) y un hostname permitido. Los diagnósticos omiten secretos y tokens. El fallo `Illegal invocation` en `siteverify-fetch` se corrigió envolviendo la llamada al `fetch` global para que no reciba la instancia del verificador como `this`.
 
-Estos commits no despliegan el Worker activo. La captura de producción sigue mostrando cero solicitudes de Siteverify, así que no se puede afirmar que el problema esté resuelto en producción ni que el secreto configurado corresponda a esta site key. Después del despliegue autorizado, los nuevos logs deben distinguir una clave secreta inválida, un token rechazado/duplicado, un hostname inesperado y un fallo de red. Sigue pendiente el E2E real con un token nuevo válido e inválido en un entorno apropiado; no se debe crear una cuenta de producción solo para validar sin un plan de limpieza aprobado.
+El 2026-10-11, el propietario confirmó que el Worker actualizado permite registro e inicio de sesión y que Turnstile funciona en producción. Esto sustituye la observación histórica de cero solicitudes Siteverify documentada durante el diagnóstico inicial. La evidencia es una comprobación manual reportada por el propietario; no afirma que ya se haya probado el rechazo de tokens inválidos. Para cerrar la fase faltan las verificaciones automatizadas del frontend actualizado, desplegar la pantalla de cambio de contraseña con autorización y comprobar el cambio real, la renovación de la sesión actual y el rechazo de la contraseña antigua en un nuevo inicio de sesión. La prueba de rechazo de token inválido debe realizarse en un entorno aprobado, sin automatizar cuentas de producción sin plan de limpieza.
 
 ## Diagnóstico operativo de Turnstile / Siteverify
 
