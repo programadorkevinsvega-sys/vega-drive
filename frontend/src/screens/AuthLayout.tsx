@@ -1,45 +1,112 @@
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { VegaLogo } from "../brand/VegaLogo";
 import { useDocumentTitle } from "../lib/use-document-title";
-import { routeMeta } from "../router/route-meta";
+import { navigate } from "../router/use-route";
 import type { Route } from "../router/routes";
+import { getAuthConfig, IdentityApiError, register } from "../services/identity-service";
+import { useAuth } from "../services/auth-context";
+import { TurnstileWidget } from "../services/TurnstileWidget";
 import { ThemeToggle } from "../theme/ThemeToggle";
-import { Icon } from "../ui/Icon";
+import { Button } from "../ui/Button";
+import { TextField } from "../ui/TextField";
 
-export interface AuthLayoutProps {
-  route: Route;
-}
-
-/**
- * Marco de las pantallas de acceso. En esta entrega solo es un esqueleto:
- * no hay formulario, no se leen credenciales y no se envia nada.
- */
+export interface AuthLayoutProps { route: Route; }
 export function AuthLayout({ route }: AuthLayoutProps) {
-  const { title } = routeMeta(route);
   const isLogin = route.name === "login";
+  const title = isLogin ? "Iniciar sesión" : "Crear cuenta";
+  const { status, signIn } = useAuth();
+  const [siteKey, setSiteKey] = useState("");
+  const [configReady, setConfigReady] = useState(false);
+  const [configError, setConfigError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [token, setToken] = useState("");
+  const [resetKey, setResetKey] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   useDocumentTitle(title);
 
-  return (
-    <div className="vd-auth">
-      <div className="vd-auth__tools">
-        <ThemeToggle />
-      </div>
-      <main className="vd-auth__panel">
-        <a href="#/drive" className="vd-auth__brand" aria-label="Vega Drive">
-          <VegaLogo />
-        </a>
-        <h1 className="vd-auth__title">{title}</h1>
-        <p className="vd-auth__text">
-          El formulario se construye en la Entrega 4. Esta pantalla no autentica
-          a nadie ni envía datos.
-        </p>
-        <p className="vd-modal__note">
-          <Icon name="info" size="sm" />
-          Vista previa de diseño: no hay cuentas reales.
-        </p>
-        <a href={isLogin ? "#/register" : "#/login"}>
-          {isLogin ? "Ir a crear cuenta" : "Ir a iniciar sesión"}
-        </a>
-      </main>
-    </div>
-  );
+  const handleToken = useCallback((value: string) => setToken(value), []);
+  const handleWidgetError = useCallback(() => {
+    setToken("");
+    setError("No se pudo completar la verificación de seguridad. Inténtalo de nuevo.");
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void getAuthConfig().then((config) => {
+      if (!active) return;
+      if (!config.ready || !config.turnstileSiteKey) {
+        setConfigError("El acceso no está disponible porque Turnstile no está configurado en el servidor.");
+        return;
+      }
+      setSiteKey(config.turnstileSiteKey);
+      setConfigReady(true);
+    }).catch(() => {
+      if (active) setConfigError("No se pudo consultar la configuración de autenticación. Recarga la página para intentarlo de nuevo.");
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") navigate({ name: "drive", folderId: null });
+  }, [status]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    if (!configReady) { setError(configError || "La verificación de seguridad todavía no está lista."); return; }
+    if (!token) { setError("Completa la verificación de seguridad antes de continuar."); return; }
+    if (password.length < 12 || password.length > 128) { setError("La contraseña debe tener entre 12 y 128 caracteres."); return; }
+
+    setLoading(true);
+    const submittedToken = token;
+    setToken("");
+    try {
+      if (isLogin) {
+        await signIn(email.trim(), password, submittedToken);
+        navigate({ name: "drive", folderId: null });
+      } else {
+        await register(email.trim(), password, submittedToken);
+        setPassword("");
+        setMessage("Cuenta creada correctamente. Ya puedes iniciar sesión.");
+        navigate({ name: "login" });
+      }
+    } catch (cause) {
+      setError(cause instanceof IdentityApiError ? cause.message : "No se pudo completar la solicitud. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+      setResetKey((value) => value + 1);
+    }
+  }
+
+  return <div className="vd-auth">
+    <div className="vd-auth__tools"><ThemeToggle /></div>
+    <main className="vd-auth__panel">
+      <a href="#/login" className="vd-auth__brand" aria-label="Vega Drive"><VegaLogo /></a>
+      <h1 className="vd-auth__title">{title}</h1>
+      <p className="vd-auth__text">{isLogin ? "Accede a tu espacio privado de Vega Drive." : "Crea tu cuenta para comenzar a usar Vega Drive."}</p>
+      {status === "unavailable" ? <p className="vd-auth__notice" role="status">No se pudo comprobar una sesión existente. Puedes volver a intentarlo recargando la página.</p> : null}
+      {configError ? <p className="vd-auth__inline-error" role="alert">{configError}</p> : null}
+      {message ? <p className="vd-auth__success" role="status">{message}</p> : null}
+      {error ? <p className="vd-auth__inline-error" role="alert">{error}</p> : null}
+      <form className="vd-auth__form" onSubmit={(event) => void handleSubmit(event)}>
+        <TextField label="Correo electrónico" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={254} disabled={loading} />
+        <TextField
+          label="Contraseña" name="password" type={showPassword ? "text" : "password"}
+          autoComplete={isLogin ? "current-password" : "new-password"} value={password}
+          onChange={(event) => setPassword(event.target.value)} required minLength={12} maxLength={128}
+          hint={isLogin ? undefined : "Usa entre 12 y 128 caracteres. Evita contraseñas comunes."}
+          disabled={loading}
+          trailing={<button type="button" className="vd-auth__password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword} disabled={loading}>{showPassword ? "Ocultar" : "Mostrar"}</button>}
+        />
+        {configReady ? <TurnstileWidget key={resetKey} siteKey={siteKey} onToken={handleToken} onError={handleWidgetError} resetKey={resetKey} /> : <p className="vd-auth__notice" role="status">Cargando verificación de seguridad…</p>}
+        <Button type="submit" fullWidth loading={loading} disabled={loading || !configReady || !token}>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</Button>
+      </form>
+      <p className="vd-auth__footer">{isLogin ? "¿Todavía no tienes cuenta?" : "¿Ya tienes una cuenta?"}{" "}<a href={isLogin ? "#/register" : "#/login"}>{isLogin ? "Crear cuenta" : "Iniciar sesión"}</a></p>
+    </main>
+  </div>;
 }

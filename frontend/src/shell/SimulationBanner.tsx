@@ -1,14 +1,9 @@
 import { Icon } from "../ui/Icon";
 
-/** Aviso permanente: nada de lo que se ve aqui es real ni se guarda. */
+/** Aclara qué partes de la aplicación siguen siendo demostrativas. */
 export function SimulationBanner() {
-  return (
-    <div className="vd-banner" role="note">
-      <Icon name="info" size="sm" />
-      <p>
-        <strong>Vista previa de diseño.</strong> Los datos son simulados: no se
-        guarda ni se envía nada.
-      </p>
-    </div>
-  );
+  return <div className="vd-banner" role="note">
+    <Icon name="info" size="sm" />
+    <p><strong>Autenticación conectada.</strong> Las pantallas y los datos de archivos siguen siendo demostrativos mientras se implementan sus entregas.</p>
+  </div>;
 }
