@@ -2,8 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const root = new URL("../", import.meta.url);
-const read = (path: string) =>
-  readFileSync(new URL(path, root), "utf8");
+const read = (path: string) => readFileSync(new URL(path, root), "utf8");
 
 describe("integración de assets frontend/Cloudflare", () => {
   it("sirve el build de Vite y conserva API y 404 separados", () => {

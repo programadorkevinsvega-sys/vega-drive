@@ -20,7 +20,7 @@ describe("Worker: enrutamiento de frontend y API", () => {
     const assets = vi.fn(async (request: Request) => {
       const path = new URL(request.url).pathname;
       if (path === "/") {
-        return new Response("<!doctype html><div id=\"root\"></div>", {
+        return new Response('<!doctype html><div id="root"></div>', {
           headers: { "Content-Type": "text/html; charset=utf-8" },
         });
       }
