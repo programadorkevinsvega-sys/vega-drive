@@ -89,7 +89,7 @@ export function createLoginUser(deps: {
     }
     let captchaValid = false;
     try {
-      captchaValid = await deps.turnstile.verify(token, ip);
+      captchaValid = await deps.turnstile.verify(token, "login", ip);
     } catch {
       captchaValid = false;
     }
