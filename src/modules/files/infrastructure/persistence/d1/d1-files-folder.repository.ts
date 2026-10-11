@@ -134,21 +134,42 @@ export class D1FilesFolderRepository implements FilesFolderRepository {
     ownerId: string,
     parentFolderId: string,
   ): Promise<FilesFolderRecord[]> {
-    const result = await this.db
-      .prepare(
-        "WITH RECURSIVE descendants AS (" +
-          "SELECT id, owner_id, parent_folder_id, name, created_at, updated_at, deleted_at, 1 AS depth " +
-          "FROM files_folders WHERE owner_id = ? AND parent_folder_id = ? UNION ALL " +
-          "SELECT f.id, f.owner_id, f.parent_folder_id, f.name, f.created_at, f.updated_at, f.deleted_at, d.depth + 1 " +
-          "FROM files_folders f JOIN descendants d ON f.parent_folder_id = d.id " +
-          "WHERE f.owner_id = ?) " +
-          "SELECT id, owner_id AS ownerId, parent_folder_id AS parentFolderId, name, " +
-          "created_at AS createdAt, updated_at AS updatedAt, deleted_at AS deletedAt " +
-          "FROM descendants ORDER BY depth DESC",
-      )
-      .bind(ownerId, parentFolderId, ownerId)
-      .all<FilesFolderRecord>();
-    return result.results;
+    const descendants: Array<{ folder: FilesFolderRecord; depth: number }> = [];
+    const visited = new Set<string>([parentFolderId]);
+    let parentIds = [parentFolderId];
+    let depth = 1;
+
+    while (parentIds.length > 0) {
+      const nextParents: string[] = [];
+      for (let offset = 0; offset < parentIds.length; offset += 80) {
+        const parentChunk = parentIds.slice(offset, offset + 80);
+        const placeholders = parentChunk.map(() => "?").join(", ");
+        const result = await this.db
+          .prepare(
+            "SELECT " +
+              FOLDER_COLUMNS +
+              " FROM files_folders WHERE owner_id = ? " +
+              "AND parent_folder_id IN (" +
+              placeholders +
+              ")",
+          )
+          .bind(ownerId, ...parentChunk)
+          .all<FilesFolderRecord>();
+
+        for (const folder of result.results) {
+          if (visited.has(folder.id)) continue;
+          visited.add(folder.id);
+          descendants.push({ folder, depth });
+          nextParents.push(folder.id);
+        }
+      }
+      parentIds = nextParents;
+      depth += 1;
+    }
+
+    return descendants
+      .sort((a, b) => b.depth - a.depth || a.folder.id.localeCompare(b.folder.id))
+      .map(({ folder }) => folder);
   }
 
   async deletePermanently(id: string, ownerId: string): Promise<boolean> {
