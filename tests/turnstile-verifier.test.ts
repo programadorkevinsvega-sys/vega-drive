@@ -7,38 +7,41 @@ afterEach(() => {
 });
 
 describe("Cloudflare Turnstile verifier", () => {
-  it("calls the default runtime fetch without binding it to the verifier instance", async () => {
-    let receiver: unknown = null;
-    const runtimeFetch = vi.fn(function (
-      this: unknown,
-      _input: RequestInfo | URL,
-      _init?: RequestInit,
-    ) {
-      receiver = this;
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            success: true,
-            action: "register",
-            hostname: "vega-drive.test",
-          }),
-          { status: 200 },
-        ),
+  it(
+    "calls the default runtime fetch without binding it to the verifier instance",
+    async () => {
+      let receiver: unknown = null;
+      const runtimeFetch = vi.fn(function (
+        this: unknown,
+        _input: RequestInfo | URL,
+        _init?: RequestInit,
+      ) {
+        receiver = this;
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              success: true,
+              action: "register",
+              hostname: "vega-drive.test",
+            }),
+            { status: 200 },
+          ),
+        );
+      });
+      vi.stubGlobal("fetch", runtimeFetch);
+
+      const verifier = new CloudflareTurnstileVerifier(
+        "test-secret",
+        ["vega-drive.test"],
       );
-    });
-    vi.stubGlobal("fetch", runtimeFetch);
 
-    const verifier = new CloudflareTurnstileVerifier(
-      "test-secret",
-      ["vega-drive.test"],
-    );
-
-    await expect(verifier.verify("captcha-token", "register")).resolves.toBe(
-      true,
-    );
-    expect(runtimeFetch).toHaveBeenCalledTimes(1);
-    expect(receiver).not.toBe(verifier);
-  });
+      await expect(verifier.verify("captcha-token", "register")).resolves.toBe(
+        true,
+      );
+      expect(runtimeFetch).toHaveBeenCalledTimes(1);
+      expect(receiver).not.toBe(verifier);
+    },
+  );
 
   it("posts the token and secret to Siteverify and validates action and hostname", async () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
