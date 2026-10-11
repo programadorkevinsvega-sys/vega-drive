@@ -3,6 +3,7 @@ import { routeMeta } from "../router/route-meta";
 import type { Route } from "../router/routes";
 import { NotFoundScreen } from "./NotFoundScreen";
 import { ScreenPlaceholder } from "./ScreenPlaceholder";
+import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
@@ -55,15 +56,7 @@ export function renderScreen(route: Route): ReactNode {
         />
       );
     case "settings":
-      return (
-        <ScreenPlaceholder
-          icon="settings"
-          title={title}
-          crumbs={[DRIVE_HOME, { label: title }]}
-          delivery="Entrega 5"
-          description="Perfil simulado, tema y preferencias de vista llegan en la Entrega 5."
-        />
-      );
+      return <PasswordSettingsScreen />;
     case "login":
     case "register":
       return null;
