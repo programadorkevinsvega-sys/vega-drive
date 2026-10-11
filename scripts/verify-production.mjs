@@ -2,7 +2,7 @@ import process from "node:process";
 
 const baseUrl = (
   process.env.PRODUCTION_URL ??
-  "https://vega-drive.programadorkevinsvega.workers.dev"
+  "https://drive.jnmtortas.com"
 ).replace(/\/$/, "");
 const timeoutMs = Number(process.env.HEALTH_TIMEOUT_MS ?? "15000");
 const retries = Number(process.env.HEALTH_RETRIES ?? "12");
