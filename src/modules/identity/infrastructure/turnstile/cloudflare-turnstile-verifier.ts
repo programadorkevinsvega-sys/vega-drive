@@ -220,7 +220,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
       }
 
       console.info("[turnstile] Siteverify accepted token", {
-        ...diagnostics,
+        ...responseDiagnostics(response, startedAt),
         hostname,
         action: expectedAction,
       });
