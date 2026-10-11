@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend de Vega Drive. Entrega 2: identidad visual, componentes base y esqueleto de navegacion. Solo datos simulados.",
+  "description": "Frontend de Vega Drive con login, registro y sesiones conectados al Worker; las funciones de archivos siguen siendo demostrativas.",
   "engines": {
     "node": ">=22.13.0"
   },
