@@ -42,9 +42,9 @@ No se modificaron migraciones históricas para ocultar la diferencia, y esta val
 
 ## 4. Alcance del ciclo de vida
 
-La Fase 3 implementa borrado lógico y restauración. No promete borrado permanente ni purga automática. Los metadatos eliminados permanecen recuperables en la papelera; una política de retención y una purga futura son decisiones de producto separadas y **no son pendientes para cerrar el alcance actual de Fase 3**.
+La Fase 3 introdujo el borrado lógico y la restauración. La política de retención de 30 días y la purga física se implementan en la Fase 4. Los metadatos de los elementos en papelera siguen contando para la cuota hasta que se eliminan permanentemente.
 
-La eliminación física de objetos R2, su idempotencia, reintentos y reconciliación de fallos D1/R2 pertenecen a la Fase 4, cuando exista el adaptador de almacenamiento.
+La purga física usa el adaptador de almacenamiento de files y se ejecuta desde el cron horario de Worker. Los errores de R2/D1 deben permitir reintentar la operación sin exponer detalles internos.
 
 ## 5. Criterios de cierre
 
