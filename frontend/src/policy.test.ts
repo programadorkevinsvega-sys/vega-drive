@@ -31,8 +31,8 @@ const STORAGE_TERMS = [
   part("amazon", "aws"),
 ].join("|");
 
-// Las llamadas de red solo se permiten en el cliente de identidad. El script
-// remoto solo se permite en el widget oficial de Cloudflare Turnstile.
+// Las llamadas de red solo se permiten en los clientes HTTP de identidad y
+// catálogo. El script remoto solo se permite en el widget oficial de Turnstile.
 const FORBIDDEN: ReadonlyArray<[string, RegExp]> = [
   ["peticiones XHR", new RegExp(XHR)],
   ["sockets / eventos de servidor", new RegExp("\\b(" + SOCKETS + ")\\b")],
@@ -57,17 +57,23 @@ describe("politica del frontend", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("limita fetch() al cliente HTTP de identidad", () => {
+  it("limita fetch() a los clientes HTTP de identidad y catálogo", () => {
     const callers = sourceFiles(CODE)
       .filter(NOT_TESTS)
       .filter((file) => /\bfetch\s*\(/.test(file.text))
       .map((file) => file.path);
-    expect(callers).toEqual(["services/identity-service.ts"]);
-    const client = readFileSync(
-      join(SRC, "services/identity-service.ts"),
-      "utf8",
-    );
-    expect(client.match(/\bfetch\s*\(/g)).toHaveLength(1);
+    expect(callers).toEqual([
+      "services/files-service.ts",
+      "services/identity-service.ts",
+    ]);
+
+    for (const path of callers) {
+      const client = readFileSync(join(SRC, path), "utf8");
+      expect(client.match(/\bfetch\s*\(/g)).toHaveLength(1);
+      expect(client).toContain('"/api/');
+      expect(client).toContain('credentials: "same-origin"');
+      expect(client).toContain('cache: "no-store"');
+    }
   });
 
   it("limita URLs absolutas al script oficial de Turnstile", () => {
