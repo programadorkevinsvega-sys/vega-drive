@@ -18,6 +18,7 @@ export interface IFileStoragePort {
     key: string,
     body: ReadableStream<Uint8Array>,
     contentType: string,
+    sizeBytes: number,
   ): Promise<void>;
   head(key: string): Promise<FileStorageHead | null>;
   get(key: string, range?: FileStorageRange): Promise<FileStorageBody | null>;
