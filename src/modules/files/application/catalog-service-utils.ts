@@ -51,10 +51,12 @@ export async function nameIsAvailable(
     exceptFolderId,
   );
   if (folderExists) return false;
-  return !(await items.findActiveByName(
-    ownerId,
-    parentId,
-    name,
-    exceptFileId,
-  ));
+  return !(
+    await items.findActiveByName(
+      ownerId,
+      parentId,
+      name,
+      exceptFileId,
+    )
+  );
 }

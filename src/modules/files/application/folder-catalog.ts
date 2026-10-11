@@ -53,10 +53,7 @@ export function createFolderCatalog(deps: FolderCatalogDependencies) {
     if (!value) return failure("invalid-input");
     const name = normalizeNodeName(value.name);
     const parentId = value.parentFolderId ?? null;
-    if (
-      !name ||
-      (parentId !== null && !isValidCatalogId(parentId))
-    ) {
+    if (!name || (parentId !== null && !isValidCatalogId(parentId))) {
       return failure("invalid-input");
     }
     try {

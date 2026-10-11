@@ -34,10 +34,7 @@ export interface FilesPublicApi {
     id: unknown,
     parentFolderId: unknown,
   ): Promise<CatalogResult<FilesFolderView>>;
-  deleteFolder(
-    actor: FilesActor,
-    id: unknown,
-  ): Promise<CatalogResult<void>>;
+  deleteFolder(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
   restoreFolder(
     actor: FilesActor,
     id: unknown,
@@ -56,10 +53,7 @@ export interface FilesPublicApi {
     id: unknown,
     folderId: unknown,
   ): Promise<CatalogResult<FilesFileView>>;
-  deleteFile(
-    actor: FilesActor,
-    id: unknown,
-  ): Promise<CatalogResult<void>>;
+  deleteFile(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
   restoreFile(
     actor: FilesActor,
     id: unknown,

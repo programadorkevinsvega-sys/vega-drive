@@ -18,30 +18,31 @@ describe("files catalog operations", () => {
   it(
     "creates folders and metadata with normalized names and rejects sibling duplicates",
     async () => {
-    const folder = await api.createFolder(ownerA, { name: " Reports " });
-    expect(folder.ok).toBe(true);
-    if (!folder.ok) return;
-    expect(folder.value.name).toBe("Reports");
+      const folder = await api.createFolder(ownerA, { name: " Reports " });
+      expect(folder.ok).toBe(true);
+      if (!folder.ok) return;
+      expect(folder.value.name).toBe("Reports");
 
-    const duplicateFolder = await api.createFolder(ownerA, { name: "reports" });
-    expect(duplicateFolder).toEqual({ ok: false, reason: "duplicate-name" });
+      const duplicateFolder = await api.createFolder(ownerA, { name: "reports" });
+      expect(duplicateFolder).toEqual({ ok: false, reason: "duplicate-name" });
 
-    const file = await api.createFileMetadata(ownerA, {
-      name: "summary.txt",
-      sizeBytes: 14,
-      contentType: "text/plain",
-    });
-    expect(file.ok).toBe(true);
-    if (!file.ok) return;
-    const duplicateAcrossTypes = await api.createFolder(ownerA, {
-      name: "SUMMARY.TXT",
-    });
-    expect(duplicateAcrossTypes).toEqual({
-      ok: false,
-      reason: "duplicate-name",
-    });
-    expect("storageKey" in file.value).toBe(false);
-  });
+      const file = await api.createFileMetadata(ownerA, {
+        name: "summary.txt",
+        sizeBytes: 14,
+        contentType: "text/plain",
+      });
+      expect(file.ok).toBe(true);
+      if (!file.ok) return;
+      const duplicateAcrossTypes = await api.createFolder(ownerA, {
+        name: "SUMMARY.TXT",
+      });
+      expect(duplicateAcrossTypes).toEqual({
+        ok: false,
+        reason: "duplicate-name",
+      });
+      expect("storageKey" in file.value).toBe(false);
+    },
+  );
 
   it("rejects invalid names and unexpected input fields", async () => {
     expect(
@@ -91,40 +92,41 @@ describe("files catalog operations", () => {
   it(
     "soft-deletes folders, blocks access through deleted ancestors, and restores them",
     async () => {
-    const parent = await api.createFolder(ownerA, { name: "Archive" });
-    if (!parent.ok) throw new Error("Folder creation failed");
-    const child = await api.createFolder(ownerA, {
-      name: "Nested",
-      parentFolderId: parent.value.id,
-    });
-    if (!child.ok) throw new Error("Child creation failed");
+      const parent = await api.createFolder(ownerA, { name: "Archive" });
+      if (!parent.ok) throw new Error("Folder creation failed");
+      const child = await api.createFolder(ownerA, {
+        name: "Nested",
+        parentFolderId: parent.value.id,
+      });
+      if (!child.ok) throw new Error("Child creation failed");
 
-    expect(await api.deleteFolder(ownerA, parent.value.id)).toEqual({
-      ok: true,
-      value: undefined,
-    });
-    expect(
-      await api.listFolder(ownerA, { folderId: child.value.id }),
-    ).toEqual({ ok: false, reason: "not-found" });
-
-    const trash = await api.listTrash(ownerA, { limit: 10 });
-    expect(trash.ok).toBe(true);
-    if (trash.ok) {
+      expect(await api.deleteFolder(ownerA, parent.value.id)).toEqual({
+        ok: true,
+        value: undefined,
+      });
       expect(
-        trash.value.nodes.some((node) => node.id === parent.value.id),
-      ).toBe(
-        true,
-      );
-    }
+        await api.listFolder(ownerA, { folderId: child.value.id }),
+      ).toEqual({ ok: false, reason: "not-found" });
 
-    expect(await api.restoreFolder(ownerA, parent.value.id)).toMatchObject({
-      ok: true,
-      value: { id: parent.value.id, deletedAt: null },
-    });
-    expect(
-      await api.listFolder(ownerA, { folderId: child.value.id }),
-    ).toMatchObject({ ok: true });
-  });
+      const trash = await api.listTrash(ownerA, { limit: 10 });
+      expect(trash.ok).toBe(true);
+      if (trash.ok) {
+        expect(
+          trash.value.nodes.some((node) => node.id === parent.value.id),
+        ).toBe(
+          true,
+        );
+      }
+
+      expect(await api.restoreFolder(ownerA, parent.value.id)).toMatchObject({
+        ok: true,
+        value: { id: parent.value.id, deletedAt: null },
+      });
+      expect(
+        await api.listFolder(ownerA, { folderId: child.value.id }),
+      ).toMatchObject({ ok: true });
+    },
+  );
 
   it("does not restore a trashed item into a deleted parent", async () => {
     const parent = await api.createFolder(ownerA, { name: "Parent" });
