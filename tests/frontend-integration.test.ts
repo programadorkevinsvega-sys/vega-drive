@@ -52,6 +52,9 @@ describe("integración de assets frontend/Cloudflare", () => {
       "wrangler deploy --dry-run",
     );
     const deploy = rootPackage.scripts["deploy"];
+    if (deploy === undefined) {
+      throw new Error("Falta el script deploy en package.json.");
+    }
     expect(deploy).toMatch(/^pnpm run deploy:preflight &&/);
     expect(deploy).toContain("pnpm run check");
     expect(deploy).toContain("pnpm run frontend:check");
