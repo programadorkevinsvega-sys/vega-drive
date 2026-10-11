@@ -60,7 +60,8 @@ function responseDiagnostics(response: Response, startedAt: number) {
   return {
     status: response.status,
     durationMs: Math.max(0, Date.now() - startedAt),
-    contentType: (response.headers.get("content-type") ?? "").slice(0, 100) || null,
+    contentType:
+      (response.headers.get("content-type") ?? "").slice(0, 100) || null,
     cloudflareRayId: safeCloudflareRayId(response.headers.get("cf-ray")),
   };
 }
@@ -138,13 +139,17 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
         let errorCodes: string[] = [];
         try {
           const payload: unknown = await response.json();
-          if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+          if (
+            payload &&
+            typeof payload === "object" &&
+            !Array.isArray(payload)
+          ) {
             errorCodes = safeErrorCodes(
               (payload as SiteverifyResponse)["error-codes"],
             );
           }
         } catch {
-          // HTTP status and response headers are still useful if the body is not JSON.
+          // HTTP status and headers remain useful when the body is not JSON.
         }
         console.warn("[turnstile] Siteverify HTTP failure", {
           ...diagnostics,
