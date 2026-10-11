@@ -85,7 +85,7 @@ export function FilesCatalogScreen({
             description={
               view === "trash"
                 ? "Los elementos que envíes a la papelera aparecerán aquí."
-                : "Crea una carpeta para organizar tu unidad. Las subidas de archivos todavía no están disponibles."
+                : "Sube archivos desde tu equipo o crea carpetas para organizar tu unidad."
             }
             action={
               view === "drive" ? (

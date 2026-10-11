@@ -62,7 +62,8 @@ export function CatalogNodeRow({
               {
                 id: "download",
                 label: "Descargar",
-                onSelect: () => window.location.assign(downloadFileUrl(node.id)),
+                onSelect: () =>
+                  window.location.assign(downloadFileUrl(node.id)),
               } satisfies MenuItem,
             ]
           : []),

@@ -42,7 +42,9 @@ export function FileTransferControls({
       for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
         if (!file) continue;
-        setStatus("Subiendo " + (index + 1) + " de " + files.length + ": " + file.name);
+        setStatus(
+          "Subiendo " + (index + 1) + " de " + files.length + ": " + file.name,
+        );
         try {
           await uploadFile(file, folderId);
           uploaded += 1;
