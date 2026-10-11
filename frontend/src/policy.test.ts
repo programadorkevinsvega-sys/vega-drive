@@ -35,16 +35,16 @@ const STORAGE_TERMS = [
 // remoto solo se permite en el widget oficial de Cloudflare Turnstile.
 const FORBIDDEN: ReadonlyArray<[string, RegExp]> = [
   ["peticiones XHR", new RegExp(XHR)],
-  ["sockets / eventos de servidor", new RegExp(`\\b(${SOCKETS})\\b`)],
+  ["sockets / eventos de servidor", new RegExp("\\b(" + SOCKETS + ")\\b")],
   ["sendBeacon", /sendBeacon/],
   [
     "HTML dinamico",
     /innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML/,
   ],
-  ["eval / Function", /\\beval\\s*\\(|new Function\\s*\\(/],
-  ["cookies", /document\\.cookie/],
-  ["consola", /\\bconsole\\./],
-  ["almacenamiento de sesion", /\\bsessionStorage\\b|\\bindexedDB\\b/],
+  ["eval / Function", /\beval\s*\(|new Function\s*\(/],
+  ["cookies", /document\.cookie/],
+  ["consola", /\bconsole\./],
+  ["almacenamiento de sesion", /\bsessionStorage\b|\bindexedDB\b/],
   ["R2/S3", new RegExp(STORAGE_TERMS, "i")],
 ];
 
@@ -60,20 +60,20 @@ describe("politica del frontend", () => {
   it("limita fetch() al cliente HTTP de identidad", () => {
     const callers = sourceFiles(CODE)
       .filter(NOT_TESTS)
-      .filter((file) => /\\bfetch\\s*\\(/.test(file.text))
+      .filter((file) => /\bfetch\s*\(/.test(file.text))
       .map((file) => file.path);
     expect(callers).toEqual(["services/identity-service.ts"]);
     const client = readFileSync(
       join(SRC, "services/identity-service.ts"),
       "utf8",
     );
-    expect(client.match(/\\bfetch\\s*\\(/g)).toHaveLength(1);
+    expect(client.match(/\bfetch\s*\(/g)).toHaveLength(1);
   });
 
   it("limita URLs absolutas al script oficial de Turnstile", () => {
     const callers = sourceFiles(CODE)
       .filter(NOT_TESTS)
-      .filter((file) => /https?:\\/\\//.test(file.text))
+      .filter((file) => /https?:\/\//.test(file.text))
       .map((file) => file.path);
     expect(callers).toEqual(["services/TurnstileWidget.tsx"]);
     const widget = readFileSync(
@@ -83,13 +83,13 @@ describe("politica del frontend", () => {
     expect(widget).toContain(
       "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
     );
-    expect(widget.match(/https?:\\/\\//g)).toHaveLength(1);
+    expect(widget.match(/https?:\/\//g)).toHaveLength(1);
   });
 
   it("localStorage solo se toca en lib/safe-storage.ts", () => {
     const offenders = sourceFiles(CODE)
       .filter(NOT_TESTS)
-      .filter((file) => /\\blocalStorage\\b/.test(file.text))
+      .filter((file) => /\blocalStorage\b/.test(file.text))
       .map((file) => file.path);
     expect(offenders).toEqual(["lib/safe-storage.ts"]);
   });
@@ -97,15 +97,15 @@ describe("politica del frontend", () => {
   it("solo main.tsx importa los adaptadores simulados", () => {
     const offenders = sourceFiles(CODE)
       .filter(NOT_TESTS)
-      .filter((file) => /from\\s+["'][^"']*\\/mock\\//.test(file.text))
+      .filter((file) => /from\s+["'][^"']*\/mock\//.test(file.text))
       .map((file) => file.path);
     expect(offenders).toEqual(["main.tsx"]);
   });
 
   it("los estilos no cargan recursos externos ni datos incrustados", () => {
-    const offenders = sourceFiles(/\\.css$/)
+    const offenders = sourceFiles(/\.css$/)
       .filter((file) =>
-        /https?:\\/\\/|url\\(\\s*["']?data:|@font-face/.test(file.text),
+        /https?:\/\/|url\(\s*["']?data:|@font-face/.test(file.text),
       )
       .map((file) => file.path);
     expect(offenders).toEqual([]);
@@ -113,17 +113,17 @@ describe("politica del frontend", () => {
 
   it("index.html no tiene scripts ni estilos en linea ni URLs externas", () => {
     const html = readFileSync(join(ROOT, "index.html"), "utf8");
-    expect(html).not.toMatch(/<style|\\sstyle=|\\son[a-z]+= /i);
-    expect(html).not.toMatch(/https?:\\/\\//);
-    const inline = [...html.matchAll(/<script\\b([^>]*)>/gi)].filter(
-      (match) => !/\\ssrc=/.test(match[1] ?? ""),
+    expect(html).not.toMatch(/<style|\sstyle=|\son[a-z]+=/i);
+    expect(html).not.toMatch(/https?:\/\//);
+    const inline = [...html.matchAll(/<script\b([^>]*)>/gi)].filter(
+      (match) => !/\ssrc=/.test(match[1] ?? ""),
     );
     expect(inline).toEqual([]);
   });
 
   it("ningun archivo de codigo supera 200 lineas", () => {
-    const tooLong = sourceFiles(/\\.(ts|tsx|css)$/)
-      .filter((file) => file.text.split("\\n").length > 200)
+    const tooLong = sourceFiles(/\.(ts|tsx|css)$/)
+      .filter((file) => file.text.split("\n").length > 200)
       .map((file) => file.path);
     expect(tooLong).toEqual([]);
   });
