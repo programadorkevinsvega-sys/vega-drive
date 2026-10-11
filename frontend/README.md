@@ -8,6 +8,7 @@ Las dependencias del frontend se mantienen aisladas con su propio `package.json`
 
 | Incluido hoy                                       | Pendiente                                                              |
 | -------------------------------------------------- | ---------------------------------------------------------------------- |
+| Identidad visual, tokens CSS y temas claro/oscuro  | Explorador real de archivos, carpetas, recientes, favoritos y papelera |
 | Componentes base accesibles y navegación por hash  | Operaciones reales de archivos y transferencias privadas con R2        |
 | Login, registro y sesiones conectados al Worker    | Búsqueda funcional sobre los datos de archivos                         |
 | Turnstile en login y registro                      | Perfil y preferencias adicionales en Ajustes                           |
