@@ -75,21 +75,21 @@ Estas son tareas explícitas de otras fases, no defectos ni pendientes de implem
 
 La aplicación Hono expone las operaciones ya implementadas por `FilesPublicApi` a través de `FilesGateway` e `InProcessFilesGateway`. Este hito cubre el backend HTTP y no conecta todavía la interfaz del navegador.
 
-| Método | Ruta | Uso |
-| --- | --- | --- |
-| GET | `/api/files` | Listar la raíz; admite `limit` y `cursor`. |
-| GET | `/api/files?folderId={id}` | Listar el contenido de una carpeta, incluidos `breadcrumbs`. |
-| GET | `/api/files/trash` | Listar la papelera; admite `limit` y `cursor`. |
-| POST | `/api/files/folders` | Crear carpeta; cuerpo `name` y, opcionalmente, `parentFolderId`. |
-| PATCH | `/api/files/folders/:id` | Renombrar carpeta; cuerpo `name`. |
-| POST | `/api/files/folders/:id/move` | Mover carpeta; cuerpo `parentFolderId` (`null` indica la raíz). |
-| DELETE | `/api/files/folders/:id` | Enviar carpeta a la papelera. |
-| POST | `/api/files/trash/folders/:id/restore` | Restaurar carpeta. |
-| POST | `/api/files/items/metadata` | Crear metadatos de archivo; no sube bytes ni escribe en R2. |
-| PATCH | `/api/files/items/:id` | Renombrar archivo; cuerpo `name`. |
-| POST | `/api/files/items/:id/move` | Mover archivo; cuerpo `folderId` (`null` indica la raíz). |
-| DELETE | `/api/files/items/:id` | Enviar archivo a la papelera. |
-| POST | `/api/files/trash/items/:id/restore` | Restaurar archivo. |
+| Método | Ruta                                   | Uso                                                              |
+| ------ | -------------------------------------- | ---------------------------------------------------------------- |
+| GET    | `/api/files`                           | Listar la raíz; admite `limit` y `cursor`.                       |
+| GET    | `/api/files?folderId={id}`             | Listar el contenido de una carpeta, incluidos `breadcrumbs`.     |
+| GET    | `/api/files/trash`                     | Listar la papelera; admite `limit` y `cursor`.                   |
+| POST   | `/api/files/folders`                   | Crear carpeta; cuerpo `name` y, opcionalmente, `parentFolderId`. |
+| PATCH  | `/api/files/folders/:id`               | Renombrar carpeta; cuerpo `name`.                                |
+| POST   | `/api/files/folders/:id/move`          | Mover carpeta; cuerpo `parentFolderId` (`null` indica la raíz).  |
+| DELETE | `/api/files/folders/:id`               | Enviar carpeta a la papelera.                                    |
+| POST   | `/api/files/trash/folders/:id/restore` | Restaurar carpeta.                                               |
+| POST   | `/api/files/items/metadata`            | Crear metadatos de archivo; no sube bytes ni escribe en R2.      |
+| PATCH  | `/api/files/items/:id`                 | Renombrar archivo; cuerpo `name`.                                |
+| POST   | `/api/files/items/:id/move`            | Mover archivo; cuerpo `folderId` (`null` indica la raíz).        |
+| DELETE | `/api/files/items/:id`                 | Enviar archivo a la papelera.                                    |
+| POST   | `/api/files/trash/items/:id/restore`   | Restaurar archivo.                                               |
 
 Las respuestas de listado, creación, renombrado, movimiento y restauración contienen las vistas públicas que devuelve el catálogo; las creaciones usan HTTP 201 y las demás respuestas correctas HTTP 200. Las operaciones de eliminación lógica devuelven `{ "ok": true }`.
 

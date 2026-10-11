@@ -121,7 +121,7 @@ function catalogResponse(
 ) {
   if (result.ok) {
     if (result.value === undefined) return c.json({ ok: true }, successStatus);
-    return c.json(result.value as object, successStatus);
+    return c.json(result.value as never, successStatus);
   }
 
   switch (result.reason) {
@@ -130,7 +130,10 @@ function catalogResponse(
     case "not-found":
       return c.json({ error: "Catalog item not found" }, 404);
     case "duplicate-name":
-      return c.json({ error: "A catalog item with that name already exists" }, 409);
+      return c.json(
+        { error: "A catalog item with that name already exists" },
+        409,
+      );
     case "cycle":
       return c.json({ error: "Folder move would create a cycle" }, 409);
     case "unavailable":
@@ -253,7 +256,8 @@ filesRoutes.post("/trash/folders/:id/restore", async (c) => {
 });
 
 /**
- * This route creates catalog metadata only. It does not upload bytes or write to R2.
+ * This route creates catalog metadata only. It does not upload bytes or
+ * write to R2.
  */
 filesRoutes.post("/items/metadata", async (c) => {
   const rejected = mutationRejection(c);
