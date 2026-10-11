@@ -52,6 +52,25 @@ function safeErrorName(value: unknown): string {
     : "unknown";
 }
 
+function safeErrorMessage(
+  value: unknown,
+  redactValues: readonly (string | null | undefined)[],
+): string {
+  if (typeof value !== "string" || !value) return "unavailable";
+
+  let message = value;
+  for (const secret of redactValues) {
+    if (secret) message = message.split(secret).join("[redacted]");
+  }
+  message = message
+    .replace(/([?&](?:secret|response|token|remoteip)=)[^&\\s]+/gi, "$1[redacted]")
+    .replace(/[\\r\\n\\t]+/g, " ")
+    .replace(/\\s{2,}/g, " ")
+    .trim();
+
+  return message.slice(0, 180) || "empty";
+}
+
 function safeCloudflareRayId(value: string | null): string | null {
   return value && /^[A-Za-z0-9-]{1,100}$/.test(value) ? value : null;
 }
@@ -229,7 +248,11 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
       const failure = error instanceof Error ? error : null;
       const cause =
         failure?.cause && typeof failure.cause === "object"
-          ? (failure.cause as { name?: unknown; code?: unknown })
+          ? (failure.cause as {
+              name?: unknown;
+              code?: unknown;
+              message?: unknown;
+            })
           : null;
       const rawCauseCode =
         typeof cause?.code === "string" &&
@@ -240,7 +263,17 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
       console.warn("[turnstile] Siteverify exception", {
         stage,
         errorName: safeErrorName(failure?.name),
+        errorMessage: safeErrorMessage(failure?.message, [
+          this.secretKey,
+          token,
+          clientIp,
+        ]),
         causeName: safeErrorName(cause?.name),
+        causeMessage: safeErrorMessage(cause?.message, [
+          this.secretKey,
+          token,
+          clientIp,
+        ]),
         causeCode: rawCauseCode,
         status: response?.status ?? null,
         durationMs: Math.max(0, Date.now() - startedAt),
