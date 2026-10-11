@@ -484,15 +484,11 @@ describe("files catalog HTTP routes", () => {
     expect(
       (await json<{ nodes: Array<{ id: string }> }>(ownerTrash)).nodes,
     ).toEqual([]);
-    const foreignTrash = await send(
-      "/api/files/trash",
-      {},
-      fixture.tokenB,
-    );
+    const foreignTrash = await send("/api/files/trash", {}, fixture.tokenB);
     expect(
-      (
-        await json<{ nodes: Array<{ id: string }> }>(foreignTrash)
-      ).nodes.map((node) => node.id),
+      (await json<{ nodes: Array<{ id: string }> }>(foreignTrash)).nodes.map(
+        (node) => node.id,
+      ),
     ).toContain(foreignFile.id);
   });
 

@@ -118,7 +118,8 @@ export function useCatalogActions(
       notify({
         tone: "success",
         title: "Papelera vaciada",
-        description: "Los elementos eliminados permanentemente ya no ocupan espacio.",
+        description:
+          "Los elementos eliminados permanentemente ya no ocupan espacio.",
       });
       refresh();
       return true;
