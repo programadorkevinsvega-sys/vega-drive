@@ -58,17 +58,14 @@ export function useCatalogData(view: CatalogView, folderId: string | null) {
   const nextCursor =
     view === "trash" ? trashData?.nextCursor : folderData?.nextCursor;
   const folderTargets: FilesFolderView[] = folderData
-    ? [
-        ...(folderData.folder ? [folderData.folder] : []),
-        ...folderData.folders,
-      ]
+    ? [...(folderData.folder ? [folderData.folder] : []), ...folderData.folders]
     : [];
   const title =
     view === "trash"
       ? "Papelera"
       : folderId === null
         ? "Mi unidad"
-        : folderData?.folder?.name ?? "Carpeta";
+        : (folderData?.folder?.name ?? "Carpeta");
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;

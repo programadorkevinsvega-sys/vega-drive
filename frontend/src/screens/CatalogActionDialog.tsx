@@ -37,8 +37,8 @@ export function CatalogActionDialog({
     setTarget(
       action?.type === "move"
         ? action.node.type === "folder"
-          ? action.node.parentFolderId ?? ""
-          : action.node.folderId ?? ""
+          ? (action.node.parentFolderId ?? "")
+          : (action.node.folderId ?? "")
         : "",
     );
     setError("");
@@ -53,8 +53,7 @@ export function CatalogActionDialog({
       : moving
         ? "Mover elemento"
         : "Renombrar elemento";
-  const nodeName =
-    action.type === "create-folder" ? "" : action.node.name;
+  const nodeName = action.type === "create-folder" ? "" : action.node.name;
   const availableFolders = folders.filter(
     (folder) => action.type !== "move" || folder.id !== action.node.id,
   );
@@ -87,7 +86,9 @@ export function CatalogActionDialog({
       title={title}
       description={
         moving
-          ? "Elige dónde quedará " + nodeName + ". El servidor validará la propiedad y los ciclos de carpetas."
+          ? "Elige dónde quedará " +
+            nodeName +
+            ". El servidor validará la propiedad y los ciclos de carpetas."
           : renaming
             ? "El nombre se actualizará en el catálogo del servidor."
             : "La carpeta se creará en la ubicación que estás viendo."
@@ -129,8 +130,8 @@ export function CatalogActionDialog({
               ))}
             </select>
             <p className="vd-field__hint">
-              Se muestran las carpetas de la ubicación actual. La autorización
-              y la prevención de ciclos se comprueban en el servidor.
+              Se muestran las carpetas de la ubicación actual. La autorización y
+              la prevención de ciclos se comprueban en el servidor.
             </p>
           </div>
         ) : (

@@ -6,13 +6,13 @@ Las dependencias del frontend se mantienen aisladas con su propio `package.json`
 
 ## Estado
 
-| Incluido hoy | Pendiente |
-| --- | --- |
-| Identidad visual, tokens y temas claro/oscuro | Transferencias privadas de bytes a/desde R2 |
-| Login, registro, sesiones y cambio de contraseña conectados al Worker | Recientes, favoritos y búsqueda sobre el catálogo |
-| Mi unidad, carpetas, renombrado, movimiento y papelera conectados al catálogo HTTP | Subida y descarga de contenido real |
-| Restauración, paginación y breadcrumbs del servidor | Perfil y preferencias adicionales en Ajustes |
-| Turnstile en login y registro | — |
+| Incluido hoy                                                                       | Pendiente                                         |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Identidad visual, tokens y temas claro/oscuro                                      | Transferencias privadas de bytes a/desde R2       |
+| Login, registro, sesiones y cambio de contraseña conectados al Worker              | Recientes, favoritos y búsqueda sobre el catálogo |
+| Mi unidad, carpetas, renombrado, movimiento y papelera conectados al catálogo HTTP | Subida y descarga de contenido real               |
+| Restauración, paginación y breadcrumbs del servidor                                | Perfil y preferencias adicionales en Ajustes      |
+| Turnstile en login y registro                                                      | —                                                 |
 
 Mi unidad, las carpetas y la papelera ya consumen el catálogo real del Worker mediante `/api/files`: crear carpetas, listar, renombrar, mover, enviar a papelera y restaurar. Se muestran los metadatos que devuelve el servidor y se usan sus breadcrumbs y cursores. Esto no carga ni descarga bytes: el botón de subida permanece deshabilitado hasta que exista la integración física con R2. Recientes, favoritos y búsqueda continúan como marcadores. Login, registro, sesiones y cambio de contraseña usan las rutas reales de identidad del Worker.
 
@@ -45,17 +45,17 @@ Qué revisar primero:
 
 ## Rutas
 
-| Hash                  | Contenido hoy                       | Se construye en |
-| --------------------- | ----------------------------------- | --------------- |
-| `#/drive`             | Catálogo real de Mi unidad          | Entrega 3 + BFF |
-| `#/drive/folder/<id>` | Contenido real de una carpeta       | Entrega 3 + BFF |
-| `#/recent`            | Marcador                            | Pendiente       |
-| `#/favorites`         | Marcador                            | Pendiente       |
-| `#/trash`             | Papelera real y restauración        | Entrega 3 + BFF |
-| `#/search?q=...`      | Marcador (el buscador ya navega)    | Entrega 5       |
-| `#/settings`          | Cambio de contraseña                | Fase 2          |
-| `#/login`             | Formulario real + Turnstile         | Fase 2          |
-| `#/register`          | Formulario real + Turnstile         | Fase 2          |
+| Hash                  | Contenido hoy                    | Se construye en |
+| --------------------- | -------------------------------- | --------------- |
+| `#/drive`             | Catálogo real de Mi unidad       | Entrega 3 + BFF |
+| `#/drive/folder/<id>` | Contenido real de una carpeta    | Entrega 3 + BFF |
+| `#/recent`            | Marcador                         | Pendiente       |
+| `#/favorites`         | Marcador                         | Pendiente       |
+| `#/trash`             | Papelera real y restauración     | Entrega 3 + BFF |
+| `#/search?q=...`      | Marcador (el buscador ya navega) | Entrega 5       |
+| `#/settings`          | Cambio de contraseña             | Fase 2          |
+| `#/login`             | Formulario real + Turnstile      | Fase 2          |
+| `#/register`          | Formulario real + Turnstile      | Fase 2          |
 
 Una ruta hash desconocida o un identificador de carpeta no válido muestran
 "Página no encontrada". Las rutas por hash no llegan al servidor HTTP. Wrangler usa

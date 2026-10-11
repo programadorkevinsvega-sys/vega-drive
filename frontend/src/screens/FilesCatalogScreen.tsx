@@ -14,7 +14,10 @@ export interface FilesCatalogScreenProps {
   folderId: string | null;
 }
 
-export function FilesCatalogScreen({ view, folderId }: FilesCatalogScreenProps) {
+export function FilesCatalogScreen({
+  view,
+  folderId,
+}: FilesCatalogScreenProps) {
   const data = useCatalogData(view, folderId);
   const actions = useCatalogActions(folderId, data.refresh);
   const breadcrumbs: Crumb[] =
@@ -23,8 +26,7 @@ export function FilesCatalogScreen({ view, folderId }: FilesCatalogScreenProps) 
       : folderId !== null
         ? (data.folderData?.breadcrumbs ?? []).slice(0, -1).map((crumb) => ({
             label: crumb.name,
-            href:
-              crumb.id === null ? "#/drive" : "#/drive/folder/" + crumb.id,
+            href: crumb.id === null ? "#/drive" : "#/drive/folder/" + crumb.id,
           }))
         : [];
 
@@ -54,11 +56,7 @@ export function FilesCatalogScreen({ view, folderId }: FilesCatalogScreenProps) 
         <div className="vd-catalog__error" role="alert">
           <Icon name="alert" size="sm" />
           <span>{data.error}</span>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={data.refresh}
-          >
+          <Button size="sm" variant="secondary" onClick={data.refresh}>
             Reintentar
           </Button>
         </div>

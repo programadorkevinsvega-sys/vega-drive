@@ -32,11 +32,6 @@ jobs:
         run: pnpm run db:migrate:local
       - name: Verify local D1 schema
         run: pnpm run db:verify:schema:local
-      - name: Temporary formatter diagnostic
-        if: startsWith(github.event.head_commit.message, 'debug(format):')
-        run: |
-          pnpm exec prettier --write frontend/README.md frontend/src/screens/CatalogActionDialog.tsx frontend/src/screens/FilesCatalogScreen.tsx frontend/src/screens/screen-for-route.test.tsx frontend/src/screens/useCatalogData.ts frontend/src/services/files-service.test.ts frontend/src/services/files-service.ts frontend/src/styles/catalog.css
-          git diff -- frontend/README.md frontend/src/screens/CatalogActionDialog.tsx frontend/src/screens/FilesCatalogScreen.tsx frontend/src/screens/screen-for-route.test.tsx frontend/src/screens/useCatalogData.ts frontend/src/services/files-service.test.ts frontend/src/services/files-service.ts frontend/src/styles/catalog.css
       - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest

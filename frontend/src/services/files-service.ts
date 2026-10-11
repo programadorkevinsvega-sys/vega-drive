@@ -48,7 +48,10 @@ function messageForStatus(status: number): string {
   return "No se pudo completar la operación. Inténtalo de nuevo.";
 }
 
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function requestJson<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -78,7 +81,9 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
   return payload as T;
 }
 
-function queryString(values: Record<string, string | null | undefined>): string {
+function queryString(
+  values: Record<string, string | null | undefined>,
+): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {
     if (value !== undefined && value !== null && value !== "") {
@@ -102,8 +107,7 @@ export function listFolder(
   cursor?: string,
 ): Promise<FilesFolderListing> {
   return requestJson<FilesFolderListing>(
-    "/api/files" +
-      queryString({ folderId, limit: "50", cursor }),
+    "/api/files" + queryString({ folderId, limit: "50", cursor }),
   );
 }
 
@@ -123,7 +127,10 @@ export function createFolder(
   });
 }
 
-export function renameFolder(id: string, name: string): Promise<FilesFolderView> {
+export function renameFolder(
+  id: string,
+  name: string,
+): Promise<FilesFolderView> {
   return sendJson<FilesFolderView>(
     "/api/files/folders/" + encodeURIComponent(id),
     "PATCH",

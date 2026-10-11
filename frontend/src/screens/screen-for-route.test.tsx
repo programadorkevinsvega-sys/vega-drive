@@ -9,7 +9,9 @@ describe("pantallas conectadas al Worker", () => {
       type: FilesCatalogScreen,
       props: { view: "drive", folderId: null },
     });
-    expect(renderScreen({ name: "drive", folderId: "folder-123" })).toMatchObject({
+    expect(
+      renderScreen({ name: "drive", folderId: "folder-123" }),
+    ).toMatchObject({
       type: FilesCatalogScreen,
       props: { view: "drive", folderId: "folder-123" },
     });

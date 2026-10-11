@@ -59,9 +59,9 @@ describe("cliente HTTP del catálogo de archivos", () => {
   });
 
   it("lista la papelera desde el endpoint real", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      response({ nodes: [], nextCursor: null }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(response({ nodes: [], nextCursor: null }));
     vi.stubGlobal("fetch", fetchMock);
     await expect(listTrash()).resolves.toEqual({
       nodes: [],
@@ -74,9 +74,11 @@ describe("cliente HTTP del catálogo de archivos", () => {
   });
 
   it("crea carpetas con solo el nombre y el padre elegido", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      response({ type: "folder", id: "f1", name: "Docs" }, 201),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        response({ type: "folder", id: "f1", name: "Docs" }, 201),
+      );
     vi.stubGlobal("fetch", fetchMock);
     await createFolder("Docs", null);
     expect(fetchMock).toHaveBeenCalledWith(
@@ -91,9 +93,9 @@ describe("cliente HTTP del catálogo de archivos", () => {
   });
 
   it("codifica identificadores y envía movimientos al BFF", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      response({ type: "folder", id: "a/b", name: "Docs" }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(response({ type: "folder", id: "a/b", name: "Docs" }));
     vi.stubGlobal("fetch", fetchMock);
     await moveFolder("a/b", "destination");
     expect(fetchMock).toHaveBeenCalledWith(
@@ -109,7 +111,9 @@ describe("cliente HTTP del catálogo de archivos", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(response({ ok: true }))
-      .mockResolvedValueOnce(response({ type: "file", id: "f1", name: "a.txt" }));
+      .mockResolvedValueOnce(
+        response({ type: "file", id: "f1", name: "a.txt" }),
+      );
     vi.stubGlobal("fetch", fetchMock);
     await deleteFile("f1");
     await restoreFile("f1");
@@ -130,7 +134,9 @@ describe("cliente HTTP del catálogo de archivos", () => {
   it("traduce los errores HTTP a mensajes públicos genéricos", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(response({ error: "PRIVATE SQL DETAILS" }, 409)),
+      vi
+        .fn()
+        .mockResolvedValue(response({ error: "PRIVATE SQL DETAILS" }, 409)),
     );
     const error = await createFolder("Duplicada", null).then(
       () => null,
