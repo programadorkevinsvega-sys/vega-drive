@@ -169,6 +169,7 @@ export function AuthLayout({ route }: AuthLayoutProps) {
             <TurnstileWidget
               key={resetKey}
               siteKey={siteKey}
+              action={isLogin ? "login" : "register"}
               onToken={handleToken}
               onError={handleWidgetError}
               resetKey={resetKey}
