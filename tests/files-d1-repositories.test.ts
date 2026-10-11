@@ -73,6 +73,7 @@ describe("files D1 repositories", () => {
     );
     expect(fake.calls[1]?.bindings).toEqual([
       "2026-10-10T00:01:00Z",
+      "2026-10-10T00:01:00Z",
       "item-b",
       "user-a",
     ]);
