@@ -277,7 +277,10 @@ describe("files catalog HTTP routes", () => {
       name: "Delete body validation folder",
     });
     const folder = await json<{ id: string }>(folderResponse);
-    const fileResponse = await sendFile("delete-body-validation.txt", "content");
+    const fileResponse = await sendFile(
+      "delete-body-validation.txt",
+      "content",
+    );
     const file = await json<{ id: string }>(fileResponse);
 
     const emptyItemDelete = await send("/api/files/items/" + file.id, {
@@ -292,7 +295,10 @@ describe("files catalog HTTP routes", () => {
     });
     expect(emptyFolderDelete.status).toBe(200);
 
-    const protectedFileResponse = await sendFile("protected-delete.txt", "keep");
+    const protectedFileResponse = await sendFile(
+      "protected-delete.txt",
+      "keep",
+    );
     const protectedFile = await json<{ id: string }>(protectedFileResponse);
     const nonEmptyDelete = await send("/api/files/items/" + protectedFile.id, {
       method: "DELETE",
@@ -302,7 +308,9 @@ describe("files catalog HTTP routes", () => {
     expect(await json(nonEmptyDelete)).toEqual({ error: "Invalid request" });
 
     const stillExists = await send("/api/files");
-    expect(await json<{ files: Array<{ id: string }> }>(stillExists)).toMatchObject({
+    expect(
+      await json<{ files: Array<{ id: string }> }>(stillExists),
+    ).toMatchObject({
       files: [{ id: protectedFile.id }],
     });
   });
