@@ -60,7 +60,7 @@ function safeErrorMessage(
 
   let message = value;
   for (const secret of redactValues) {
-    if (secret) message = message.split(secret).join("[redacted]");
+    if (secret) message = message.replaceAll(secret, "[redacted]");
   }
   message = message
     .replace(
