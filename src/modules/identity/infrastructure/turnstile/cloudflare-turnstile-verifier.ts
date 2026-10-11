@@ -97,7 +97,8 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
     // Keep a wrapper around the runtime fetch: storing the native fetch function
     // directly and invoking it as this.fetcher(...) can give it the verifier as
     // its this-value in Workers, causing an "Illegal invocation" error.
-    private readonly fetcher: typeof fetch = (input, init) => fetch(input, init),
+    private readonly fetcher: typeof fetch = (input, init) =>
+      fetch(input, init),
   ) {
     this.expectedHostnames = new Set(
       expectedHostnames
