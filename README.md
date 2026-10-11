@@ -2,7 +2,7 @@
 
 Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> **Estado real:** el esqueleto del Worker está desplegado en Cloudflare, pero la aplicación de archivos aún no está lista para producción con datos reales. No están implementados el registro/login, la autorización por usuario ni los flujos funcionales de archivos. El esquema inicial, los puertos de aplicación y los adaptadores de persistencia D1 de `identity` y `files` están en el código, pero la Fase 1 aún requiere completar su verificación antes de considerarse cerrada. No habilites usuarios reales hasta cerrar esos puntos y las comprobaciones de seguridad.
+> **Estado real (2026-10-10):** las Fases 0 y 1 están cerradas y la Fase 2 de identity quedó implementada y aceptada: registro, login, logout, resolución de sesión y cambio de contraseña; Turnstile se valida en el servidor. El propietario confirmó en producción la aceptación con tokens válidos e inválidos y la rotación/revocación de sesiones tras cambiar la contraseña. La aplicación de archivos todavía no está lista para almacenar datos reales: el catálogo, las transferencias con R2, las cuotas y la compartición siguen pendientes. La certificación global de seguridad y el procedimiento de rollback también continúan pendientes.
 
 ## Arquitectura
 
@@ -29,7 +29,7 @@ Las reglas obligatorias, los headers esperados para Workers/Hono y la matriz de 
 
 **La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban autenticación, autorización, aislamiento entre cuentas ni transferencias seguras. No habilites usuarios reales hasta implementar y probar los flujos correspondientes.
 
-El adaptador real de almacenamiento, autenticación, autorización por usuario y flujo de archivos siguen pendientes. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
+La autenticación y la resolución de sesión del módulo `identity` están implementadas y probadas. Siguen pendientes el adaptador de almacenamiento real, el catálogo de archivos y la autorización por recurso en las operaciones de `files`. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
 ## Flujo de archivos previsto
 
@@ -53,14 +53,14 @@ Las descargas se harán por `GET /api/files/:id/download`, tras autorizar el rec
 - `public`: assets estáticos.
 - `tests`: pruebas de salud, configuración, migraciones, repositorios y arquitectura.
 
-Los puertos y adaptadores de persistencia preparan la capa de datos de `identity` y `files`; no habilitan por sí solos APIs funcionales, registro/login, autorización de sesión ni transferencias. Las APIs públicas siguen siendo placeholders hasta las fases que implementan esos flujos.
+El módulo `identity` ya implementa registro/login, logout, resolución de sesión y cambio de contraseña mediante sus APIs reales. El módulo `files` conserva la base de persistencia, pero el catálogo y las transferencias no están implementados.
 
 ## Servicios Cloudflare
 
 - Backend, BFF y assets: Cloudflare Workers.
 - Metadatos, usuarios y sesiones: D1 mediante `VEGA_DRIVE_DB`.
 - Archivos: R2 privado mediante `FILES_BUCKET`.
-- Anti-bots: Turnstile, pendiente de configuración.
+- Anti-bots: Turnstile integrado en registro/login; configuración de producción y aceptación de tokens válidos e inválidos confirmadas el 2026-10-10.
 
 El esquema de D1 para `identity` y `files` está versionado en migraciones independientes por módulo y se comprueba con `pnpm run db:verify:schema:local` o `pnpm run db:verify:schema:production`. La existencia de un binding, por sí sola, no prueba que el esquema real coincida con las migraciones ni que el bucket R2 sea privado. Verifica en Cloudflare que R2 no tenga acceso público, dominio público, `r2.dev` ni CORS de navegador.
 
@@ -107,6 +107,6 @@ GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecuci
 
 **Fase 0: CERRADA (2026-10-10), dentro de su alcance fundacional.** El contrato, el esqueleto del Worker, los bindings base, el build, las pruebas, CI y el despliegue están verificados. Los pendientes operativos que dependen de funciones aún no implementadas se asignan a las fases que las incorporan; no bloquean el cierre de Fase 0. Evidencia del 2026-10-10: Cloudflare completó `pnpm run cloudflare:build` y `pnpm run deploy`; los 4 archivos de pruebas (12 tests), el typecheck, el control arquitectónico y `pnpm audit --audit-level=high` pasaron. D1 no tenía migraciones pendientes y la verificación remota confirmó 17 tablas/índices. La versión Worker desplegada más reciente registrada a las 07:13 UTC fue `a6bb5609-9afd-4566-b298-d0b3178c5698`, y `/api/health` respondió HTTP 200. GitHub Actions para el commit `23329baa646e38ecc816620c68eef8f861ae49b5` quedó verde (29 s), con 4 archivos/12 tests aprobados y Gitleaks sin fugas detectadas. El usuario confirmó en el panel que el bucket R2 es privado.
 
-Como tareas de fases posteriores, antes de implementar transferencias en la Fase 4 se verificará que R2 no tenga dominio público ni `r2.dev` ni CORS de navegador y se confirmarán los permisos mínimos del adaptador. Turnstile y su secreto se configurarán al implementar registro/login en la Fase 2. No se deben inferir esos ajustes de un binding o de un escaneo de repositorio; se mantienen como requisitos antes de habilitar esas funciones, pero no bloquean el cierre fundacional de Fase 0.
+Como tareas de fases posteriores, antes de implementar transferencias en la Fase 4 se verificará que R2 no tenga dominio público ni `r2.dev` ni CORS de navegador y se confirmarán los permisos mínimos del adaptador. Turnstile y su secreto quedaron configurados y validados durante la Fase 2. No se deben inferir esos ajustes de un binding o de un escaneo de repositorio; se mantienen como requisitos antes de habilitar esas funciones, pero no bloquean el cierre fundacional de Fase 0.
 
-El despliegue no certifica que Vega Drive esté lista para usuarios reales. Antes de admitirlos aún deben implementarse y probarse autenticación, autorización por usuario, aislamiento entre clientes y flujos de archivos; Turnstile se configura cuando se habilite registro/login. La certificación global de seguridad y el rollback permanecen pendientes según [Security.md](./Security.md) y [Rollback.md](./Rollback.md). La estructura actual es un andamiaje inicial: las fases posteriores describen trabajo futuro, no funcionalidades implementadas.
+El despliegue no certifica que Vega Drive esté lista para almacenar archivos con datos reales. Registro/login, sesiones, cambio de contraseña y Turnstile ya están implementados y aceptados en la Fase 2; siguen pendientes el catálogo y las transferencias de archivos, la autorización por recurso, las pruebas de aislamiento de las operaciones funcionales y la certificación global de seguridad y rollback según [Security.md](./Security.md) y [Rollback.md](./Rollback.md). Las fases posteriores describen trabajo futuro, no funcionalidades de archivos ya implementadas.
