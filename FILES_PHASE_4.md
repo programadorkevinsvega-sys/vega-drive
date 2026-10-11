@@ -26,6 +26,10 @@
 
 Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera— siguen activas en /api/files. La interfaz ya incorpora selección y subida binaria desde Mi unidad, y descarga mediante la ruta same-origin autenticada. El navegador no contacta R2 ni recibe claves o URLs de almacenamiento. La integración visual no sustituye las verificaciones operativas de privacidad, permisos, despliegue y E2E de esta fase.
 
+## Papelera y retención
+
+La papelera conserva archivos y carpetas durante 30 días desde `deleted_at`. El cron ya configurado se ejecuta cada hora y purga los elementos vencidos. La interfaz advierte que los elementos de la papelera siguen consumiendo espacio de almacenamiento. La eliminación permanente está disponible para archivos y carpetas; en carpetas se elimina también el contenido descendiente.
+
 ## Límites iniciales
 
 - Tamaño máximo por archivo: 95 MiB para permanecer por debajo del límite de cuerpo de Worker.
