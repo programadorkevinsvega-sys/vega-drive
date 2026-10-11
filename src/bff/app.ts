@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { SECURITY_HEADERS } from "./security-headers.js";
 import { identityRoutes } from "./identity-routes.js";
+import { filesRoutes } from "./routes/files-routes.js";
 import {
   requireAuthenticatedActor,
   type AuthenticatedEnv,
@@ -20,5 +21,6 @@ app.get("/api/health", (c) =>
   c.json({ status: "ok", service: "vega-drive" }, 200),
 );
 app.route("/api/auth", identityRoutes);
+app.route("/api/files", filesRoutes);
 app.use("/api/protected/*", requireAuthenticatedActor);
 app.notFound((c) => c.json({ error: "Not found" }, 404));

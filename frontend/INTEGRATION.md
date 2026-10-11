@@ -40,10 +40,16 @@ añadieron endpoints. El registro no inicia sesión automáticamente: después d
 crear la cuenta, el usuario debe iniciar sesión.
 
 Las pantallas de drive, carpetas, recientes, favoritos, papelera y búsqueda
-siguen siendo marcadores visuales. Ajustes ya permite cambiar la contraseña
-mediante el backend existente; el perfil y otras preferencias de cuenta todavía
-no están implementados. La autenticación real no significa que las operaciones
-de archivos estén implementadas.
+siguen siendo marcadores visuales. El backend ya expone las operaciones de
+catálogo mediante rutas HTTP autenticadas, pero estas pantallas todavía no están
+conectadas a ellas. Ajustes permite cambiar la contraseña mediante el backend;
+el perfil y otras preferencias de cuenta todavía no están implementados. La
+existencia de las rutas del catálogo no implica que existan transferencias R2.
+
+El contrato y la lista de rutas del catálogo están documentados en
+[FILES_PHASE_3.md](../FILES_PHASE_3.md), sección 7. Este avance no cierra la
+Fase 5: siguen pendientes la conexión del cliente frontend, la presentación de
+estados, la comprobación integral de assets/cabeceras y la aceptación operativa.
 
 ## Comandos de instalación y validación
 

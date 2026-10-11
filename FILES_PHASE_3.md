@@ -1,6 +1,6 @@
 # Cierre de Fase 3 — Catálogo de archivos y carpetas
 
-**Estado: CERRADA (2026-10-11).** El alcance definido para el catálogo de metadatos está implementado y validado localmente en el commit `9cfb738` (`test: strengthen architecture boundary checks`). La fase no incluye transferencias físicas R2, controllers HTTP/BFF ni certificación transversal de seguridad; esas capacidades pertenecen a fases posteriores.
+**Estado del catálogo de metadatos: CERRADO (2026-10-11).** El alcance definido para el módulo está implementado y validado localmente en el commit `9cfb738` (`test: strengthen architecture boundary checks`). El catálogo dispone ahora de un hito incremental de integración HTTP autenticada descrito en la sección 7. Esto no cierra la integración visual del frontend ni la Fase 5 completa.
 
 ## 1. Alcance implementado
 
@@ -14,7 +14,7 @@ El módulo `src/modules/files` contiene casos de uso, contratos y persistencia D
 - Proporcionar paginación estable y breadcrumbs navegables.
 - Mantener el nombre visible del catálogo separado de la clave física de almacenamiento.
 
-El propietario se deriva del actor autenticado entregado por la capa de aplicación; no se confía en un `ownerId` del navegador como autoridad. Los recursos ajenos se tratan como no encontrados en los casos de uso. La traducción HTTP a 404 será responsabilidad de los controllers de la Fase 5, que todavía no forman parte de esta fase.
+El propietario se deriva del actor autenticado entregado por la capa de aplicación; no se confía en un `ownerId` del navegador como autoridad. Los recursos ajenos se tratan como no encontrados en los casos de uso. La capa HTTP del catálogo reutiliza `FilesGateway`, toma el usuario exclusivamente del middleware de sesión y convierte el resultado `not-found` en HTTP 404.
 
 ## 2. Evidencia de pruebas y verificaciones
 
@@ -63,10 +63,42 @@ La eliminación física de objetos R2, su idempotencia, reintentos y reconciliac
 El cierre de Fase 3 **no** certifica ni marca como completados:
 
 - **Fase 4:** adaptador y transferencias de archivos con R2.
-- **Fase 5:** integración de las operaciones de catálogo en rutas HTTP/BFF y presentación de errores HTTP.
+- **Fase 5:** integración completa del frontend, presentación de estados, assets y aceptación integral de seguridad/operación; las rutas del catálogo cubren solo el hito HTTP del backend.
 - **Fase 6:** cuotas.
 - **Fase 7:** compartición.
 - **Fase 8:** certificación transversal de seguridad.
 - **Fase 9:** staging, operación, recuperación y rollback certificados.
 
 Estas son tareas explícitas de otras fases, no defectos ni pendientes de implementación del alcance de catálogo de Fase 3.
+
+## 7. Hito incremental de integración HTTP del catálogo
+
+La aplicación Hono expone las operaciones ya implementadas por `FilesPublicApi` a través de `FilesGateway` e `InProcessFilesGateway`. Este hito cubre el backend HTTP y no conecta todavía la interfaz del navegador.
+
+| Método | Ruta | Uso |
+| --- | --- | --- |
+| GET | `/api/files` | Listar la raíz; admite `limit` y `cursor`. |
+| GET | `/api/files?folderId={id}` | Listar el contenido de una carpeta, incluidos `breadcrumbs`. |
+| GET | `/api/files/trash` | Listar la papelera; admite `limit` y `cursor`. |
+| POST | `/api/files/folders` | Crear carpeta; cuerpo `name` y, opcionalmente, `parentFolderId`. |
+| PATCH | `/api/files/folders/:id` | Renombrar carpeta; cuerpo `name`. |
+| POST | `/api/files/folders/:id/move` | Mover carpeta; cuerpo `parentFolderId` (`null` indica la raíz). |
+| DELETE | `/api/files/folders/:id` | Enviar carpeta a la papelera. |
+| POST | `/api/files/trash/folders/:id/restore` | Restaurar carpeta. |
+| POST | `/api/files/items/metadata` | Crear metadatos de archivo; no sube bytes ni escribe en R2. |
+| PATCH | `/api/files/items/:id` | Renombrar archivo; cuerpo `name`. |
+| POST | `/api/files/items/:id/move` | Mover archivo; cuerpo `folderId` (`null` indica la raíz). |
+| DELETE | `/api/files/items/:id` | Enviar archivo a la papelera. |
+| POST | `/api/files/trash/items/:id/restore` | Restaurar archivo. |
+
+Las respuestas de listado, creación, renombrado, movimiento y restauración contienen las vistas públicas que devuelve el catálogo; las creaciones usan HTTP 201 y las demás respuestas correctas HTTP 200. Las operaciones de eliminación lógica devuelven `{ "ok": true }`.
+
+### Controles de transporte y autorización
+
+- Todas las rutas del catálogo exigen la sesión validada por `requireAuthenticatedActor`; el actor de archivos contiene únicamente el `userId` resuelto en servidor.
+- Los cuerpos JSON se limitan a 64 KiB y rechazan tipos de contenido incorrectos, JSON malformado y claves desconocidas. Los parámetros de consulta no reconocidos o duplicados se rechazan.
+- Las mutaciones verifican que `Origin` coincida con el origen de la petición. No aceptan parámetros de consulta; las operaciones sin cuerpo rechazan cuerpos inesperados.
+- Los resultados `invalid-input`, `not-found`, `duplicate-name`, `cycle` y `unavailable` se traducen respectivamente a HTTP 400, 404, 409, 409 y 503. La respuesta de error no revela SQL, trazas ni mensajes internos.
+- Se conservan las cabeceras existentes y `Cache-Control: no-store` en las respuestas `/api/*`.
+
+No se exponen rutas de subida o descarga física, búsqueda, favoritos ni transferencias R2: el contrato actual no implementa esas operaciones. El frontend sigue sin estar conectado al catálogo mediante un cliente de API.

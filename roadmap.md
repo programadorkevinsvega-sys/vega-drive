@@ -67,7 +67,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Crear `src/modules/identity`, `files`, `quota` y `sharing`, cada uno con `module.public-api.ts` mínimo.
 - [x] Crear composition root con gateways en proceso para los cuatro módulos; por ahora las APIs son placeholders que informan `ready: false`.
 - [x] Servir assets y `/api/*` desde el mismo Worker; `/api/health` responde 200.
-- [x] Añadir prueba de contrato del composition root: los cuatro gateways delegan en sus APIs públicas placeholder y se mantienen en `ready: false`. No hay todavía controllers de negocio que llamen gateways; registro, catálogo y transferencias pertenecen a fases posteriores.
+- [x] Añadir prueba de contrato del composition root: los cuatro gateways delegan en sus APIs públicas placeholder y se mantienen en `ready: false`. El catálogo ya dispone de rutas BFF autenticadas sobre `FilesGateway`; las transferencias y los demás flujos de negocio siguen pendientes.
 - **Aceptación ajustada a Fase 0:** Worker único, rutas API separadas de assets, salud de liveness y composición mínima tipada. No afirmar que módulos placeholder están funcionalmente listos.
 - 🔒 SEC-FE-01, SEC-MOD-01, SEC-MOD-04.
 
@@ -190,7 +190,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Derivar autoridad del actor de servidor, nunca de un `ownerId` proporcionado por el navegador.
 - [x] Verificar que rechazos por propiedad y conflictos de nombre no alteren recursos ni produzcan efectos colaterales.
 - [x] Probar papelera y restauración con aislamiento por propietario.
-- **Aceptación:** el catálogo de dominio implementa y prueba el alcance funcional de metadatos y aislamiento. La traducción a códigos HTTP y su integración con rutas/BFF son parte de la Fase 5, no un pendiente de esta fase.
+- **Aceptación:** el catálogo de dominio implementa y prueba el alcance funcional de metadatos y aislamiento. El hito HTTP conecta esas operaciones existentes con Hono, sin declarar terminada la integración completa del frontend/Fase 5.
 - 🔒 SEC-ISO-02…06, SEC-VAL-03, SEC-MOD-02.
 
 ### 3.2 Papelera y ciclo de vida
@@ -205,7 +205,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 ### Fuera de alcance de Fase 3
 
 - **Fase 4:** adaptador y transferencias físicas privadas con R2.
-- **Fase 5:** controllers HTTP/BFF, rutas de archivos y mapeo de errores de transporte.
+- **Fase 5:** integración completa del frontend, presentación, assets, verificación integral de cabeceras y operación. El hito HTTP del catálogo se implementa de forma incremental y no cierra esta fase.
 - **Fase 6:** cuotas.
 - **Fase 7:** compartición.
 - **Fase 8:** certificación transversal de seguridad.
@@ -256,10 +256,11 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 ### 5.2 Controllers y gateways
 
-- [ ] Implementar controllers Hono delgados que validan transporte y llaman gateways.
-- [ ] Mantener InProcessFilesGateway e InProcessIdentityGateway en el composition root.
-- [ ] Manejar 401/404/errores sin detalles sensibles.
-- **Aceptación:** controllers no importan domain, application, infrastructure, D1 ni R2.
+- [x] Implementar rutas Hono delgadas para el catálogo de metadatos: validan transporte y llaman `FilesGateway` sin importar capas internas.
+- [x] Traducir resultados del catálogo a 400/404/409/503, rechazar sesiones ausentes con 401 y evitar exponer detalles internos.
+- [ ] Completar la integración visual del frontend y las evidencias de presentación, assets y operación exigidas por la Fase 5.
+- [ ] Mantener los gateways del composition root como punto de entrada modular para las funciones que se implementen después.
+- **Aceptación:** controllers no importan domain, application, infrastructure, D1 ni R2; este hito no implica el cierre de la Fase 5.
 - 🔒 SEC-MOD-01, SEC-MOD-04, SEC-LOG-03.
 
 ---

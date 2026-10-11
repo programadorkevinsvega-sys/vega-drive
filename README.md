@@ -2,7 +2,7 @@
 
 Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> **Estado real (2026-10-11):** las Fases 0, 1 y 2 están cerradas, y la Fase 3 del catálogo de metadatos de archivos/carpetas también está cerrada dentro de su alcance. La autenticación, sesiones, Turnstile, persistencia modular y catálogo con aislamiento por propietario están implementados y validados. Vega Drive aún no está listo para transferencias reales de archivos: la integración física con R2 (Fase 4), la integración HTTP/BFF completa para archivos (Fase 5), cuotas (Fase 6) y compartición (Fase 7) siguen pendientes. La certificación global de seguridad (Fase 8) y el procedimiento de rollback/operación (Fase 9) también continúan pendientes.
+> **Estado real (2026-10-11):** las Fases 0, 1 y 2 están cerradas; el catálogo de metadatos de la Fase 3 está implementado y validado. El catálogo ya cuenta además con un hito de rutas HTTP privadas en el BFF, con autenticación por sesión, validación de entradas, aislamiento por propietario y traducción de errores. La conexión de esas rutas al frontend todavía no está implementada. Vega Drive aún no está listo para transferencias reales de archivos: R2 (Fase 4), la integración completa de frontend/presentación y la certificación global siguen pendientes; también lo están cuotas (Fase 6), compartición (Fase 7) y el procedimiento de rollback/operación (Fase 9).
 
 ## Arquitectura
 
@@ -29,7 +29,7 @@ Las reglas obligatorias, los headers esperados para Workers/Hono y la matriz de 
 
 **La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban autenticación, autorización, aislamiento entre cuentas ni transferencias seguras. No habilites usuarios reales hasta implementar y probar los flujos correspondientes.
 
-La autenticación y la resolución de sesión del módulo `identity` están implementadas y probadas. El catálogo de metadatos del módulo `files` está implementado y validado, incluyendo aislamiento por propietario para las operaciones de catálogo. Siguen pendientes el adaptador y las transferencias reales con R2, y la integración de las operaciones de archivos en rutas HTTP/BFF. El endpoint `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
+La autenticación y la resolución de sesión del módulo `identity` están implementadas y probadas. El catálogo de metadatos de `files` está expuesto mediante rutas HTTP privadas que reutilizan `FilesGateway` y el actor derivado de la sesión validada. Siguen pendientes el adaptador y las transferencias reales con R2 y la conexión de estas rutas a la interfaz. `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
 ## Flujo de archivos previsto
 
@@ -109,4 +109,4 @@ GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecuci
 
 Como tareas de fases posteriores, antes de implementar transferencias en la Fase 4 se verificará que R2 no tenga dominio público ni `r2.dev` ni CORS de navegador y se confirmarán los permisos mínimos del adaptador. Turnstile y su secreto quedaron configurados y validados durante la Fase 2. No se deben inferir esos ajustes de un binding o de un escaneo de repositorio; se mantienen como requisitos antes de habilitar esas funciones, pero no bloquean el cierre fundacional de Fase 0.
 
-El despliegue no certifica que Vega Drive esté lista para almacenar archivos con datos reales. Registro/login, sesiones, cambio de contraseña y Turnstile están implementados y aceptados en la Fase 2; el catálogo de metadatos, el aislamiento por propietario y las pruebas de sus operaciones están implementados y validados en la Fase 3. Siguen pendientes las transferencias físicas con R2, la integración HTTP/BFF de archivos, la certificación global de seguridad y rollback según [Security.md](./Security.md) y [Rollback.md](./Rollback.md). Las fases posteriores describen trabajo futuro, no funcionalidades de almacenamiento ya implementadas.
+El despliegue no certifica que Vega Drive esté lista para almacenar archivos con datos reales. Registro/login, sesiones, cambio de contraseña y Turnstile están implementados y aceptados en la Fase 2; el catálogo y su integración HTTP autenticada están implementados en sus alcances respectivos. Siguen pendientes las transferencias físicas con R2, la conexión del frontend a las rutas del catálogo, la certificación global de seguridad y rollback según [Security.md](./Security.md) y [Rollback.md](./Rollback.md). Las fases posteriores describen trabajo futuro, no funcionalidades de almacenamiento ya implementadas.
