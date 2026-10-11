@@ -128,7 +128,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 2 — Módulo identity
 
-**Estado: IMPLEMENTACIÓN EN CURSO (2026-10-11).** Registro, login, logout, resolución de sesión, cambio de contraseña, limitación progresiva y auditoría están implementados en código. GitHub Actions pasó para el commit `d0c21c3378f4481ddd9d748157447ce346b6b241` (105/105 pruebas raíz, 103/103 pruebas frontend y Gitleaks correcto); el log de Cloudflare confirma build, verificación de 19 objetos D1, publicación del Worker y `/api/health` HTTP 200. El log de despliegue muestra la site key de Turnstile presente, pero aún no había evidencia de que el secreto estuviera configurado y aceptara tokens válidos. El gate de despliegue comprobará `GET /api/auth/config` con `ready: true` antes de las migraciones/publicación. La fase sigue abierta hasta disponer de E2E de registro/login con tokens válidos e inválidos en un entorno aprobado. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md).
+**Estado: IMPLEMENTACIÓN EN CURSO (2026-10-11).** Registro, login, logout, resolución de sesión, cambio de contraseña en backend, limitación progresiva y auditoría están implementados. El propietario confirmó manualmente que el Worker actualizado permite registro/login y que Turnstile funciona en producción. La interfaz real de cambio de contraseña acaba de incorporarse a `main` en `#/settings`, con cliente HTTP y pruebas de validación; ese cambio de frontend todavía debe superar las comprobaciones del repositorio y desplegarse de forma autorizada. La fase permanece abierta hasta verificar el cambio real de contraseña, la renovación de la sesión actual, la revocación de sesiones anteriores y el rechazo de tokens Turnstile inválidos en un entorno aprobado. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md).
 
 **Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main` y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
 
@@ -152,7 +152,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Añadir bloqueo progresivo por correo/IP con claves hasheadas y expiración de ventana.
 - [x] Limitar el cuerpo JSON a 64 KiB durante lectura, verificar Origin y aplicar cabeceras de seguridad.
 - [x] Añadir pruebas de casos de uso y límites HTTP para registro, login, logout, sesiones, contraseña, Turnstile y rate limiting.
-- **Aceptación:** las rutas protegidas responden 401 sin sesión y los campos de autoridad enviados por cliente son rechazados. La verificación automatizada y CI ya pasaron el 2026-10-11; sigue pendiente E2E con Turnstile válido/inválido en un entorno aprobado.
+- **Aceptación:** las rutas protegidas responden 401 sin sesión y los campos de autoridad enviados por cliente son rechazados. El propietario confirmó el flujo positivo de Turnstile en producción; la pantalla de cambio de contraseña recién integrada aún requiere checks, despliegue autorizado y prueba de aceptación de rotación de sesiones. Sigue pendiente probar el rechazo de tokens inválidos en un entorno aprobado.
 - 🔒 SEC-SES-01…05, SEC-ISO-01, SEC-AUTH-02, SEC-AUTH-04.
 
 ---
