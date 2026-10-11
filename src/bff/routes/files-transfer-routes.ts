@@ -87,6 +87,9 @@ function contentDisposition(name: string): string {
 
 filesTransferRoutes.post("/", async (c) => {
   const request = c.req.raw;
+  if (new URL(request.url).searchParams.size > 0) {
+    return c.json(REQUEST_ERROR, 400);
+  }
   if (!originAllowed(request)) return c.json(ORIGIN_ERROR, 403);
 
   const encodedName = request.headers.get("X-File-Name");
@@ -117,12 +120,11 @@ filesTransferRoutes.post("/", async (c) => {
   }
 
   const folderId = request.headers.get("X-File-Folder-Id");
-  const contentType = (
-    request.headers.get("Content-Type") ?? "application/octet-stream"
-  )
-    .split(";")[0]
-    .trim()
-    .toLowerCase();
+  const contentType =
+    (request.headers.get("Content-Type") ?? "application/octet-stream")
+      .split(";")[0]
+      ?.trim()
+      .toLowerCase() || "application/octet-stream";
   const result = await createCompositionRoot(c.env).files.uploadFile(
     actorFor(c),
     { name, folderId: folderId ?? null, sizeBytes, contentType },
@@ -133,6 +135,9 @@ filesTransferRoutes.post("/", async (c) => {
 });
 
 filesTransferRoutes.get("/:id/download", async (c) => {
+  if (new URL(c.req.raw.url).searchParams.size > 0) {
+    return c.json(REQUEST_ERROR, 400);
+  }
   const result = await createCompositionRoot(c.env).files.downloadFile(
     actorFor(c),
     c.req.param("id"),

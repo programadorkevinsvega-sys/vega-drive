@@ -15,7 +15,7 @@ export function createFilesModuleFromD1(env: Env) {
     names: new D1FilesCatalogNameRepository(env.VEGA_DRIVE_DB),
     uploads: new D1FilesUploadRepository(env.VEGA_DRIVE_DB),
     transferEvents: new D1FilesTransferEventRepository(env.VEGA_DRIVE_DB),
-    storage: storage ?? undefined,
+    ...(storage ? { storage } : {}),
     ready: Boolean(env.VEGA_DRIVE_DB && storage),
   });
 }
