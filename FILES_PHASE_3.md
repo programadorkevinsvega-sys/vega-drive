@@ -45,7 +45,7 @@ Las migraciones modulares esperadas documentadas en [migrations/manifest.md](./m
 - `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`
 - `identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql`
 
-### Incidencia local registrada el 2026-10-11
+### Incidencia local resuelta el 2026-10-11
 
 Comando ejecutado por el propietario:
 
@@ -61,7 +61,7 @@ index:identity_auth_attempts_locked_until_idx
 Deployment must stop.
 ```
 
-La salida demuestra que la D1 **local** consultada no coincide con el conjunto de objetos esperado por las migraciones que el verificador leyó. No prueba por sí sola la causa. Una explicación posible es que las migraciones modulares nuevas no se hayan aplicado a la D1 local actual; hay que comprobarlo y no asumirlo.
+La salida inicial demostró que la D1 **local** no coincidía con los objetos esperados. La causa inmediata quedó resuelta al aplicar las dos migraciones pendientes de `files` e `identity` localmente; no fue necesario modificar las migraciones ni el verificador.
 
 ### Procedimiento de reconciliación local
 
@@ -69,16 +69,16 @@ La salida demuestra que la D1 **local** consultada no coincide con el conjunto d
 2. Aplicar las migraciones **solo a la D1 local** con `pnpm run db:migrate:local`.
 3. Volver a ejecutar `pnpm run db:verify:schema:local`.
 4. Si aún falla, conservar la salida completa y comparar los objetos/DDL reales con las migraciones y con `scripts/verify-d1-schema.mjs`. Corregir intencionalmente la causa; no debilitar ni desactivar el verificador para que pase.
-5. Registrar aquí el comando, resultado y commit que resuelve el problema.
+5. Registrar aquí el comando, resultado y commit que resuelve el problema. **Resultado registrado:** `pnpm run db:migrate:local` aplicó `files/.../0002_files_catalog_names.sql` e `identity/.../0002_identity_auth_attempts.sql`; a continuación `pnpm run db:verify:schema:local` pasó con `22 tables/indexes match migrations in vega_drive_db (local)`. La reconciliación fue local; no se ejecutó una migración remota.
 
 No ejecutar `pnpm run db:migrate:production`, `pnpm run deploy` ni otros comandos que cambien D1 remota como parte de esta reconciliación local. Cualquier operación remota requiere revisión y autorización explícita separadas.
 
 ### Estado de la incidencia
 
-- [ ] Migraciones locales aplicadas o causa alternativa identificada.
-- [ ] `pnpm run db:verify:schema:local` pasa después de la reconciliación.
-- [ ] Se registra evidencia del resultado y del commit.
-- [ ] No se ha alterado el esquema remoto como parte de esta comprobación.
+- [x] Migraciones locales aplicadas o causa alternativa identificada: se aplicaron las dos migraciones pendientes localmente.
+- [x] `pnpm run db:verify:schema:local` pasa después de la reconciliación: 22 tablas/índices.
+- [x] Se registra evidencia del resultado en la salida del usuario, 2026-10-11; no hubo commit de código porque el árbol estaba limpio.
+- [x] No se ha alterado el esquema remoto como parte de esta comprobación.
 
 ## 4. Papelera y limpieza
 
@@ -95,7 +95,7 @@ Evidencia comunicada el 2026-10-11:
 
 - [x] `pnpm run check`: Prettier, guardia arquitectónica, TypeScript y suite de tests aprobados; 126/126 tests.
 - [x] `pnpm run verify:architecture:all`: los verificadores ejecutados finalizaron correctamente, con notas explícitas de capacidades R2/gateway aún no implementadas.
-- [ ] `pnpm run db:verify:schema:local`: **falló**; incidencia pendiente descrita arriba.
+- [x] `pnpm run db:verify:schema:local`: pasó tras `pnpm run db:migrate:local`; 22 tablas/índices coinciden con las migraciones.
 - [x] CI previamente reportado como satisfactorio: [GitHub Actions run 38114942365](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38114942365).
 
 Las casillas indican evidencia reportada, no una afirmación de que estos comandos se hayan vuelto a ejecutar durante la edición de este documento.
@@ -105,7 +105,7 @@ Las casillas indican evidencia reportada, no una afirmación de que estos comand
 La fase permanece abierta hasta que:
 
 1. Se complete la cobertura de pruebas de aislamiento y movimientos/restauraciones indicada en la sección 2.
-2. Se resuelva y registre la discrepancia de D1 local con una verificación estructural satisfactoria.
+2. (Resuelto) Se reconcilie D1 local y se registre una verificación estructural satisfactoria; esto ya se completó el 2026-10-11.
 3. Se defina y documente el alcance de limpieza permanente, separando metadatos de objetos R2.
 4. Se actualicen los checks del roadmap únicamente cuando exista evidencia.
 5. Se vuelvan a ejecutar los checks locales y CI sobre el commit candidato.
