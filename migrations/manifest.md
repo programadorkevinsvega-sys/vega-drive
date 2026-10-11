@@ -46,9 +46,11 @@ Una migración nueva debe ser propiedad de un módulo, permanecer dentro de su d
 
 El verificador estructural rechaza DDL que todavía no pueda modelar, objetos incompatibles u objetos inesperados. Si se necesita `ALTER`, `DROP` u otra operación no admitida, primero amplía y prueba el verificador para representar explícitamente el esquema final. La lista de Wrangler demuestra el historial de migraciones, no la compatibilidad de columnas y restricciones ni la seguridad funcional de la aplicación.
 
-## Incidencia de verificación local registrada
+## Incidencia de verificación local resuelta
 
-La última ejecución local reportada el 2026-10-11 de `pnpm run db:verify:schema:local` falló por objetos ausentes de las migraciones de `files` e `identity`. La incidencia y el procedimiento de reconciliación exclusivamente local están documentados en [FILES_PHASE_3.md](../FILES_PHASE_3.md). Hasta obtener una verificación local satisfactoria, no se debe considerar cerrado el criterio de esquema de la Fase 3 ni proceder a un despliegue. Este apunte no afirma que la D1 remota esté afectada ni autoriza cambios remotos.
+El 2026-10-11, `pnpm run db:verify:schema:local` detectó objetos ausentes de las migraciones de `files` e `identity`. Se aplicaron únicamente en la D1 local las migraciones modulares pendientes `files/.../0002_files_catalog_names.sql` e `identity/.../0002_identity_auth_attempts.sql`. La verificación posterior pasó con `22 tables/indexes match migrations in vega_drive_db (local)`.
+
+El incidente y la evidencia se documentan en [FILES_PHASE_3.md](../FILES_PHASE_3.md). Esta reconciliación no modificó D1 remota ni demuestra por sí sola el cierre de la Fase 3; siguen siendo obligatorias las pruebas funcionales y de aislamiento descritas en el documento de fase.
 
 ## Compatibilidad y rollback
 
