@@ -107,6 +107,7 @@ export function createRegisterUser(deps: RegisterUserDependencies) {
     try {
       captchaValid = await deps.turnstile.verify(
         input.turnstileToken,
+        "register",
         clientIp,
       );
     } catch {
