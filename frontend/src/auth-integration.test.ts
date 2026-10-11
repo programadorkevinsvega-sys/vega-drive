@@ -15,6 +15,8 @@ describe("integración de identidad en la interfaz", () => {
     const widget = read("./services/TurnstileWidget.tsx");
     const api = read("./services/identity-service.ts");
     expect(auth).toContain("<TurnstileWidget");
+    expect(auth).toContain('action={isLogin ? "login" : "register"}');
+    expect(widget).toContain('action: "register" | "login"');
     expect(auth).toContain("submittedToken");
     expect(widget).toContain(
       "https://challenges.cloudflare.com/turnstile/v0/api.js",
