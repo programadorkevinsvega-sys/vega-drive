@@ -131,7 +131,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 2 — Módulo identity
 
-**Estado: CERRADA (2026-10-10, hora local de Colombia).** La implementación y aceptación funcional del módulo identity quedaron completadas. Este cierre cubre registro, autenticación, sesiones, Turnstile y cambio de contraseña; no implica que Vega Drive ya tenga el catálogo o las transferencias de archivos, ni que la certificación transversal de seguridad o el procedimiento de rollback estén cerrados. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md).
+**Estado: CERRADA (2026-10-10, hora local de Colombia).** La implementación y aceptación funcional del módulo identity quedaron completadas. Este cierre cubre registro, autenticación, sesiones, Turnstile y cambio de contraseña. El catálogo de metadatos quedó completado y validado por separado en la Fase 3; las transferencias físicas de archivos, la certificación transversal de seguridad y el procedimiento de rollback pertenecen a fases posteriores. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md).
 
 ### Evidencia de cierre
 
