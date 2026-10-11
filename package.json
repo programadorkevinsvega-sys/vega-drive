@@ -13,7 +13,7 @@
     "db:migration:list": "wrangler d1 migrations list vega_drive_db --remote",
     "db:verify:production": "pnpm run db:migration:list && pnpm run db:verify:schema:production",
     "verify:production": "node scripts/verify-production.mjs",
-    "deploy": "pnpm run deploy:preflight && pnpm run check && pnpm run frontend:check && pnpm audit --audit-level=high && pnpm run frontend:audit && pnpm exec wrangler deploy --dry-run && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
+    "deploy": "pnpm run deploy:preflight && pnpm run cloudflare:build && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "node scripts/architecture-check.mjs",

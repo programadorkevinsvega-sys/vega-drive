@@ -56,14 +56,21 @@ describe("integración de assets frontend/Cloudflare", () => {
       throw new Error("Falta el script deploy en package.json.");
     }
     expect(deploy).toMatch(/^pnpm run deploy:preflight &&/);
-    expect(deploy).toContain("pnpm run check");
-    expect(deploy).toContain("pnpm run frontend:check");
-    expect(deploy).toContain("pnpm run frontend:audit");
+    expect(deploy).toContain("pnpm run cloudflare:build");
 
-    const dryRunIndex = deploy.indexOf("wrangler deploy --dry-run");
+    const cloudflareBuild = rootPackage.scripts["cloudflare:build"];
+    if (cloudflareBuild === undefined) {
+      throw new Error("Falta el script cloudflare:build en package.json.");
+    }
+    expect(cloudflareBuild).toMatch(/^pnpm run deploy:preflight &&/);
+    expect(cloudflareBuild).toContain("pnpm run check");
+    expect(cloudflareBuild).toContain("pnpm run frontend:check");
+    expect(cloudflareBuild).toContain("pnpm run frontend:audit");
+    expect(cloudflareBuild).toContain("wrangler deploy --dry-run");
+
+    const buildIndex = deploy.indexOf("pnpm run cloudflare:build");
     const migrationIndex = deploy.indexOf("db:migrate:production");
-    expect(dryRunIndex).toBeGreaterThanOrEqual(0);
-    expect(migrationIndex).toBeGreaterThan(dryRunIndex);
+    expect(migrationIndex).toBeGreaterThan(buildIndex);
     expect(frontendPackage.scripts.check).toBe(
       "pnpm run typecheck && pnpm run test && pnpm run build",
     );
