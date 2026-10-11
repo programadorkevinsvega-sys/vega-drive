@@ -114,6 +114,24 @@ function queryRecord(
   return query;
 }
 
+async function requestHasBody(request: Request): Promise<boolean> {
+  const reader = request.body?.getReader();
+  if (!reader) return false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return false;
+      if (value.byteLength > 0) {
+        await reader.cancel();
+        return true;
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 function catalogResponse(
   c: Context<AuthenticatedEnv>,
   result: CatalogHttpResult,
@@ -230,7 +248,9 @@ filesRoutes.post("/folders/:id/move", async (c) => {
 filesRoutes.delete("/folders/:id", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
-  if (c.req.raw.body !== null) return c.json(REQUEST_ERROR, 400);
+  if (await requestHasBody(c.req.raw)) {
+    return c.json(REQUEST_ERROR, 400);
+  }
 
   return catalogResponse(
     c,
@@ -244,7 +264,9 @@ filesRoutes.delete("/folders/:id", async (c) => {
 filesRoutes.post("/trash/folders/:id/restore", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
-  if (c.req.raw.body !== null) return c.json(REQUEST_ERROR, 400);
+  if (await requestHasBody(c.req.raw)) {
+    return c.json(REQUEST_ERROR, 400);
+  }
 
   return catalogResponse(
     c,
@@ -294,7 +316,9 @@ filesRoutes.post("/items/:id/move", async (c) => {
 filesRoutes.delete("/items/:id", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
-  if (c.req.raw.body !== null) return c.json(REQUEST_ERROR, 400);
+  if (await requestHasBody(c.req.raw)) {
+    return c.json(REQUEST_ERROR, 400);
+  }
 
   return catalogResponse(
     c,
@@ -308,7 +332,9 @@ filesRoutes.delete("/items/:id", async (c) => {
 filesRoutes.post("/trash/items/:id/restore", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
-  if (c.req.raw.body !== null) return c.json(REQUEST_ERROR, 400);
+  if (await requestHasBody(c.req.raw)) {
+    return c.json(REQUEST_ERROR, 400);
+  }
 
   return catalogResponse(
     c,
