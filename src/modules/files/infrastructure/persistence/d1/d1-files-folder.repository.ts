@@ -151,10 +151,7 @@ export class D1FilesFolderRepository implements FilesFolderRepository {
     return result.results;
   }
 
-  async deletePermanently(
-    id: string,
-    ownerId: string,
-  ): Promise<boolean> {
+  async deletePermanently(id: string, ownerId: string): Promise<boolean> {
     const result = await this.db
       .prepare("DELETE FROM files_folders WHERE id = ? AND owner_id = ?")
       .bind(id, ownerId)

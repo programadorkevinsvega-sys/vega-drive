@@ -139,5 +139,9 @@ export function createTrashMutations(deps: TrashMutationDependencies) {
     return cleaned;
   }
 
-  return { permanentlyDeleteFile, permanentlyDeleteFolder, cleanupExpiredTrash };
+  return {
+    permanentlyDeleteFile,
+    permanentlyDeleteFolder,
+    cleanupExpiredTrash,
+  };
 }

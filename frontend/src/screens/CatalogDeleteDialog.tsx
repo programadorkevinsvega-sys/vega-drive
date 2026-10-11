@@ -33,11 +33,7 @@ export function CatalogDeleteDialog({
       }
       footer={
         <>
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={loading}
-          >
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
           {!trashed ? (

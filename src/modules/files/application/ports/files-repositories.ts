@@ -104,7 +104,10 @@ export interface FilesFolderRepository {
   ): Promise<FilesFolderRecord[]>;
   insert(folder: FilesFolderRecord): Promise<void>;
   deletePermanently?(id: string, ownerId: string): Promise<boolean>;
-  listExpiredTrash?(cutoff: string, limit: number): Promise<FilesFolderRecord[]>;
+  listExpiredTrash?(
+    cutoff: string,
+    limit: number,
+  ): Promise<FilesFolderRecord[]>;
   listDescendants?(
     ownerId: string,
     parentFolderId: string,

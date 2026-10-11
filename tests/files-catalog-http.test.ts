@@ -334,9 +334,7 @@ describe("files catalog HTTP routes", () => {
     );
     const file = await json<{ id: string }>(upload);
     const stored = await fixture.db
-      .prepare(
-        "SELECT storage_key AS storageKey FROM files_items WHERE id = ?",
-      )
+      .prepare("SELECT storage_key AS storageKey FROM files_items WHERE id = ?")
       .bind(file.id)
       .first<{ storageKey: string }>();
     expect(stored).not.toBeNull();
@@ -350,9 +348,7 @@ describe("files catalog HTTP routes", () => {
     );
     expect(response.status).toBe(200);
     expect(await json(response)).toEqual({ ok: true });
-    expect(
-      await fixture.env.FILES_BUCKET.head(stored!.storageKey),
-    ).toBeNull();
+    expect(await fixture.env.FILES_BUCKET.head(stored!.storageKey)).toBeNull();
     expect(
       await fixture.db
         .prepare("SELECT id FROM files_items WHERE id = ?")
@@ -371,9 +367,7 @@ describe("files catalog HTTP routes", () => {
     const upload = await sendFile("expired.txt", "expired bytes");
     const file = await json<{ id: string }>(upload);
     const stored = await fixture.db
-      .prepare(
-        "SELECT storage_key AS storageKey FROM files_items WHERE id = ?",
-      )
+      .prepare("SELECT storage_key AS storageKey FROM files_items WHERE id = ?")
       .bind(file.id)
       .first<{ storageKey: string }>();
     expect(stored).not.toBeNull();
@@ -391,9 +385,7 @@ describe("files catalog HTTP routes", () => {
     ).files.cleanupExpiredTrash(new Date().toISOString(), 10);
 
     expect(cleaned).toBeGreaterThan(0);
-    expect(
-      await fixture.env.FILES_BUCKET.head(stored!.storageKey),
-    ).toBeNull();
+    expect(await fixture.env.FILES_BUCKET.head(stored!.storageKey)).toBeNull();
     expect(
       await fixture.db
         .prepare("SELECT id FROM files_items WHERE id = ?")
