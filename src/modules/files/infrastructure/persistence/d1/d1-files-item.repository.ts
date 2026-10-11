@@ -120,25 +120,47 @@ export class D1FilesItemRepository implements FilesItemRepository {
     return result.results;
   }
 
-  async listExpiredTrash(cutoff: string, limit: number): Promise<FilesItemRecord[]> {
-    const result = await this.db.prepare(
-      "SELECT " + ITEM_COLUMNS + " FROM files_items " +
-      "WHERE deleted_at IS NOT NULL AND deleted_at <= ? ORDER BY deleted_at ASC, id ASC LIMIT ?",
-    ).bind(cutoff, boundedLimit(limit)).all<FilesItemRecord>();
+  async listExpiredTrash(
+    cutoff: string,
+    limit: number,
+  ): Promise<FilesItemRecord[]> {
+    const result = await this.db
+      .prepare(
+        "SELECT " +
+          ITEM_COLUMNS +
+          " FROM files_items WHERE deleted_at IS NOT NULL AND deleted_at <= ? " +
+          "ORDER BY deleted_at ASC, id ASC LIMIT ?",
+      )
+      .bind(cutoff, boundedLimit(limit))
+      .all<FilesItemRecord>();
     return result.results;
   }
 
-  async listByFolderIds(ownerId: string, folderIds: string[], limit: number): Promise<FilesItemRecord[]> {
+  async listByFolderIds(
+    ownerId: string,
+    folderIds: string[],
+    limit: number,
+  ): Promise<FilesItemRecord[]> {
     const items: FilesItemRecord[] = [];
     const max = boundedLimit(limit);
-    for (let offset = 0; offset < folderIds.length && items.length < max; offset += 80) {
+    for (
+      let offset = 0;
+      offset < folderIds.length && items.length < max;
+      offset += 80
+    ) {
       const chunk = folderIds.slice(offset, offset + 80);
       const remaining = max - items.length;
       const placeholders = chunk.map(() => "?").join(", ");
-      const result = await this.db.prepare(
-        "SELECT " + ITEM_COLUMNS + " FROM files_items WHERE owner_id = ? " +
-        "AND folder_id IN (" + placeholders + ") ORDER BY id ASC LIMIT ?",
-      ).bind(ownerId, ...chunk, remaining).all<FilesItemRecord>();
+      const result = await this.db
+        .prepare(
+          "SELECT " +
+            ITEM_COLUMNS +
+            " FROM files_items WHERE owner_id = ? AND folder_id IN (" +
+            placeholders +
+            ") ORDER BY id ASC LIMIT ?",
+        )
+        .bind(ownerId, ...chunk, remaining)
+        .all<FilesItemRecord>();
       items.push(...result.results);
     }
     return items;
