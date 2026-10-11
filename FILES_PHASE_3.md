@@ -24,7 +24,7 @@ Los tests de catálogo y repositorios existen. La ejecución local reportada el 
 
 El código revisado deriva el propietario de la identidad de actor que recibe el caso de uso y filtra recursos mediante propietario; los caminos de carpeta también comprueban la propiedad y el estado de los ancestros. Los tests actuales cubren aislamiento de algunas operaciones de lectura, renombrado y borrado, así como la concurrencia de creación de nombres.
 
-La cobertura adicional se añadió directamente a `main` en los commits [7844040](https://github.com/programadorkevinsvega-sys/vega-drive/commit/7844040acd4188b34fc97b4fa08199baafec0cc4) y [58a6f84](https://github.com/programadorkevinsvega-sys/vega-drive/commit/58a6f84dcaf4f0567de6be7684582328767ee528). Incluye pruebas para:
+La cobertura adicional quedó incorporada directamente a `main` en [73b2c8f](https://github.com/programadorkevinsvega-sys/vega-drive/commit/73b2c8fa2041aa5b67d7d5d32254241eb1316d42), [4ef3c66](https://github.com/programadorkevinsvega-sys/vega-drive/commit/4ef3c662001351291bfaac7186f72c68f97fab9c), [a152cf7](https://github.com/programadorkevinsvega-sys/vega-drive/commit/a152cf72c1fe5422ceb5397339c59b50a7982a9c), [a0e2d3a](https://github.com/programadorkevinsvega-sys/vega-drive/commit/a0e2d3a1be305bd38fc7a873d685250f325e42ee) y [11438e3](https://github.com/programadorkevinsvega-sys/vega-drive/commit/11438e35a1cdfee667bbbb847a60dd4a3790f814). La ejecución local que se reportó antes de incorporar estas pruebas adicionales pasó 126/126; aún se debe volver a ejecutar la suite sobre la versión actual para validar las cuatro pruebas nuevas. Incluye pruebas para:
 
 - [x] Intentar mover una carpeta ajena y mover una carpeta propia a una carpeta ajena.
 - [x] Intentar mover un archivo ajeno y mover un archivo propio a una carpeta ajena.
@@ -32,6 +32,7 @@ La cobertura adicional se añadió directamente a `main` en los commits [7844040
 - [x] Restaurar recursos ajenos y comprobar que no aparecen en la papelera del otro propietario.
 - [x] Comprobar que los rechazos no mueven nodos y que conflictos de nombre no alteran la ubicación ni la reserva del nodo existente.
 - [x] Cubrir movimientos y renombrados exitosos, breadcrumbs y conflicto al restaurar un archivo.
+- [ ] Volver a ejecutar los checks locales sobre la versión que contiene las cuatro pruebas nuevas y registrar el resultado.
 - [ ] Ejecutar la suite actualizada en CI y registrar el resultado antes de certificar el cierre.
 
 Estos puntos eran **brechas de evidencia de pruebas**; no se describen como vulnerabilidades confirmadas. Las respuestas HTTP 404 para recursos ajenos se deben verificar cuando el BFF/controller esté implementado en la Fase 5.
@@ -93,9 +94,12 @@ El borrado lógico y la restauración forman parte del catálogo. La limpieza pe
 
 Evidencia comunicada el 2026-10-11:
 
-- [x] `pnpm run check`: Prettier, guardia arquitectónica, TypeScript y suite de tests aprobados; 126/126 tests.
+- [x] Ejecución local anterior a las últimas cuatro pruebas adicionales: `pnpm run check` aprobó Prettier, guardia arquitectónica, TypeScript y 126/126 tests.
+- [ ] Repetir `pnpm run check` después de los commits de cobertura adicionales; los resultados 126/126 no se atribuyen a esa revisión más reciente.
 - [x] `pnpm run verify:architecture:all`: los verificadores ejecutados finalizaron correctamente, con notas explícitas de capacidades R2/gateway aún no implementadas.
 - [x] `pnpm run db:verify:schema:local`: pasó tras `pnpm run db:migrate:local`; 22 tablas/índices coinciden con las migraciones.
+- [x] `pnpm run cloudflare:build` en la revisión anterior: frontend 119/119 tests, build de producción, auditorías sin vulnerabilidades conocidas y Wrangler dry-run completados.
+- [ ] Repetir `pnpm run cloudflare:build` tras la última edición de las pruebas; no desplegar.
 - [x] CI previamente reportado como satisfactorio: [GitHub Actions run 38114942365](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38114942365).
 
 Las casillas indican evidencia reportada, no una afirmación de que estos comandos se hayan vuelto a ejecutar durante la edición de este documento.
@@ -104,7 +108,7 @@ Las casillas indican evidencia reportada, no una afirmación de que estos comand
 
 La fase permanece abierta hasta que:
 
-1. Se complete la cobertura de pruebas de aislamiento y movimientos/restauraciones indicada en la sección 2.
+1. La cobertura de aislamiento y movimientos/restauraciones está incorporada; falta que las cuatro pruebas nuevas pasen en la suite actual y que el resultado de CI se registre.
 2. (Resuelto) Se reconcilie D1 local y se registre una verificación estructural satisfactoria; esto ya se completó el 2026-10-11.
 3. Se documente el alcance de limpieza: Fase 3 no hace purga permanente ni automática; el ciclo de borrado físico y la reconciliación D1/R2 pertenecen a Fase 4. Esta delimitación de alcance ya está documentada; la política de retención de producto sigue pendiente y bloquea cualquier purga futura, no el catálogo de Fase 3.
 4. Se actualicen los checks del roadmap únicamente cuando exista evidencia.
