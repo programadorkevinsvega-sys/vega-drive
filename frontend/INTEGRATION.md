@@ -68,22 +68,15 @@ solo instalan las dependencias de la raíz. La CI ejecuta ese mismo gate y manti
 Gitleaks como job independiente. Ninguna de estas comprobaciones
 por sí sola demuestra la aplicación de cabeceras o disponibilidad en producción.
 
-## Evidencia pendiente antes de cerrar la subfase
+## Evidencia de integración y pendientes de la fase 5
 
-- Ejecutar el gate completo sobre el commit integrado y revisar el diff, incluido
-  el formateo manual acordado.
-- Probar localmente `/`, archivos JS/CSS/favicon, 404 de assets, `/api/health` y un
-  endpoint API inexistente; comprobar tipo de contenido, CSP y las demás cabeceras.
-- Probar con Turnstile real en el hostname autorizado el login y registro con tokens
-  válidos e inválidos; las pruebas unitarias del cliente no sustituyen ese E2E.
-- Tras desplegar de forma autorizada la pantalla de Ajustes, probar un cambio de
-  contraseña real: nueva contraseña aceptada, contraseña anterior rechazada en un
-  login posterior, sesión actual renovada y sesiones previas revocadas.
-- Verificar las cabeceras y la interfaz desplegada en producción después de un
-  despliegue autorizado antes de considerar la integración publicada.
-- Cumplir `Security.md` y el procedimiento `Rollback.md`; staging y el ensayo de
-  rollback siguen pendientes en la documentación operativa.
-- No marcar la fase 5 como cerrada ni modificar `roadmap.md` sin la evidencia exigida.
+- [x] Ejecutar el gate completo sobre el commit integrado y revisar el diff, incluido el formateo manual acordado. La ejecución de GitHub Actions del commit `bd7e192f1afe6e89af2b6c10442f2b51e7d60ed5` terminó correctamente: [ver CI](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38112184984).
+- [ ] Probar localmente `/`, archivos JS/CSS/favicon, 404 de assets, `/api/health` y un endpoint API inexistente; comprobar tipo de contenido, CSP y las demás cabeceras.
+- [x] El propietario confirmó la prueba de extremo a extremo en producción: Turnstile válido funciona y el servidor rechaza un token inválido en el flujo probado.
+- [x] Tras publicar Ajustes, el propietario probó el cambio de contraseña: la nueva contraseña permite iniciar sesión, la anterior es rechazada, la sesión actual sigue operativa y las sesiones previas quedan revocadas.
+- [ ] Verificar en producción las cabeceras CSP, HSTS, nosniff, framing, Referrer-Policy y `Cache-Control`. La interfaz de Ajustes y el flujo de cambio de contraseña ya fueron aceptados funcionalmente.
+- [ ] Cumplir el checklist aplicable de `Security.md` y el procedimiento `Rollback.md`; staging aislado y el ensayo de rollback siguen pendientes.
+- [ ] No marcar la fase 5 como cerrada hasta que se reúna la evidencia de presentación, assets, cabeceras y operación requerida en su propio alcance. El cierre de la Fase 2 no cierra automáticamente la fase 5.
 
 ## Reversión
 
