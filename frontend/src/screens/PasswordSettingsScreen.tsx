@@ -94,12 +94,19 @@ export function PasswordSettingsScreen() {
           </div>
 
           {success ? (
-            <p className="vd-settings__feedback vd-settings__feedback--success" role="status" aria-live="polite">
+            <p
+              className="vd-settings__feedback vd-settings__feedback--success"
+              role="status"
+              aria-live="polite"
+            >
               {success}
             </p>
           ) : null}
           {error ? (
-            <p className="vd-settings__feedback vd-settings__feedback--error" role="alert">
+            <p
+              className="vd-settings__feedback vd-settings__feedback--error"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}
