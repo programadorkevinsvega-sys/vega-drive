@@ -105,17 +105,19 @@ No se exponen rutas de subida o descarga física, búsqueda, favoritos ni transf
 
 ## 8. Evidencia del hito HTTP del backend
 
-La integración HTTP se incorporó en el commit `83e4aa07065c654fa7a4c879c9dc378851f7cad0` de `main`. La ejecución de GitHub Actions [CI #366](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38118044863) terminó correctamente:
+La integración HTTP del catálogo se incorporó en el commit `83e4aa07065c654fa7a4c879c9dc378851f7cad0` de `main`. El gate final de GitHub Actions [CI #368](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38118139777) pasó correctamente en el commit `e77c2bdf24fc7f64c17154d48c0b4fc61aa7bfb3`:
 
-- `pnpm run verify:module-migrations`: correcta.
-- `pnpm run format:check` y `pnpm run lint`: correctos.
-- `pnpm run typecheck`: correcto.
-- `pnpm test`: 137/137 tests de backend aprobados; `tests/files-catalog-http.test.ts` aporta 7 pruebas de integración HTTP con SQLite y sesiones sembradas.
-- `pnpm run verify:architecture:all`: los verificadores ejecutados por el preflight terminaron correctamente.
-- Comprobación del frontend incluida en `cloudflare:build`: typecheck y 119/119 tests aprobados; build Vite correcto.
-- Auditoría de dependencias de backend y frontend: sin vulnerabilidades conocidas.
-- `pnpm run cloudflare:build`: correcto, con `wrangler deploy --dry-run`; no publicó ningún Worker.
+- `pnpm run verify:module-migrations`: correcto; cuatro archivos de migración con propiedad modular verificada.
+- `pnpm run db:migrate:local`: migraciones aplicadas en una D1 local efímera.
+- `pnpm run db:verify:schema:local`: **22 tablas/índices coinciden con las migraciones** de `vega_drive_db` local.
+- `pnpm run format:check`, `pnpm run lint` y `pnpm run typecheck`: correctos.
+- `pnpm test`: **137/137 tests de backend aprobados**, incluidas 7 pruebas de integración HTTP en `tests/files-catalog-http.test.ts`.
+- `pnpm run verify:architecture:all`: todos los verificadores del preflight pasaron, incluidos los límites de BFF, actor autenticado y FilesGateway.
+- Validación del frontend dentro de `cloudflare:build`: typecheck correcto, **119/119 tests aprobados** y build Vite correcto.
+- Auditorías de dependencias de backend y frontend: sin vulnerabilidades conocidas.
+- `pnpm run cloudflare:build`: correcto; Wrangler terminó con `--dry-run` y el mensaje `--dry-run: exiting now`.
+- Job de secretos de GitHub Actions: correcto; Gitleaks no detectó secretos.
 
-La CI incorpora además una verificación explícita de D1 local: aplica las migraciones versionadas a la base local efímera y compara `sqlite_schema` con las migraciones del módulo. Esta comprobación no usa `--remote`. Su resultado específico se registrará tras completar la siguiente ejecución de CI.
+El test HTTP usa el BFF real `app.fetch()`, middleware de sesión y persistencia SQLite en memoria para comprobar autenticación, listado/breadcrumbs, cambios de carpeta y archivo, papelera/restauración, entradas inválidas, suplantación de identidad, conflictos, aislamiento por propietario y traducción segura de errores.
 
-Este hito valida el backend HTTP y no acredita que el frontend consuma estas rutas. No se ejecutaron migraciones remotas ni despliegues; Fase 4 y las fases 5–9 siguen abiertas según su alcance documentado.
+La ejecución no usó `--remote`, no ejecutó migraciones remotas y no desplegó ningún Worker. El backend HTTP del catálogo queda implementado y validado en este hito. El frontend aún no consume estas rutas y no se marcan como cerradas la Fase 4 ni las fases 5–9.
