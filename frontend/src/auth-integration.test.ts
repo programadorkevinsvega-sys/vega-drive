@@ -15,12 +15,13 @@ describe("integración de identidad en la interfaz", () => {
     const widget = read("./services/TurnstileWidget.tsx");
     const api = read("./services/identity-service.ts");
     expect(auth).toContain("<TurnstileWidget");
-    expect(auth).toContain("turnstileToken");
+    expect(auth).toContain("submittedToken");
     expect(widget).toContain(
       "https://challenges.cloudflare.com/turnstile/v0/api.js",
     );
     expect(api).toContain('"/api/auth/login"');
     expect(api).toContain('"/api/auth/register"');
+    expect(api).toContain("turnstileToken");
   });
   it("permite Turnstile en CSP sin relajar las restricciones base", () => {
     const headers = read("../public/_headers");
