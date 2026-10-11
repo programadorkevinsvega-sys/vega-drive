@@ -18,17 +18,26 @@
   dependencias de ambos paquetes y `wrangler deploy --dry-run`. El script `deploy`
   ejecuta este gate antes de migraciones o publicación; no se ejecuta como parte
   de estas instrucciones de integración.
-- La guía temporal `#/kit` y sus componentes/estilos se retiran. No se modifican
-  los contratos de servicio ni los adaptadores simulados.
+- La guía temporal `#/kit` y sus componentes/estilos se retiran.
+- Login, registro, consulta de sesión y logout usan `/api/auth/*` en el mismo
+  origen. La cookie de sesión permanece HttpOnly y el navegador no lee ni guarda
+  el token de sesión.
+- El widget oficial de Cloudflare Turnstile se carga en login y registro; el token
+  se envía al Worker para validación server-side. La CSP permite los orígenes
+  necesarios de Turnstile para script, iframe y conexión.
 
 ## Datos y alcance funcional
 
-Los datos visibles siguen siendo explícitamente simulados. No se añaden llamadas
-HTTP desde el frontend, endpoints nuevos, sesiones falsas ni formularios de
-autenticación funcionales. La lógica de identidad que ya existe en el backend no
-se cambia en esta integración. Las pantallas de drive, carpetas, recientes,
-favoritos, papelera, búsqueda, ajustes y acceso continúan siendo marcadores visuales
-hasta que sus fases del roadmap implementen sus contratos reales.
+La autenticación de la interfaz está conectada al backend existente: la sesión se
+consulta al cargar la aplicación, las rutas de la interfaz requieren una sesión
+resuelta, login y registro envían el token Turnstile, y cerrar sesión llama al
+endpoint de revocación. No se cambió la lógica de identidad del backend ni se
+añadieron endpoints. El registro no inicia sesión automáticamente: después de
+crear la cuenta, el usuario debe iniciar sesión.
+
+Las pantallas de drive, carpetas, recientes, favoritos, papelera, búsqueda y ajustes
+siguen siendo marcadores visuales; la autenticación real no significa que las
+operaciones de archivos estén implementadas.
 
 ## Comandos de instalación y validación
 
@@ -55,11 +64,14 @@ por sí sola demuestra la aplicación de cabeceras o disponibilidad en producci�
 
 ## Evidencia pendiente antes de cerrar la subfase
 
-- Ejecutar el gate completo sobre el commit integrado y revisar el diff.
+- Ejecutar el gate completo sobre el commit integrado y revisar el diff, incluido
+  el formateo manual acordado.
 - Probar localmente `/`, archivos JS/CSS/favicon, 404 de assets, `/api/health` y un
   endpoint API inexistente; comprobar tipo de contenido, CSP y las demás cabeceras.
-- Verificar las cabeceras y la interfaz desplegada en un entorno aprobado antes de
-  considerar la integración publicada.
+- Probar con Turnstile real en el hostname autorizado el login y registro con tokens
+  válidos e inválidos; las pruebas unitarias del cliente no sustituyen ese E2E.
+- Verificar las cabeceras y la interfaz desplegada en producción después de un
+  despliegue autorizado antes de considerar la integración publicada.
 - Cumplir `Security.md` y el procedimiento `Rollback.md`; staging y el ensayo de
   rollback siguen pendientes en la documentación operativa.
 - No marcar la fase 5 como cerrada ni modificar `roadmap.md` sin la evidencia exigida.
