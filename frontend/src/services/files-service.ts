@@ -130,9 +130,14 @@ export function deleteFolder(id: string): Promise<{ ok: true }> {
   );
 }
 
-export function deleteFolderPermanently(id: string): Promise<{ ok: true }> {
+export function deleteFolderPermanently(
+  id: string,
+): Promise<{ ok: true }> {
   return sendNoBody<{ ok: true }>(
-    "/api/files/folders/" + encodeURIComponent(id) + "/permanent-delete", "POST",
+    "/api/files/folders/" +
+      encodeURIComponent(id) +
+      "/permanent-delete",
+    "POST",
   );
 }
 
@@ -169,9 +174,14 @@ export function deleteFile(id: string): Promise<{ ok: true }> {
   );
 }
 
-export function deleteFilePermanently(id: string): Promise<{ ok: true }> {
+export function deleteFilePermanently(
+  id: string,
+): Promise<{ ok: true }> {
   return sendNoBody<{ ok: true }>(
-    "/api/files/items/" + encodeURIComponent(id) + "/permanent-delete", "POST",
+    "/api/files/items/" +
+      encodeURIComponent(id) +
+      "/permanent-delete",
+    "POST",
   );
 }
 
