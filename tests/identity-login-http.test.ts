@@ -43,13 +43,13 @@ describe("identity login HTTP integration", () => {
       vi.fn(
         async () =>
           new Response(
-          JSON.stringify({
-            success: true,
-            action: "login",
-            hostname: "vega-drive.test",
-          }),
-          { status: 200 },
-        ),
+            JSON.stringify({
+              success: true,
+              action: "login",
+              hostname: "vega-drive.test",
+            }),
+            { status: 200 },
+          ),
       ),
     );
     const env = {
