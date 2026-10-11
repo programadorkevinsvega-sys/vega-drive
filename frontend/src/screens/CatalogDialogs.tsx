@@ -18,9 +18,9 @@ export function CatalogDialogs({
   emptyTrashOpen,
   setEmptyTrashOpen,
 }: CatalogDialogsProps) {
-
   return (
-        <Modal
+    <>
+      <Modal
           open={emptyTrashOpen}
           onClose={() => {
             if (!actions.emptyTrashLoading) setEmptyTrashOpen(false);
@@ -55,20 +55,20 @@ export function CatalogDialogs({
             no se puedan eliminar por un error del servidor permanecerán en la
             papelera para que puedas volver a intentarlo.
           </p>
-        </Modal>
-  
-        <CatalogActionDialog
+      </Modal>
+      <CatalogActionDialog
           action={actions.action}
           folders={folderTargets}
           onClose={() => actions.setAction(null)}
           onSubmit={actions.submitAction}
-        />
-        <CatalogDeleteDialog
+      />
+      <CatalogDeleteDialog
           target={actions.deleteTarget}
           loading={actions.deleteLoading}
           onClose={actions.closeDeleteDialog}
           onSendToTrash={actions.sendToTrash}
           onPermanentDelete={actions.permanentlyDelete}
-        />
+      />
+    </>
   );
 }
