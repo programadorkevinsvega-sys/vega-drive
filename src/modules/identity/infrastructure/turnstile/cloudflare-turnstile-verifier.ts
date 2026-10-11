@@ -32,7 +32,9 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
   async verify(token: string, clientIp?: string | null): Promise<boolean> {
     if (!this.secretKey || !token || token.length > 2048) {
       console.warn("[turnstile] Siteverify skipped", {
-        reason: !this.secretKey ? "missing-secret" : "missing-or-oversized-token",
+        reason: !this.secretKey
+          ? "missing-secret"
+          : "missing-or-oversized-token",
       });
       return false;
     }
