@@ -11,13 +11,14 @@ Las dependencias del frontend se mantienen aisladas con su propio `package.json`
 | Identidad visual, tokens CSS y temas claro/oscuro  | Explorador real de archivos, carpetas, recientes, favoritos y papelera |
 | Componentes base accesibles y navegación por hash  | Operaciones reales de archivos y transferencias privadas con R2        |
 | Login, registro y sesiones conectados al Worker    | Búsqueda funcional sobre los datos de archivos                         |
-| Turnstile en login y registro                      | Perfil y preferencias adicionales en Ajustes                           |
-| Formulario de cambio de contraseña en `#/settings` | Pruebas de aceptación y publicación autorizada de este cambio          |
+| Turnstile en login y registro                      | —                                                                      |
+| Formulario de cambio de contraseña en `#/settings` | Perfil y preferencias adicionales en Ajustes                           |
 
 Las pantallas de archivos y búsqueda siguen siendo **marcadores** con datos
 simulados. Login, registro, sesiones y cambio de contraseña usan las rutas reales
-de identidad del Worker; el frontend todavía no implementa las operaciones de
-archivos.
+de identidad del Worker; el propietario confirmó en producción Turnstile válido e
+inválido, el uso de la nueva contraseña, el rechazo de la anterior y la revocación
+de sesiones previas. El frontend todavía no implementa las operaciones de archivos.
 
 ## Requisitos
 
