@@ -73,7 +73,9 @@ describe("integración de assets frontend/Cloudflare", () => {
     expect(cloudflareBuild).toContain("wrangler deploy --dry-run");
 
     const buildIndex = deploy.indexOf("pnpm run cloudflare:build");
-    const authConfigIndex = deploy.indexOf("pnpm run verify:production:auth-config");
+    const authConfigIndex = deploy.indexOf(
+      "pnpm run verify:production:auth-config",
+    );
     const migrationIndex = deploy.indexOf("db:migrate:production");
     expect(authConfigIndex).toBeGreaterThan(buildIndex);
     expect(migrationIndex).toBeGreaterThan(authConfigIndex);
