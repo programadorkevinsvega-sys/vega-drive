@@ -89,7 +89,7 @@ El verificador de Turnstile exige que Siteverify confirme `success: true`, la ac
 - El despliegue proporcionado publicó la versión Worker `aa3c2aa4-1e86-4c38-9d52-a587dbfea36c`; el log mostró `/api/health` HTTP 200 y confirmó que la site key pública y el secreto server-side de Turnstile están configurados. El log no incluye el SHA de Git de la versión publicada.
 - GitHub Actions terminó correctamente para el commit `bd7e192f1afe6e89af2b6c10442f2b51e7d60ed5`, con los jobs `verify` y `secrets` aprobados: [ver ejecución de CI](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38112184984).
 
-El cierre de la Fase 2 no certifica la seguridad global ni implica que el almacenamiento de archivos esté listo: siguen pendientes el catálogo y las transferencias de archivos, las pruebas de autorización por recurso, la certificación transversal indicada en `Security.md` y el procedimiento de rollback de `Rollback.md`.
+El cierre de la Fase 2 no certifica la seguridad global ni implica que el almacenamiento de archivos esté listo. El catálogo de metadatos y las pruebas de aislamiento de sus operaciones quedaron completados y validados en la Fase 3. Siguen pendientes las transferencias físicas con R2 (Fase 4), la integración HTTP/BFF de archivos y sus respuestas de autorización (Fase 5), la certificación transversal indicada en `Security.md` y el procedimiento de rollback de `Rollback.md`.
 
 ## Diagnóstico operativo de Turnstile / Siteverify
 
