@@ -25,6 +25,10 @@
 - El widget oficial de Cloudflare Turnstile se carga en login y registro; el token
   se envía al Worker para validación server-side. La CSP permite los orígenes
   necesarios de Turnstile para script, iframe y conexión.
+- Ajustes contiene un formulario real de cambio de contraseña que usa
+  `POST /api/auth/password` en el mismo origen. El backend comprueba la sesión
+  y la contraseña actual, rota la cookie y revoca las otras sesiones; el
+  navegador no lee el valor de la cookie HttpOnly.
 
 ## Datos y alcance funcional
 
@@ -35,9 +39,11 @@ endpoint de revocación. No se cambió la lógica de identidad del backend ni se
 añadieron endpoints. El registro no inicia sesión automáticamente: después de
 crear la cuenta, el usuario debe iniciar sesión.
 
-Las pantallas de drive, carpetas, recientes, favoritos, papelera, búsqueda y ajustes
-siguen siendo marcadores visuales; la autenticación real no significa que las
-operaciones de archivos estén implementadas.
+Las pantallas de drive, carpetas, recientes, favoritos, papelera y búsqueda
+siguen siendo marcadores visuales. Ajustes ya permite cambiar la contraseña
+mediante el backend existente; el perfil y otras preferencias de cuenta todavía
+no están implementados. La autenticación real no significa que las operaciones
+de archivos estén implementadas.
 
 ## Comandos de instalación y validación
 
@@ -70,6 +76,9 @@ por sí sola demuestra la aplicación de cabeceras o disponibilidad en producci�
   endpoint API inexistente; comprobar tipo de contenido, CSP y las demás cabeceras.
 - Probar con Turnstile real en el hostname autorizado el login y registro con tokens
   válidos e inválidos; las pruebas unitarias del cliente no sustituyen ese E2E.
+- Tras desplegar de forma autorizada la pantalla de Ajustes, probar un cambio de
+  contraseña real: nueva contraseña aceptada, contraseña anterior rechazada en un
+  login posterior, sesión actual renovada y sesiones previas revocadas.
 - Verificar las cabeceras y la interfaz desplegada en producción después de un
   despliegue autorizado antes de considerar la integración publicada.
 - Cumplir `Security.md` y el procedimiento `Rollback.md`; staging y el ensayo de
