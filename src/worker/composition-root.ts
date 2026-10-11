@@ -106,7 +106,9 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.downloadFile(...args);
   }
 
-  cleanupExpiredUploads(...args: Parameters<FilesPublicApi["cleanupExpiredUploads"]>) {
+  cleanupExpiredUploads(
+    ...args: Parameters<FilesPublicApi["cleanupExpiredUploads"]>
+  ) {
     return this.api.cleanupExpiredUploads(...args);
   }
 

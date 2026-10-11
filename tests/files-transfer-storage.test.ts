@@ -13,7 +13,8 @@ async function fixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
-  ]) db.exec(await readFile(resolve(path), "utf8"));
+  ])
+    db.exec(await readFile(resolve(path), "utf8"));
   return db;
 }
 
@@ -41,10 +42,26 @@ describe("file transfer reservations and rate limits", () => {
       const max = 1024 * 1024 * 1024;
       const each = 100 * 1024 * 1024;
       for (let i = 0; i < 10; i++) {
-        expect(await uploads.reserve(pendingUpload("up-" + i, each), max)).toBe(true);
+        expect(await uploads.reserve(pendingUpload("up-" + i, each), max)).toBe(
+          true,
+        );
       }
-      expect(await uploads.reserve(pendingUpload("over-limit", 30 * 1024 * 1024), max)).toBe(false);
-      expect(await uploads.reserve({ ...pendingUpload("other-owner", 1), ownerId: "owner-b", storageKey: "u/owner-b/item-other-owner" }, max)).toBe(true);
+      expect(
+        await uploads.reserve(
+          pendingUpload("over-limit", 30 * 1024 * 1024),
+          max,
+        ),
+      ).toBe(false);
+      expect(
+        await uploads.reserve(
+          {
+            ...pendingUpload("other-owner", 1),
+            ownerId: "owner-b",
+            storageKey: "u/owner-b/item-other-owner",
+          },
+          max,
+        ),
+      ).toBe(true);
     } finally {
       db.close();
     }
@@ -57,21 +74,41 @@ describe("file transfer reservations and rate limits", () => {
       const occurredAt = "2026-10-11T12:00:00.000Z";
       const windowStart = "2026-10-11T11:00:00.000Z";
       for (let i = 0; i < 20; i++) {
-        expect(await events.consume(
-          "event-" + i, "owner-a", "upload", occurredAt, windowStart, 20,
-        )).toBe(true);
+        expect(
+          await events.consume(
+            "event-" + i,
+            "owner-a",
+            "upload",
+            occurredAt,
+            windowStart,
+            20,
+          ),
+        ).toBe(true);
       }
-      expect(await events.consume(
-        "event-over-limit", "owner-a", "upload", occurredAt, windowStart, 20,
-      )).toBe(false);
-      expect(await events.consume(
-        "other-user", "owner-b", "upload", occurredAt, windowStart, 20,
-      )).toBe(true);
+      expect(
+        await events.consume(
+          "event-over-limit",
+          "owner-a",
+          "upload",
+          occurredAt,
+          windowStart,
+          20,
+        ),
+      ).toBe(false);
+      expect(
+        await events.consume(
+          "other-user",
+          "owner-b",
+          "upload",
+          occurredAt,
+          windowStart,
+          20,
+        ),
+      ).toBe(true);
     } finally {
       db.close();
     }
   });
-
 
   it("removes expired upload objects and reconciles any pending metadata", async () => {
     const fixture = await createFilesCatalogFixture();
@@ -82,21 +119,64 @@ describe("file transfer reservations and rate limits", () => {
         bytes: new TextEncoder().encode("stale"),
         contentType: "text/plain",
       });
-      await fixture.db.prepare(
-        "INSERT INTO files_catalog_names (owner_id, parent_key, name_key, node_type, node_id) VALUES (?, ?, ?, ?, ?)",
-      ).bind("owner-a", "", "stale.txt", "file", "item-stale").run();
-      await fixture.db.prepare(
-        "INSERT INTO files_items (id, owner_id, folder_id, storage_key, name, content_type, size_bytes, created_at, updated_at, deleted_at) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL)",
-      ).bind("item-stale", "owner-a", objectKey, "stale.txt", "text/plain", 5, now, now).run();
-      await fixture.db.prepare(
-        "INSERT INTO files_uploads (id, owner_id, item_id, storage_key, expected_size_bytes, content_type, status, created_at, expires_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
-      ).bind("upload-stale", "owner-a", "item-stale", objectKey, 5, "text/plain", "pending", "2026-10-11T10:00:00.000Z", "2026-10-11T11:00:00.000Z").run();
+      await fixture.db
+        .prepare(
+          "INSERT INTO files_catalog_names (owner_id, parent_key, name_key, node_type, node_id) VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind("owner-a", "", "stale.txt", "file", "item-stale")
+        .run();
+      await fixture.db
+        .prepare(
+          "INSERT INTO files_items (id, owner_id, folder_id, storage_key, name, content_type, size_bytes, created_at, updated_at, deleted_at) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL)",
+        )
+        .bind(
+          "item-stale",
+          "owner-a",
+          objectKey,
+          "stale.txt",
+          "text/plain",
+          5,
+          now,
+          now,
+        )
+        .run();
+      await fixture.db
+        .prepare(
+          "INSERT INTO files_uploads (id, owner_id, item_id, storage_key, expected_size_bytes, content_type, status, created_at, expires_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+        )
+        .bind(
+          "upload-stale",
+          "owner-a",
+          "item-stale",
+          objectKey,
+          5,
+          "text/plain",
+          "pending",
+          "2026-10-11T10:00:00.000Z",
+          "2026-10-11T11:00:00.000Z",
+        )
+        .run();
 
       expect(await fixture.api.cleanupExpiredUploads(now, 10)).toBe(1);
       expect(fixture.objects.has(objectKey)).toBe(false);
-      expect(await fixture.db.prepare("SELECT id FROM files_items WHERE id = ?").bind("item-stale").first()).toBeNull();
-      expect(await fixture.db.prepare("SELECT id FROM files_uploads WHERE id = ?").bind("upload-stale").first()).toBeNull();
-      expect(await fixture.db.prepare("SELECT node_id FROM files_catalog_names WHERE node_id = ?").bind("item-stale").first()).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_items WHERE id = ?")
+          .bind("item-stale")
+          .first(),
+      ).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_uploads WHERE id = ?")
+          .bind("upload-stale")
+          .first(),
+      ).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT node_id FROM files_catalog_names WHERE node_id = ?")
+          .bind("item-stale")
+          .first(),
+      ).toBeNull();
     } finally {
       fixture.close();
     }
@@ -116,8 +196,14 @@ describe("file transfer reservations and rate limits", () => {
       };
       await uploads.insert(stale);
       await uploads.insert(failed);
-      const found = await uploads.listNeedingCleanup("2026-10-11T12:00:00.000Z", 20);
-      expect(found.map((upload) => upload.id).sort()).toEqual(["failed", "stale"]);
+      const found = await uploads.listNeedingCleanup(
+        "2026-10-11T12:00:00.000Z",
+        20,
+      );
+      expect(found.map((upload) => upload.id).sort()).toEqual([
+        "failed",
+        "stale",
+      ]);
     } finally {
       db.close();
     }

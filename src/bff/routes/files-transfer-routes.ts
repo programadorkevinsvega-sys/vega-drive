@@ -27,20 +27,35 @@ function transferError(reason: string, totalSizeBytes?: number): Response {
   switch (reason) {
     case "invalid-input":
     case "size-mismatch":
-      return Response.json({ error: "Invalid file transfer request" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid file transfer request" },
+        { status: 400 },
+      );
     case "too-large":
-      return Response.json({ error: "File exceeds the maximum allowed size" }, { status: 413 });
+      return Response.json(
+        { error: "File exceeds the maximum allowed size" },
+        { status: 413 },
+      );
     case "not-found":
       return Response.json({ error: "File not found" }, { status: 404 });
     case "duplicate-name":
-      return Response.json({ error: "A catalog item with that name already exists" }, { status: 409 });
+      return Response.json(
+        { error: "A catalog item with that name already exists" },
+        { status: 409 },
+      );
     case "quota-exceeded":
       return Response.json({ error: "Storage limit reached" }, { status: 409 });
     case "rate-limited":
-      return new Response(JSON.stringify({ error: "Too many file transfers" }), {
-        status: 429,
-        headers: { "Content-Type": "application/json; charset=UTF-8", "Retry-After": "3600" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Too many file transfers" }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Retry-After": "3600",
+          },
+        },
+      );
     case "range-not-satisfiable":
       return new Response(JSON.stringify({ error: "Range not satisfiable" }), {
         status: 416,
@@ -51,16 +66,23 @@ function transferError(reason: string, totalSizeBytes?: number): Response {
         },
       });
     default:
-      return Response.json({ error: "File storage temporarily unavailable" }, { status: 503 });
+      return Response.json(
+        { error: "File storage temporarily unavailable" },
+        { status: 503 },
+      );
   }
 }
 
 function contentDisposition(name: string): string {
-  const fallback = name.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download";
-  const encoded = encodeURIComponent(name).replace(/[!'()*]/g, (character) =>
-    "%" + character.charCodeAt(0).toString(16).toUpperCase(),
+  const fallback =
+    name.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download";
+  const encoded = encodeURIComponent(name).replace(
+    /[!'()*]/g,
+    (character) => "%" + character.charCodeAt(0).toString(16).toUpperCase(),
   );
-  return "attachment; filename=\"" + fallback + "\"; filename*=UTF-8''" + encoded;
+  return (
+    'attachment; filename="' + fallback + "\"; filename*=UTF-8''" + encoded
+  );
 }
 
 filesTransferRoutes.post("/", async (c) => {
@@ -69,7 +91,12 @@ filesTransferRoutes.post("/", async (c) => {
 
   const encodedName = request.headers.get("X-File-Name");
   const declaredSize = request.headers.get("X-File-Size");
-  if (!encodedName || encodedName.length > 4096 || !declaredSize || !/^\d{1,16}$/.test(declaredSize)) {
+  if (
+    !encodedName ||
+    encodedName.length > 4096 ||
+    !declaredSize ||
+    !/^\d{1,16}$/.test(declaredSize)
+  ) {
     return c.json(REQUEST_ERROR, 400);
   }
 
@@ -92,7 +119,10 @@ filesTransferRoutes.post("/", async (c) => {
   const folderId = request.headers.get("X-File-Folder-Id");
   const contentType = (
     request.headers.get("Content-Type") ?? "application/octet-stream"
-  ).split(";")[0].trim().toLowerCase();
+  )
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
   const result = await createCompositionRoot(c.env).files.uploadFile(
     actorFor(c),
     { name, folderId: folderId ?? null, sizeBytes, contentType },

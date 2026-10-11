@@ -45,10 +45,7 @@ export class D1FilesUploadRepository implements FilesUploadRepository {
     return result.meta.changes > 0;
   }
 
-  listNeedingCleanup(
-    now: string,
-    limit: number,
-  ): Promise<FilesUploadRecord[]> {
+  listNeedingCleanup(now: string, limit: number): Promise<FilesUploadRecord[]> {
     return this.db
       .prepare(
         "SELECT " +

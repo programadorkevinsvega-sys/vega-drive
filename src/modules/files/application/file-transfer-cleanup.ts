@@ -1,7 +1,10 @@
 import type { FileTransferDependencies } from "./file-transfer-dependencies.js";
 
 export function createFileTransferCleanup(deps: FileTransferDependencies) {
-  return async function cleanupExpiredUploads(nowIso: string, limit: number): Promise<number> {
+  return async function cleanupExpiredUploads(
+    nowIso: string,
+    limit: number,
+  ): Promise<number> {
     let cleaned = 0;
     const boundedLimit = Math.min(100, Math.max(1, Math.trunc(limit)));
     const pending = await deps.uploads.listNeedingCleanup(nowIso, boundedLimit);
@@ -20,7 +23,9 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
     }
     try {
       await deps.transferEvents.cleanupBefore(
-        new Date(new Date(nowIso).getTime() - 48 * 60 * 60 * 1000).toISOString(),
+        new Date(
+          new Date(nowIso).getTime() - 48 * 60 * 60 * 1000,
+        ).toISOString(),
         boundedLimit,
       );
     } catch {

@@ -16,10 +16,10 @@
 
 ## Rutas de transferencia
 
-| Método | Ruta | Comportamiento |
-|---|---|---|
-| POST | /api/files | Subida binaria autenticada; X-File-Name (URI-encoded), X-File-Size y opcionalmente X-File-Folder-Id; Content-Type declara el tipo del archivo. |
-| GET | /api/files/:id/download | Descarga autenticada con streaming; acepta un único encabezado Range. |
+| Método | Ruta                    | Comportamiento                                                                                                                                 |
+| ------ | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | /api/files              | Subida binaria autenticada; X-File-Name (URI-encoded), X-File-Size y opcionalmente X-File-Folder-Id; Content-Type declara el tipo del archivo. |
+| GET    | /api/files/:id/download | Descarga autenticada con streaming; acepta un único encabezado Range.                                                                          |
 
 Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera— siguen activas en /api/files. El frontend aún no incorpora el control visual para seleccionar/subir archivos; esa integración corresponde a la Fase 5 y no equivale a permitir acceso directo a R2.
 

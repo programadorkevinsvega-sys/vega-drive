@@ -28,20 +28,31 @@ export function createMemoryR2Bucket(): R2Bucket {
       }
       objects.set(key, {
         bytes,
-        contentType: options?.httpMetadata?.contentType ?? "application/octet-stream",
+        contentType:
+          options?.httpMetadata?.contentType ?? "application/octet-stream",
       });
     },
     async head(key: string) {
       const object = objects.get(key);
       return object
-        ? { size: object.bytes.byteLength, httpMetadata: { contentType: object.contentType } }
+        ? {
+            size: object.bytes.byteLength,
+            httpMetadata: { contentType: object.contentType },
+          }
         : null;
     },
-    async get(key: string, options?: { range?: { offset: number; length?: number } }) {
+    async get(
+      key: string,
+      options?: { range?: { offset: number; length?: number } },
+    ) {
       const object = objects.get(key);
       if (!object) return null;
       const bytes = options?.range
-        ? object.bytes.slice(options.range.offset, options.range.offset + (options.range.length ?? object.bytes.length))
+        ? object.bytes.slice(
+            options.range.offset,
+            options.range.offset +
+              (options.range.length ?? object.bytes.length),
+          )
         : object.bytes.slice();
       return {
         body: new Response(bytes).body,

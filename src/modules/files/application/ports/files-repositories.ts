@@ -131,7 +131,10 @@ export interface FilesUploadRecord {
 }
 
 export interface FilesUploadRepository {
-  reserve(upload: FilesUploadRecord, maxUserStorageBytes: number): Promise<boolean>;
+  reserve(
+    upload: FilesUploadRecord,
+    maxUserStorageBytes: number,
+  ): Promise<boolean>;
   listNeedingCleanup(now: string, limit: number): Promise<FilesUploadRecord[]>;
   deleteByIdForOwner(id: string, ownerId: string): Promise<boolean>;
   findByIdForOwner(

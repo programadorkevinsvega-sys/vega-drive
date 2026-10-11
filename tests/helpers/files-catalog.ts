@@ -41,7 +41,12 @@ export async function createFilesCatalogFixture() {
     },
     async head(key) {
       const object = objects.get(key);
-      return object ? { sizeBytes: object.bytes.byteLength, contentType: object.contentType } : null;
+      return object
+        ? {
+            sizeBytes: object.bytes.byteLength,
+            contentType: object.contentType,
+          }
+        : null;
     },
     async get(key, range) {
       const object = objects.get(key);
@@ -72,7 +77,11 @@ export async function createFilesCatalogFixture() {
     createFileMetadata(actor: FilesActor, input: unknown) {
       const record = input as { sizeBytes?: number };
       const sizeBytes = record.sizeBytes ?? 0;
-      return api.uploadFile(actor, input, new Response(new ArrayBuffer(sizeBytes)).body);
+      return api.uploadFile(
+        actor,
+        input,
+        new Response(new ArrayBuffer(sizeBytes)).body,
+      );
     },
   });
   return { ...fixture, api: testApi, objects };

@@ -129,11 +129,7 @@ async function sendFile(
     "X-File-Size": String(new TextEncoder().encode(body).byteLength),
   });
   if (folderId) headers.set("X-File-Folder-Id", folderId);
-  return send(
-    "/api/files",
-    { method: "POST", headers, body },
-    token,
-  );
+  return send("/api/files", { method: "POST", headers, body }, token);
 }
 
 async function json<T = Record<string, unknown>>(
@@ -415,7 +411,11 @@ describe("files catalog HTTP routes", () => {
     );
     const foreignFolder = await json<{ id: string }>(foreignFolderResponse);
 
-    const foreignItemResponse = await sendFile("foreign.txt", "file", fixture.tokenB);
+    const foreignItemResponse = await sendFile(
+      "foreign.txt",
+      "file",
+      fixture.tokenB,
+    );
     const foreignItem = await json<{ id: string }>(foreignItemResponse);
 
     const foreignFolderList = await send(
@@ -484,7 +484,12 @@ describe("files catalog HTTP routes", () => {
   it("streams private uploads and downloads with ranges and owner isolation", async () => {
     const upload = await sendFile("private report.txt", "abcdefghijklmnop");
     expect(upload.status).toBe(201);
-    const file = await json<{ id: string; name: string; sizeBytes: number; storageKey?: string }>(upload);
+    const file = await json<{
+      id: string;
+      name: string;
+      sizeBytes: number;
+      storageKey?: string;
+    }>(upload);
     expect(file).toMatchObject({ name: "private report.txt", sizeBytes: 16 });
     expect(file).not.toHaveProperty("storageKey");
 

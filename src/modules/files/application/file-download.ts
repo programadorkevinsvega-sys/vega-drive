@@ -1,7 +1,14 @@
 import type { FilesActor } from "./catalog-contracts.js";
 import type { FileTransferDependencies } from "./file-transfer-dependencies.js";
-import { DOWNLOADS_PER_HOUR, isValidContentType, parseByteRange } from "./transfer-contracts.js";
-import { hasValidActor, isValidCatalogId } from "../domain/catalog-validation.js";
+import {
+  DOWNLOADS_PER_HOUR,
+  isValidContentType,
+  parseByteRange,
+} from "./transfer-contracts.js";
+import {
+  hasValidActor,
+  isValidCatalogId,
+} from "../domain/catalog-validation.js";
 import { activeFolderPath } from "./catalog-service-utils.js";
 
 export interface FilesDownload {
@@ -33,16 +40,25 @@ export function createFileDownload(deps: FileTransferDependencies) {
     try {
       const item = await deps.items.findByIdForOwner(rawId, actor.userId);
       if (
-        !item || item.deletedAt !== null ||
+        !item ||
+        item.deletedAt !== null ||
         (item.folderId !== null &&
           !(await activeFolderPath(deps.folders, actor.userId, item.folderId)))
-      ) return { ok: false, reason: "not-found" };
+      )
+        return { ok: false, reason: "not-found" };
 
       const timestamp = now();
-      if (!(await deps.transferEvents.consume(
-        createId(), actor.userId, "download", timestamp.toISOString(),
-        new Date(timestamp.getTime() - 3600000).toISOString(), DOWNLOADS_PER_HOUR,
-      ))) return { ok: false, reason: "rate-limited" };
+      if (
+        !(await deps.transferEvents.consume(
+          createId(),
+          actor.userId,
+          "download",
+          timestamp.toISOString(),
+          new Date(timestamp.getTime() - 3600000).toISOString(),
+          DOWNLOADS_PER_HOUR,
+        ))
+      )
+        return { ok: false, reason: "rate-limited" };
 
       const head = await deps.storage.head(item.storageKey);
       if (!head || head.sizeBytes !== item.sizeBytes) {
@@ -50,7 +66,11 @@ export function createFileDownload(deps: FileTransferDependencies) {
       }
       const range = parseByteRange(rawRange, head.sizeBytes);
       if (range === false) {
-        return { ok: false, reason: "range-not-satisfiable", totalSizeBytes: head.sizeBytes };
+        return {
+          ok: false,
+          reason: "range-not-satisfiable",
+          totalSizeBytes: head.sizeBytes,
+        };
       }
       const stored = await deps.storage.get(
         item.storageKey,
@@ -64,7 +84,8 @@ export function createFileDownload(deps: FileTransferDependencies) {
         value: {
           name: item.name,
           contentType: isValidContentType(item.contentType)
-            ? item.contentType : "application/octet-stream",
+            ? item.contentType
+            : "application/octet-stream",
           sizeBytes: head.sizeBytes,
           contentLength: range ? range.length : head.sizeBytes,
           status: range ? 206 : 200,

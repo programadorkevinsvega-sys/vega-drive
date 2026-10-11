@@ -25,24 +25,59 @@ import type {
 
 export interface FilesPublicApi {
   status(): ModuleStatus;
-  createFolder(actor: FilesActor, input: unknown): Promise<CatalogResult<FilesFolderView>>;
-  renameFolder(actor: FilesActor, id: unknown, name: unknown): Promise<CatalogResult<FilesFolderView>>;
-  moveFolder(actor: FilesActor, id: unknown, parentFolderId: unknown): Promise<CatalogResult<FilesFolderView>>;
+  createFolder(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesFolderView>>;
+  renameFolder(
+    actor: FilesActor,
+    id: unknown,
+    name: unknown,
+  ): Promise<CatalogResult<FilesFolderView>>;
+  moveFolder(
+    actor: FilesActor,
+    id: unknown,
+    parentFolderId: unknown,
+  ): Promise<CatalogResult<FilesFolderView>>;
   deleteFolder(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
-  restoreFolder(actor: FilesActor, id: unknown): Promise<CatalogResult<FilesFolderView>>;
+  restoreFolder(
+    actor: FilesActor,
+    id: unknown,
+  ): Promise<CatalogResult<FilesFolderView>>;
   uploadFile(
     actor: FilesActor,
     input: unknown,
     body: ReadableStream<Uint8Array> | null,
   ): Promise<CatalogResult<FilesFileView>>;
-  downloadFile(actor: FilesActor, id: unknown, range: string | null): Promise<FilesDownloadResult>;
+  downloadFile(
+    actor: FilesActor,
+    id: unknown,
+    range: string | null,
+  ): Promise<FilesDownloadResult>;
   cleanupExpiredUploads(nowIso: string, limit: number): Promise<number>;
-  renameFile(actor: FilesActor, id: unknown, name: unknown): Promise<CatalogResult<FilesFileView>>;
-  moveFile(actor: FilesActor, id: unknown, folderId: unknown): Promise<CatalogResult<FilesFileView>>;
+  renameFile(
+    actor: FilesActor,
+    id: unknown,
+    name: unknown,
+  ): Promise<CatalogResult<FilesFileView>>;
+  moveFile(
+    actor: FilesActor,
+    id: unknown,
+    folderId: unknown,
+  ): Promise<CatalogResult<FilesFileView>>;
   deleteFile(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
-  restoreFile(actor: FilesActor, id: unknown): Promise<CatalogResult<FilesFileView>>;
-  listFolder(actor: FilesActor, input: unknown): Promise<CatalogResult<FilesFolderListing>>;
-  listTrash(actor: FilesActor, input: unknown): Promise<CatalogResult<FilesTrashListing>>;
+  restoreFile(
+    actor: FilesActor,
+    id: unknown,
+  ): Promise<CatalogResult<FilesFileView>>;
+  listFolder(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesFolderListing>>;
+  listTrash(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesTrashListing>>;
 }
 
 export interface FilesModuleDependencies {
@@ -57,7 +92,9 @@ export interface FilesModuleDependencies {
   createId?: () => string;
 }
 
-export function createFilesModule(deps: FilesModuleDependencies): FilesPublicApi {
+export function createFilesModule(
+  deps: FilesModuleDependencies,
+): FilesPublicApi {
   const folderCatalog = createFolderCatalog(deps);
   const folderMutations = createFolderMutations(deps);
   const itemCatalog = createItemCatalog(deps);
@@ -96,6 +133,8 @@ export function createFilesModule(deps: FilesModuleDependencies): FilesPublicApi
         ? transfers.downloadFile(...args)
         : Promise.resolve({ ok: false, reason: "unavailable" }),
     cleanupExpiredUploads: (nowIso, limit) =>
-      transfers ? transfers.cleanupExpiredUploads(nowIso, limit) : Promise.resolve(0),
+      transfers
+        ? transfers.cleanupExpiredUploads(nowIso, limit)
+        : Promise.resolve(0),
   };
 }
