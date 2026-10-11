@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Breadcrumbs, type Crumb } from "../ui/Breadcrumbs";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
@@ -12,6 +12,7 @@ import { useCatalogActions } from "./useCatalogActions";
 import { useCatalogData, type CatalogView } from "./useCatalogData";
 import { navigate } from "../router/use-route";
 import { FileTransferControls } from "./FileTransferControls";
+import { buildCatalogBreadcrumbs } from "./catalog-breadcrumbs";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -25,15 +26,11 @@ export function FilesCatalogScreen({
   const data = useCatalogData(view, folderId);
   const actions = useCatalogActions(folderId, data.refresh);
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
-  const breadcrumbs: Crumb[] =
-    view === "trash"
-      ? [{ label: "Mi unidad", href: "#/drive" }]
-      : folderId !== null
-        ? (data.folderData?.breadcrumbs ?? []).slice(0, -1).map((crumb) => ({
-            label: crumb.name,
-            href: crumb.id === null ? "#/drive" : "#/drive/folder/" + crumb.id,
-          }))
-        : [];
+  const breadcrumbs = buildCatalogBreadcrumbs(
+    view,
+    folderId,
+    data.folderData?.breadcrumbs,
+  );
 
   return (
     <div className="vd-page vd-catalog">
