@@ -119,9 +119,9 @@ describe("cliente HTTP de identidad", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
-      changePassword("old-test", "new-test-value"),
-    ).resolves.toEqual({ ok: true });
+    await expect(changePassword("old-test", "new-test-value")).resolves.toEqual(
+      { ok: true },
+    );
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/auth/password",
