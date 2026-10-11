@@ -12,15 +12,20 @@ Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
    - Migración: `files/infrastructure/persistence/d1/migrations/0001_files_initial.sql`.
    - Tablas: `files_items`, `files_folders`, `files_uploads` y `files_outbox`.
 
-2. **Propietario: `identity`**
+2. **Propietario: `files`**
+   - Migración: `files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql`.
+   - Tabla `files_catalog_names` con unicidad por propietario, padre y nombre normalizado; coordina los nombres activos entre carpetas y archivos.
+   - Índices únicos parciales adicionales en ambas tablas de nodos.
+
+3. **Propietario: `identity`**
    - Migración: `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`.
    - Tablas: `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
 
-3. **Propietario: `identity`**
+4. **Propietario: `identity`**
    - Migración: `identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql`.
    - Tabla e índice: `identity_auth_attempts` e `identity_auth_attempts_locked_until_idx`; las claves de limitación se guardan como hashes.
 
-El orden no establece dependencias entre módulos. Los IDs entre módulos son valores, nunca claves foráneas; no hay tablas genéricas compartidas, JOIN ni SQL cruzado. Los índices se definen en la migración del mismo propietario que la tabla indexada. `quota_usage` y `sharing_links` se crearán en las fases 6 y 7, respectivamente.
+El orden no establece dependencias entre módulos. Los IDs entre módulos son valores, nunca claves foráneas; no hay tablas genéricas compartidas, JOIN ni SQL cruzado. Los índices se definen en la migración del mismo propietario que la tabla indexada. El catálogo reserva el nombre en `files_catalog_names` antes de crear o restaurar y actualiza la reserva antes de renombrar o mover. La clave única cubre ambos tipos de nodo. Las modificaciones de reserva y metadatos son escrituras separadas, por lo que el código compensa reservas si falla la segunda operación; no se usa `db.batch()` para coordinarlas. `quota_usage` y `sharing_links` se crearán en las fases 6 y 7, respectivamente.
 
 ## Migración histórica conservada
 

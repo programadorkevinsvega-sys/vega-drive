@@ -63,6 +63,7 @@ describe("module-owned D1 migrations", () => {
 
     expect(paths).toEqual([
       "files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
+      "files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
       "identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql",
     ]);
@@ -112,6 +113,9 @@ describe("module-owned D1 migrations", () => {
       expect(initialDefinitions.get(key)).toBe(value);
     }
 
+    expect(allActiveDefinitions.has("index:files_folders_owner_parent_name_active_idx")).toBe(true);
+    expect(allActiveDefinitions.has("index:files_items_owner_folder_name_active_idx")).toBe(true);
+    expect(allActiveDefinitions.has("table:files_catalog_names")).toBe(true);
     expect(allActiveDefinitions.has("table:identity_auth_attempts")).toBe(true);
     expect(
       allActiveDefinitions.has("index:identity_auth_attempts_locked_until_idx"),
@@ -122,6 +126,9 @@ describe("module-owned D1 migrations", () => {
     const manifest = await readFile(resolve("migrations/manifest.md"), "utf8");
     expect(manifest).toContain(
       "files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
+    );
+    expect(manifest).toContain(
+      "files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
     );
     expect(manifest).toContain(
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",

@@ -1,10 +1,13 @@
 import type {
+  FilesCatalogCursor,
   FilesItemRecord,
   FilesItemRepository,
+  FilesTrashCursor,
 } from "../../../application/ports/files-repositories.js";
 
 const ITEM_COLUMNS =
-  "id, owner_id AS ownerId, folder_id AS folderId, storage_key AS storageKey, " +
+  "id, owner_id AS ownerId, folder_id AS folderId, " +
+  "storage_key AS storageKey, " +
   "name, content_type AS contentType, size_bytes AS sizeBytes, " +
   "created_at AS createdAt, updated_at AS updatedAt, deleted_at AS deletedAt";
 
@@ -30,20 +33,90 @@ export class D1FilesItemRepository implements FilesItemRepository {
       .first<FilesItemRecord>();
   }
 
+  async findActiveByName(
+    ownerId: string,
+    folderId: string | null,
+    name: string,
+    exceptId?: string,
+  ): Promise<boolean> {
+    const exclusion = exceptId ? " AND id <> ?" : "";
+    const statement = this.db.prepare(
+      "SELECT id FROM files_items WHERE owner_id = ? " +
+        "AND folder_id IS ? AND lower(name) = lower(?) " +
+        "AND deleted_at IS NULL" +
+        exclusion +
+        " LIMIT 1",
+    );
+    const query = exceptId
+      ? statement.bind(ownerId, folderId, name, exceptId)
+      : statement.bind(ownerId, folderId, name);
+    return Boolean(await query.first<{ id: string }>());
+  }
+
   async listByOwnerAndFolder(
     ownerId: string,
     folderId: string | null,
     limit: number,
+    cursor?: FilesCatalogCursor | null,
   ): Promise<FilesItemRecord[]> {
-    const result = await this.db
-      .prepare(
-        "SELECT " +
-          ITEM_COLUMNS +
-          " FROM files_items WHERE owner_id = ? AND folder_id IS ? " +
-          "AND deleted_at IS NULL ORDER BY created_at DESC LIMIT ?",
-      )
-      .bind(ownerId, folderId, boundedLimit(limit))
-      .all<FilesItemRecord>();
+    const after = cursor
+      ? " AND (lower(name) > lower(?) OR " +
+        "(lower(name) = lower(?) AND (? = 'folder' OR " +
+        "(? = 'file' AND id > ?))))"
+      : "";
+    const statement = this.db.prepare(
+      "SELECT " +
+        ITEM_COLUMNS +
+        " FROM files_items WHERE owner_id = ? AND folder_id IS ? " +
+        "AND deleted_at IS NULL" +
+        after +
+        " ORDER BY lower(name) ASC, id ASC LIMIT ?",
+    );
+    const query = cursor
+      ? statement.bind(
+          ownerId,
+          folderId,
+          cursor.name,
+          cursor.name,
+          cursor.type,
+          cursor.type,
+          cursor.id,
+          boundedLimit(limit),
+        )
+      : statement.bind(ownerId, folderId, boundedLimit(limit));
+    const result = await query.all<FilesItemRecord>();
+    return result.results;
+  }
+
+  async listTrashByOwner(
+    ownerId: string,
+    limit: number,
+    cursor?: FilesTrashCursor | null,
+  ): Promise<FilesItemRecord[]> {
+    const after = cursor
+      ? " AND (deleted_at < ? OR " +
+        "(deleted_at = ? AND (? = 'folder' OR " +
+        "(? = 'file' AND id > ?))))"
+      : "";
+    const statement = this.db.prepare(
+      "SELECT " +
+        ITEM_COLUMNS +
+        " FROM files_items WHERE owner_id = ? AND deleted_at IS NOT NULL" +
+        after +
+        " ORDER BY deleted_at DESC, id ASC LIMIT ?",
+    );
+    const query = cursor
+      ? statement.bind(
+          ownerId,
+          cursor.deletedAt,
+          cursor.deletedAt,
+          cursor.type,
+          cursor.type,
+          cursor.id,
+          boundedLimit(limit),
+        )
+      : statement.bind(ownerId, boundedLimit(limit));
+    const result = await query.all<FilesItemRecord>();
     return result.results;
   }
 
@@ -51,8 +124,10 @@ export class D1FilesItemRepository implements FilesItemRepository {
     await this.db
       .prepare(
         "INSERT INTO files_items " +
-          "(id, owner_id, folder_id, storage_key, name, content_type, size_bytes, " +
-          "created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "(id, owner_id, folder_id, storage_key, name, content_type, " +
+          "size_bytes, " +
+          "created_at, updated_at, deleted_at) " +
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       )
       .bind(
         item.id,
@@ -93,10 +168,26 @@ export class D1FilesItemRepository implements FilesItemRepository {
   ): Promise<boolean> {
     const result = await this.db
       .prepare(
-        "UPDATE files_items SET deleted_at = ? " +
+        "UPDATE files_items SET deleted_at = ?, updated_at = ? " +
           "WHERE id = ? AND owner_id = ? AND deleted_at IS NULL",
       )
-      .bind(deletedAt, id, ownerId)
+      .bind(deletedAt, deletedAt, id, ownerId)
+      .run();
+    return result.meta.changes > 0;
+  }
+
+  async restore(
+    id: string,
+    ownerId: string,
+    expectedDeletedAt: string,
+    updatedAt: string,
+  ): Promise<boolean> {
+    const result = await this.db
+      .prepare(
+        "UPDATE files_items SET deleted_at = NULL, updated_at = ? " +
+          "WHERE id = ? AND owner_id = ? AND deleted_at = ?",
+      )
+      .bind(updatedAt, id, ownerId, expectedDeletedAt)
       .run();
     return result.meta.changes > 0;
   }

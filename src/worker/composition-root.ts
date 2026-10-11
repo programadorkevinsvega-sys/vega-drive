@@ -1,17 +1,57 @@
 import type { Env, ModuleStatus } from "./env.js";
 import { createIdentityModuleFromD1 } from "../modules/identity/infrastructure/persistence/d1/create-identity-module.js";
 import type { IdentityPublicApi } from "../modules/identity/module.public-api.js";
+import { createFilesModuleFromD1 } from "../modules/files/infrastructure/persistence/d1/create-files-module.js";
 import type { FilesPublicApi } from "../modules/files/module.public-api.js";
 import type { QuotaPublicApi } from "../modules/quota/module.public-api.js";
 import type { SharingPublicApi } from "../modules/sharing/module.public-api.js";
 
 export interface IdentityGateway extends IdentityPublicApi {}
+
 export interface FilesGateway {
   status(): ModuleStatus;
+  createFolder(
+    ...args: Parameters<FilesPublicApi["createFolder"]>
+  ): ReturnType<FilesPublicApi["createFolder"]>;
+  renameFolder(
+    ...args: Parameters<FilesPublicApi["renameFolder"]>
+  ): ReturnType<FilesPublicApi["renameFolder"]>;
+  moveFolder(
+    ...args: Parameters<FilesPublicApi["moveFolder"]>
+  ): ReturnType<FilesPublicApi["moveFolder"]>;
+  deleteFolder(
+    ...args: Parameters<FilesPublicApi["deleteFolder"]>
+  ): ReturnType<FilesPublicApi["deleteFolder"]>;
+  restoreFolder(
+    ...args: Parameters<FilesPublicApi["restoreFolder"]>
+  ): ReturnType<FilesPublicApi["restoreFolder"]>;
+  createFileMetadata(
+    ...args: Parameters<FilesPublicApi["createFileMetadata"]>
+  ): ReturnType<FilesPublicApi["createFileMetadata"]>;
+  renameFile(
+    ...args: Parameters<FilesPublicApi["renameFile"]>
+  ): ReturnType<FilesPublicApi["renameFile"]>;
+  moveFile(
+    ...args: Parameters<FilesPublicApi["moveFile"]>
+  ): ReturnType<FilesPublicApi["moveFile"]>;
+  deleteFile(
+    ...args: Parameters<FilesPublicApi["deleteFile"]>
+  ): ReturnType<FilesPublicApi["deleteFile"]>;
+  restoreFile(
+    ...args: Parameters<FilesPublicApi["restoreFile"]>
+  ): ReturnType<FilesPublicApi["restoreFile"]>;
+  listFolder(
+    ...args: Parameters<FilesPublicApi["listFolder"]>
+  ): ReturnType<FilesPublicApi["listFolder"]>;
+  listTrash(
+    ...args: Parameters<FilesPublicApi["listTrash"]>
+  ): ReturnType<FilesPublicApi["listTrash"]>;
 }
+
 export interface QuotaGateway {
   status(): ModuleStatus;
 }
+
 export interface SharingGateway {
   status(): ModuleStatus;
 }
@@ -55,16 +95,69 @@ export class InProcessIdentityGateway implements IdentityGateway {
 
 export class InProcessFilesGateway implements FilesGateway {
   constructor(private readonly api: FilesPublicApi) {}
+
   status() {
     return this.api.status();
   }
+
+  createFolder(...args: Parameters<FilesPublicApi["createFolder"]>) {
+    return this.api.createFolder(...args);
+  }
+
+  renameFolder(...args: Parameters<FilesPublicApi["renameFolder"]>) {
+    return this.api.renameFolder(...args);
+  }
+
+  moveFolder(...args: Parameters<FilesPublicApi["moveFolder"]>) {
+    return this.api.moveFolder(...args);
+  }
+
+  deleteFolder(...args: Parameters<FilesPublicApi["deleteFolder"]>) {
+    return this.api.deleteFolder(...args);
+  }
+
+  restoreFolder(...args: Parameters<FilesPublicApi["restoreFolder"]>) {
+    return this.api.restoreFolder(...args);
+  }
+
+  createFileMetadata(
+    ...args: Parameters<FilesPublicApi["createFileMetadata"]>
+  ) {
+    return this.api.createFileMetadata(...args);
+  }
+
+  renameFile(...args: Parameters<FilesPublicApi["renameFile"]>) {
+    return this.api.renameFile(...args);
+  }
+
+  moveFile(...args: Parameters<FilesPublicApi["moveFile"]>) {
+    return this.api.moveFile(...args);
+  }
+
+  deleteFile(...args: Parameters<FilesPublicApi["deleteFile"]>) {
+    return this.api.deleteFile(...args);
+  }
+
+  restoreFile(...args: Parameters<FilesPublicApi["restoreFile"]>) {
+    return this.api.restoreFile(...args);
+  }
+
+  listFolder(...args: Parameters<FilesPublicApi["listFolder"]>) {
+    return this.api.listFolder(...args);
+  }
+
+  listTrash(...args: Parameters<FilesPublicApi["listTrash"]>) {
+    return this.api.listTrash(...args);
+  }
 }
+
 export class InProcessQuotaGateway implements QuotaGateway {
   constructor(private readonly api: QuotaPublicApi) {}
   status() {
     return this.api.status();
   }
 }
+
 export class InProcessSharingGateway implements SharingGateway {
   constructor(private readonly api: SharingPublicApi) {}
   status() {
@@ -74,9 +167,7 @@ export class InProcessSharingGateway implements SharingGateway {
 
 export function createCompositionRoot(env: Env) {
   const identityApi = createIdentityModuleFromD1(env);
-  const filesApi: FilesPublicApi = {
-    status: () => ({ module: "files", ready: false }),
-  };
+  const filesApi = createFilesModuleFromD1(env);
   const quotaApi: QuotaPublicApi = {
     status: () => ({ module: "quota", ready: false }),
   };
