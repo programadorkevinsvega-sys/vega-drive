@@ -4,9 +4,15 @@ import { FilesApiError, requestJson } from "./files-service";
 const MAX_FILE_SIZE_BYTES = 95 * 1024 * 1024;
 
 /** Sube bytes al Worker same-origin; el servidor sigue siendo autoridad de tamaño y permisos. */
-export async function uploadFile(file: File, folderId: string | null): Promise<FilesFileView> {
+export async function uploadFile(
+  file: File,
+  folderId: string | null,
+): Promise<FilesFileView> {
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    throw new FilesApiError("El archivo supera el tamaño máximo permitido de 95 MiB.", 413);
+    throw new FilesApiError(
+      "El archivo supera el tamaño máximo permitido de 95 MiB.",
+      413,
+    );
   }
 
   const payload = await requestJson<unknown>("/api/files", {
@@ -27,7 +33,10 @@ export async function uploadFile(file: File, folderId: string | null): Promise<F
     (payload as { type?: unknown }).type !== "file" ||
     typeof (payload as { id?: unknown }).id !== "string"
   ) {
-    throw new FilesApiError("El servidor devolvió una respuesta de archivo inválida.", 200);
+    throw new FilesApiError(
+      "El servidor devolvió una respuesta de archivo inválida.",
+      200,
+    );
   }
   return payload as FilesFileView;
 }
