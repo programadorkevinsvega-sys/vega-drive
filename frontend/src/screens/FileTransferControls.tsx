@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { uploadFile, FilesApiError } from "../services/files-service";
+import { FilesApiError } from "../services/files-service";
+import { uploadFile } from "../services/files-transfer-service";
 import { Button } from "../ui/Button";
 
 const MAX_FILE_SIZE_BYTES = 95 * 1024 * 1024;
