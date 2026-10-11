@@ -94,7 +94,6 @@ export function logout(): Promise<{ ok: true }> {
   });
 }
 
-
 export function changePassword(
   currentPassword: string,
   newPassword: string,
