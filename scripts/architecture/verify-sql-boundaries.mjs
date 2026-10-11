@@ -63,7 +63,8 @@ await runGuard("Límites SQL e imports entre módulos", async (failures) => {
         );
       }
     }
-    if (/\bJOIN\b/i.test(source))
+    const sqlJoinSource = source.replace(/\.\s*join\s*\(/gi, ".arrayJoin(");
+    if (/\bJOIN\b/i.test(sqlJoinSource))
       failures.push(rel + ": JOIN prohibido entre límites modulares.");
     if (/\bFOREIGN\s+KEY\b/i.test(source))
       failures.push(rel + ": FOREIGN KEY prohibida entre módulos.");
