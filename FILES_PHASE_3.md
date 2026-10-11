@@ -24,17 +24,17 @@ Los tests de catálogo y repositorios existen. La ejecución local reportada el 
 
 El código revisado deriva el propietario de la identidad de actor que recibe el caso de uso y filtra recursos mediante propietario; los caminos de carpeta también comprueban la propiedad y el estado de los ancestros. Los tests actuales cubren aislamiento de algunas operaciones de lectura, renombrado y borrado, así como la concurrencia de creación de nombres.
 
-Antes de cerrar, añadir o identificar pruebas explícitas que demuestren:
+La cobertura adicional se añadió directamente a `main` en los commits [7844040](https://github.com/programadorkevinsvega-sys/vega-drive/commit/7844040acd4188b34fc97b4fa08199baafec0cc4) y [58a6f84](https://github.com/programadorkevinsvega-sys/vega-drive/commit/58a6f84dcaf4f0567de6be7684582328767ee528). Incluye pruebas para:
 
-- [ ] Mover carpeta ajena y mover una carpeta propia dentro de una carpeta ajena.
-- [ ] Mover archivo propio a carpeta ajena, y mover archivo ajeno.
-- [ ] Restaurar carpeta o archivo ajeno.
-- [ ] Listar papelera sin revelar metadatos de otro propietario.
-- [ ] Crear o mover dentro de una carpeta ajena.
-- [ ] Rechazos sin cambios colaterales en metadatos ni reservas de nombres.
-- [ ] Conflictos de nombre durante renombrado, movimiento y restauración, incluidos escenarios concurrentes relevantes.
+- [x] Intentar mover una carpeta ajena y mover una carpeta propia a una carpeta ajena.
+- [x] Intentar mover un archivo ajeno y mover un archivo propio a una carpeta ajena.
+- [x] Rechazar creación de carpeta/archivo dentro de una carpeta ajena.
+- [x] Restaurar recursos ajenos y comprobar que no aparecen en la papelera del otro propietario.
+- [x] Comprobar que los rechazos no mueven nodos y que conflictos de nombre no alteran la ubicación ni la reserva del nodo existente.
+- [x] Cubrir movimientos y renombrados exitosos, breadcrumbs y conflicto al restaurar un archivo.
+- [ ] Ejecutar la suite actualizada en CI y registrar el resultado antes de certificar el cierre.
 
-Estos puntos son **brechas de evidencia de pruebas**; no deben describirse como vulnerabilidades confirmadas sin reproducir un fallo. Las respuestas HTTP 404 para recursos ajenos se deben verificar cuando el BFF/controller esté implementado en la Fase 5.
+Estos puntos eran **brechas de evidencia de pruebas**; no se describen como vulnerabilidades confirmadas. Las respuestas HTTP 404 para recursos ajenos se deben verificar cuando el BFF/controller esté implementado en la Fase 5.
 
 ## 3. Migraciones y verificación estructural de D1
 
@@ -84,10 +84,10 @@ No ejecutar `pnpm run db:migrate:production`, `pnpm run deploy` ni otros comando
 
 El borrado lógico y la restauración forman parte del catálogo. La limpieza permanente de metadatos y objetos físicos requiere una política explícita de retención, idempotencia y tratamiento de fallos. La limpieza de objetos R2 depende del adaptador de la Fase 4; no se debe marcar como implementada en el catálogo mientras no exista un caso de uso integrado y probado.
 
-- [ ] Definir política de retención y condiciones de borrado permanente.
-- [ ] Definir si la limpieza será síncrona o asíncrona y cómo se reintenta sin borrar recursos de otro propietario.
-- [ ] Documentar pruebas de idempotencia, fallos parciales y aislamiento.
-- [ ] Asignar el trabajo de objetos físicos a la Fase 4, si corresponde.
+- [x] Alcance de Fase 3 definido: solo borrado lógico y restauración; no hay borrado permanente ni purga automática por antigüedad.
+- [x] Hasta que se apruebe una política de retención y exista un caso de uso de purga explícito, los metadatos eliminados permanecen recuperables en la papelera; no se elimina automáticamente ningún metadato ni objeto.
+- [x] La eliminación física de objetos, reintentos/idempotencia y reconciliación de fallos D1/R2 se asignan a la Fase 4, cuando exista el adaptador R2. No se simula ni se marca como implementada esta capacidad en Fase 3.
+- [ ] La política de retención de producto y cualquier borrado permanente futuro requieren una decisión explícita antes de implementar la purga.
 
 ## 5. Evidencia de checks
 
@@ -106,7 +106,7 @@ La fase permanece abierta hasta que:
 
 1. Se complete la cobertura de pruebas de aislamiento y movimientos/restauraciones indicada en la sección 2.
 2. (Resuelto) Se reconcilie D1 local y se registre una verificación estructural satisfactoria; esto ya se completó el 2026-10-11.
-3. Se defina y documente el alcance de limpieza permanente, separando metadatos de objetos R2.
+3. Se documente el alcance de limpieza: Fase 3 no hace purga permanente ni automática; el ciclo de borrado físico y la reconciliación D1/R2 pertenecen a Fase 4. Esta delimitación de alcance ya está documentada; la política de retención de producto sigue pendiente y bloquea cualquier purga futura, no el catálogo de Fase 3.
 4. Se actualicen los checks del roadmap únicamente cuando exista evidencia.
 5. Se vuelvan a ejecutar los checks locales y CI sobre el commit candidato.
 
