@@ -78,7 +78,9 @@ describe("Cloudflare Turnstile verifier", () => {
         ),
     );
 
-    await expect(verifier.verify("sensitive-token-value")).resolves.toBe(false);
+    await expect(
+      verifier.verify("sensitive-token-value"),
+    ).resolves.toBe(false);
 
     const diagnostic = JSON.stringify(warn.mock.calls);
     expect(diagnostic).toContain("invalid-input-secret");
