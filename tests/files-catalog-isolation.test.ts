@@ -87,7 +87,9 @@ describe("files catalog owner isolation", () => {
     ).toHaveLength(1);
   });
   
-  it("rejects cross-owner moves and creation inside foreign folders", async () => {
+  it(
+    "rejects cross-owner moves and creation inside foreign folders",
+    async () => {
     const foreignFolder = await fixture.api.createFolder(ownerB, {
       name: "Foreign destination",
     });
@@ -111,13 +113,21 @@ describe("files catalog owner isolation", () => {
     if (!foreignFile.ok) throw new Error("Foreign file creation failed");
 
     expect(
-      await fixture.api.moveFolder(ownerA, ownFolder.value.id, foreignFolder.value.id),
+      await fixture.api.moveFolder(
+        ownerA,
+        ownFolder.value.id,
+        foreignFolder.value.id,
+      ),
     ).toEqual({ ok: false, reason: "not-found" });
     expect(
       await fixture.api.moveFolder(ownerA, foreignFolder.value.id, null),
     ).toEqual({ ok: false, reason: "not-found" });
     expect(
-      await fixture.api.moveFile(ownerA, ownFile.value.id, foreignFolder.value.id),
+      await fixture.api.moveFile(
+        ownerA,
+        ownFile.value.id,
+        foreignFolder.value.id,
+      ),
     ).toEqual({ ok: false, reason: "not-found" });
     expect(
       await fixture.api.moveFile(ownerA, foreignFile.value.id, null),
@@ -163,7 +173,9 @@ describe("files catalog owner isolation", () => {
     }
   });
 
-  it("isolates trash and rejects restoration of another owner's deleted nodes", async () => {
+  it(
+    "isolates trash and rejects restoration of another owner's deleted nodes",
+    async () => {
     const foreignFolder = await fixture.api.createFolder(ownerB, {
       name: "Trashed foreign folder",
     });
@@ -175,7 +187,9 @@ describe("files catalog owner isolation", () => {
     });
     if (!foreignFile.ok) throw new Error("Foreign file creation failed");
 
-    expect(await fixture.api.deleteFolder(ownerB, foreignFolder.value.id)).toEqual({
+    expect(
+      await fixture.api.deleteFolder(ownerB, foreignFolder.value.id),
+    ).toEqual({
       ok: true,
       value: undefined,
     });
