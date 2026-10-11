@@ -119,9 +119,9 @@ describe("cliente HTTP de identidad", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(changePassword("old-test", "new-test-value")).resolves.toEqual({
-      ok: true,
-    });
+    await expect(
+      changePassword("old-test", "new-test-value"),
+    ).resolves.toEqual({ ok: true });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/auth/password",
@@ -147,12 +147,13 @@ describe("cliente HTTP de identidad", () => {
       ),
     );
 
-    await expect(changePassword("old-test", "new-test-value")).rejects
-      .toMatchObject<Partial<IdentityApiError>>({
-        name: "IdentityApiError",
-        status: 400,
-        message: "Unable to change password",
-      });
+    await expect(
+      changePassword("old-test", "new-test-value"),
+    ).rejects.toMatchObject<Partial<IdentityApiError>>({
+      name: "IdentityApiError",
+      status: 400,
+      message: "Unable to change password",
+    });
   });
   it("consulta la sesión con credenciales same-origin", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
