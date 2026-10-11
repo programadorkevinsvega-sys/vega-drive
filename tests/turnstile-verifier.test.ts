@@ -160,9 +160,9 @@ describe("Cloudflare Turnstile verifier", () => {
         ),
     );
 
-    await expect(
-      verifier.verify("token-never-log", "register"),
-    ).resolves.toBe(false);
+    await expect(verifier.verify("token-never-log", "register")).resolves.toBe(
+      false,
+    );
 
     const diagnostic = JSON.stringify(warn.mock.calls);
     expect(diagnostic).toContain("Siteverify HTTP failure");
@@ -192,9 +192,9 @@ describe("Cloudflare Turnstile verifier", () => {
       },
     );
 
-    await expect(
-      verifier.verify("token-never-log", "register"),
-    ).resolves.toBe(false);
+    await expect(verifier.verify("token-never-log", "register")).resolves.toBe(
+      false,
+    );
 
     const diagnostic = JSON.stringify(warn.mock.calls);
     expect(diagnostic).toContain("Siteverify exception");
