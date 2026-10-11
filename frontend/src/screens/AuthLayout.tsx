@@ -12,7 +12,7 @@ import { useAuth } from "../services/auth-context";
 import { TurnstileWidget } from "../services/TurnstileWidget";
 import { ThemeToggle } from "../theme/ThemeToggle";
 import { Button } from "../ui/Button";
-import { TextField } from "../ui/TextField";
+import { AuthFields } from "./AuthFields";
 
 export interface AuthLayoutProps {
   route: Route;
@@ -155,47 +155,15 @@ export function AuthLayout({ route }: AuthLayoutProps) {
           className="vd-auth__form"
           onSubmit={(event) => void handleSubmit(event)}
         >
-          <TextField
-            label="Correo electrónico"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            maxLength={254}
-            disabled={loading}
-          />
-          <TextField
-            label="Contraseña"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete={isLogin ? "current-password" : "new-password"}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={12}
-            maxLength={128}
-            {...(!isLogin
-              ? {
-                  hint: "Usa entre 12 y 128 caracteres. Evita contraseñas comunes.",
-                }
-              : {})}
-            disabled={loading}
-            trailing={
-              <button
-                type="button"
-                className="vd-auth__password-toggle"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={
-                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                }
-                aria-pressed={showPassword}
-                disabled={loading}
-              >
-                {showPassword ? "Ocultar" : "Mostrar"}
-              </button>
-            }
+          <AuthFields
+            isLogin={isLogin}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            loading={loading}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
           />
           {configReady ? (
             <TurnstileWidget
