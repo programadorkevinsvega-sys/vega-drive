@@ -60,13 +60,21 @@ describe("cliente HTTP de identidad", () => {
       }),
     );
   });
-  it("conecta registro y logout con sus rutas", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ ok: true }), {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
-      }),
-    );
+  it("conecta registro y logout con sus rutas y estados HTTP", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
     vi.stubGlobal("fetch", fetchMock);
     await expect(
       register("person@example.test", "a secure password", "token"),
