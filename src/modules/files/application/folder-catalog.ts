@@ -96,7 +96,8 @@ export function createFolderCatalog(deps: FolderCatalogDependencies) {
         throw error;
       }
       return success(toFolderView(folder));
-    } catch {
+    } catch (error) {
+      console.error("[files] folder creation failed", error);
       return failure("unavailable");
     }
   }
@@ -156,7 +157,8 @@ export function createFolderCatalog(deps: FolderCatalogDependencies) {
         throw error;
       }
       return success({ ...toFolderView(folder), name, updatedAt });
-    } catch {
+    } catch (error) {
+      console.error("[files] folder rename failed", error);
       return failure("unavailable");
     }
   }
