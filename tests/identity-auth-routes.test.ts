@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { app } from "../src/bff/app.js";
 import type { Env } from "../src/worker/env.js";
+import { sha256Hex } from "../src/modules/identity/application/sessions/session-tokens.js";
 
 const env = {
   ASSETS: { fetch: async () => new Response("asset") },
@@ -20,6 +21,95 @@ describe("identity HTTP boundary", () => {
       env,
     );
     expect(response.status).toBe(403);
+  });
+
+  it("exposes only the public Turnstile site key and readiness, never the secret", async () => {
+    const configuredEnv = {
+      ...env,
+      TURNSTILE_SECRET_KEY: "server-only-test-secret",
+      TURNSTILE_SITE_KEY: "public-site-key",
+    } as Env;
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/api/auth/config"),
+      configuredEnv,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({
+      turnstileSiteKey: "public-site-key",
+      ready: true,
+    });
+    expect(JSON.stringify(body)).not.toContain("server-only-test-secret");
+  });
+
+  it("rejects unknown password fields even with a valid server-resolved session", async () => {
+    const token = "a".repeat(43);
+    const timestamp = new Date().toISOString();
+    const user = {
+      id: "user-a",
+      email: "person@example.test",
+      passwordHash: "unused",
+      passwordSalt: "unused",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      disabledAt: null,
+    };
+    const session = {
+      id: "session-a",
+      userId: user.id,
+      tokenHash: await sha256Hex(token),
+      createdAt: timestamp,
+      lastSeenAt: timestamp,
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      revokedAt: null,
+    };
+    const db = {
+      prepare(sql: string) {
+        return {
+          bind() {
+            return this;
+          },
+          async first<T>() {
+            if (sql.includes("FROM identity_sessions WHERE token_hash = ?")) {
+              return session as T;
+            }
+            if (sql.includes("FROM identity_users WHERE id = ?")) {
+              return user as T;
+            }
+            return null as T | null;
+          },
+          async run() {
+            return { success: true, meta: { changes: 1 } };
+          },
+        };
+      },
+    };
+    const configuredEnv = {
+      ...env,
+      VEGA_DRIVE_DB: db,
+      TURNSTILE_SECRET_KEY: "test-only-secret",
+      TURNSTILE_SITE_KEY: "public-site-key",
+    } as unknown as Env;
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/api/auth/password", {
+        method: "POST",
+        headers: {
+          Origin: "https://vega-drive.test",
+          Cookie: "__Host-session=" + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword: "Old passphrase 42!",
+          newPassword: "New passphrase 84!",
+          ownerId: "user-b",
+        }),
+      }),
+      configuredEnv,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "Invalid request" });
   });
 
   it("fails closed when Turnstile is not configured", async () => {

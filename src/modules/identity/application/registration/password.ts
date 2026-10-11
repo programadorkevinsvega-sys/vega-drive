@@ -41,9 +41,18 @@ function fromBase64(value: string): Uint8Array<ArrayBuffer> {
 }
 
 function constantTimeEqual(actual: Uint8Array, expected: Uint8Array): boolean {
-  let difference = actual.length ^ expected.length;
-  const length = Math.max(actual.length, expected.length);
-  for (let index = 0; index < length; index += 1) {
+  if (actual.length !== expected.length) return false;
+
+  const subtle = crypto.subtle as SubtleCrypto & {
+    timingSafeEqual?: (left: Uint8Array, right: Uint8Array) => boolean;
+  };
+  if (typeof subtle.timingSafeEqual === "function") {
+    return subtle.timingSafeEqual(actual, expected);
+  }
+
+  // Node's Web Crypto lacks Cloudflare's non-standard extension; keep tests safe.
+  let difference = 0;
+  for (let index = 0; index < actual.length; index += 1) {
     difference |= (actual[index] ?? 0) ^ (expected[index] ?? 0);
   }
   return difference === 0;

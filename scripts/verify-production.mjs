@@ -41,7 +41,6 @@ async function verifyHealth() {
         console.log(
           `PASS /api/health: HTTP ${response.status}, status=${body.status}, service=${body.service}`,
         );
-        console.log(`Production verification passed for ${baseUrl}`);
         return;
       }
 
@@ -65,4 +64,46 @@ async function verifyHealth() {
   throw lastError ?? new Error("Production health verification failed.");
 }
 
-await verifyHealth();
+async function verifyAuthConfiguration() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/config`, {
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    });
+    const bodyText = await response.text();
+    let body;
+
+    try {
+      body = JSON.parse(bodyText);
+    } catch {
+      body = null;
+    }
+
+    const siteKeyPresent =
+      typeof body?.turnstileSiteKey === "string" &&
+      body.turnstileSiteKey.trim().length > 0;
+    if (response.status === 200 && body?.ready === true && siteKeyPresent) {
+      console.log(
+        "PASS /api/auth/config: public site key present and server-side secret configured",
+      );
+      return;
+    }
+
+    throw new Error(
+      `Production authentication configuration is not ready: expected HTTP 200, ready=true and a public site key; received HTTP ${response.status}, ready=${String(body?.ready)}, siteKeyPresent=${siteKeyPresent}. Verify TURNSTILE_SITE_KEY and the TURNSTILE_SECRET_KEY Worker secret.`,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+if (!process.argv.includes("--auth-config-only")) {
+  await verifyHealth();
+}
+await verifyAuthConfiguration();
+if (!process.argv.includes("--auth-config-only")) {
+  console.log(`Production verification passed for ${baseUrl}`);
+}

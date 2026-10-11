@@ -49,9 +49,10 @@ La aplicación deshabilita registro/login con HTTP 503 cuando falta la site key 
 2. Configurar el secreto correspondiente como secreto del Worker TURNSTILE_SECRET_KEY; no guardarlo en Git ni en wrangler.toml.
 3. Confirmar que MAX_USERS es el límite de registro aprobado (actualmente el valor versionado es 10).
 4. Aplicar la migración 0002_identity_auth_attempts.sql a D1 remota mediante el flujo de despliegue autorizado y verificar el esquema.
-5. Probar login y registro reales con tokens Turnstile válidos en el hostname de producción, así como rechazo de tokens inválidos.
+5. Confirmar que `GET /api/auth/config` devuelve `ready: true` sin revelar el secreto (este control queda en el gate de despliegue).
+6. Probar login y registro con tokens Turnstile válidos en el hostname de producción o en un staging aislado con sus propias claves; verificar también el rechazo de tokens inválidos. No automatizar estos escenarios contra datos reales de producción sin una cuenta y un procedimiento de limpieza aprobados.
 
-La configuración registrada previamente en Cloudflare tenía TURNSTILE_SITE_KEY vacía. Por eso no se debe declarar autenticación de producción operativa hasta corregirla y verificar el secreto correspondiente.
+La salida del despliegue de Cloudflare del 2026-10-11 muestra TURNSTILE_SITE_KEY presente entre las variables del Worker. Esa salida no revela ni valida el secreto y no demuestra que Siteverify acepte tokens. El script `deploy` comprueba ahora `GET /api/auth/config` antes de migraciones/publicación y exige `ready: true`, lo que acredita que ambas variables están presentes, pero no sustituye el E2E con tokens válidos e inválidos en el hostname real. Nunca se deben usar las claves de prueba de Turnstile en producción.
 
 ## Verificación
 
@@ -70,4 +71,4 @@ La suite incluye pruebas de registro y límite atómico, política/derivación d
 
 ## Estado honesto
 
-La implementación y los tests se están incorporando directamente en main. La CI de la revisión previa falló en format:check, por lo que sus pasos posteriores fueron omitidos. Los tests añadidos en esta continuación aún deben ejecutarse en una revisión que supere el formateo manual. No hay evidencia nueva de prueba E2E de registro/login en producción en este documento.
+La implementación y los tests están en `main`. GitHub Actions pasó en el commit `d0c21c3378f4481ddd9d748157447ce346b6b241`: 105/105 pruebas raíz, 103/103 pruebas frontend y Gitleaks correctos. El log de Cloudflare del 2026-10-11 muestra `cloudflare:build` correcto, auditorías sin vulnerabilidades conocidas, verificación de 19 objetos de D1, publicación del Worker y `/api/health` HTTP 200. El gate añadido exige también que `/api/auth/config` informe `ready: true` antes de aplicar migraciones remotas. Sigue sin existir evidencia del E2E de registro/login con tokens Turnstile válidos e inválidos en un entorno aislado; por eso la Fase 2 permanece abierta hasta producir esa evidencia.
