@@ -233,7 +233,9 @@ describe("files catalog operations", () => {
       sizeBytes: 2,
       contentType: "text/plain",
     });
-    if (!replacementFile.ok) throw new Error("Replacement file creation failed");
+    if (!replacementFile.ok) {
+      throw new Error("Replacement file creation failed");
+    }
 
     expect(await api.restoreFile(ownerA, originalFile.value.id)).toEqual({
       ok: false,
