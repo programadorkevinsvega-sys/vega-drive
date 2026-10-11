@@ -130,6 +130,12 @@ export function deleteFolder(id: string): Promise<{ ok: true }> {
   );
 }
 
+export function deleteFolderPermanently(id: string): Promise<{ ok: true }> {
+  return sendNoBody<{ ok: true }>(
+    "/api/files/folders/" + encodeURIComponent(id) + "/permanent-delete", "POST",
+  );
+}
+
 export function restoreFolder(id: string): Promise<FilesFolderView> {
   return sendNoBody<FilesFolderView>(
     "/api/files/trash/folders/" + encodeURIComponent(id) + "/restore",
@@ -160,6 +166,12 @@ export function deleteFile(id: string): Promise<{ ok: true }> {
   return sendNoBody<{ ok: true }>(
     "/api/files/items/" + encodeURIComponent(id),
     "DELETE",
+  );
+}
+
+export function deleteFilePermanently(id: string): Promise<{ ok: true }> {
+  return sendNoBody<{ ok: true }>(
+    "/api/files/items/" + encodeURIComponent(id) + "/permanent-delete", "POST",
   );
 }
 

@@ -94,6 +94,18 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.deleteFile(...args);
   }
 
+  permanentlyDeleteFile(...args: Parameters<FilesPublicApi["permanentlyDeleteFile"]>) {
+    return this.api.permanentlyDeleteFile(...args);
+  }
+
+  permanentlyDeleteFolder(...args: Parameters<FilesPublicApi["permanentlyDeleteFolder"]>) {
+    return this.api.permanentlyDeleteFolder(...args);
+  }
+
+  cleanupExpiredTrash(...args: Parameters<FilesPublicApi["cleanupExpiredTrash"]>) {
+    return this.api.cleanupExpiredTrash(...args);
+  }
+
   restoreFile(...args: Parameters<FilesPublicApi["restoreFile"]>) {
     return this.api.restoreFile(...args);
   }

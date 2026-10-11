@@ -10,6 +10,7 @@ interface CatalogNodeRowProps {
   onRename: (node: FilesCatalogNode) => void;
   onMove: (node: FilesCatalogNode) => void;
   onDelete: (node: FilesCatalogNode) => void;
+  onPermanentDelete: (node: FilesCatalogNode) => void;
   onRestore: (node: FilesCatalogNode) => void;
 }
 
@@ -36,6 +37,7 @@ export function CatalogNodeRow({
   onRename,
   onMove,
   onDelete,
+  onPermanentDelete,
   onRestore,
 }: CatalogNodeRowProps) {
   const isFolder = node.type === "folder";
@@ -54,6 +56,13 @@ export function CatalogNodeRow({
           label: "Restaurar",
           icon: "undo",
           onSelect: () => onRestore(node),
+        },
+        {
+          id: "permanent-delete",
+          label: "Eliminar permanentemente",
+          icon: "trash",
+          danger: true,
+          onSelect: () => onPermanentDelete(node),
         },
       ]
     : [
@@ -81,7 +90,7 @@ export function CatalogNodeRow({
         },
         {
           id: "delete",
-          label: "Enviar a papelera",
+          label: "Eliminar",
           icon: "trash",
           danger: true,
           onSelect: () => onDelete(node),

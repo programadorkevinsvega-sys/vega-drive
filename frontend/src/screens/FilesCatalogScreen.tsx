@@ -4,6 +4,7 @@ import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
 import { Spinner } from "../ui/Spinner";
 import { CatalogActionDialog } from "./CatalogActionDialog";
+import { CatalogDeleteDialog } from "./CatalogDeleteDialog";
 import { CatalogNodeRow } from "./CatalogNodeRow";
 import { useCatalogActions } from "./useCatalogActions";
 import { useCatalogData, type CatalogView } from "./useCatalogData";
@@ -39,7 +40,7 @@ export function FilesCatalogScreen({
           <h1 className="vd-page__title">{data.title}</h1>
           <p className="vd-catalog__description">
             {view === "trash"
-              ? "Elementos eliminados de forma reversible. Puedes restaurarlos."
+              ? "Se eliminan automáticamente a los 30 días y siguen ocupando espacio mientras estén aquí."
               : "Carpetas y metadatos sincronizados con tu catálogo privado."}
           </p>
         </div>
@@ -135,7 +136,8 @@ export function FilesCatalogScreen({
                 onMove={(item) =>
                   actions.setAction({ type: "move", node: item })
                 }
-                onDelete={(item) => void actions.deleteNode(item)}
+                onDelete={(item) => actions.requestDelete(item, false)}
+                onPermanentDelete={(item) => actions.requestDelete(item, true)}
                 onRestore={(item) => void actions.restoreNode(item)}
               />
             ))}
@@ -160,6 +162,13 @@ export function FilesCatalogScreen({
         folders={data.folderTargets}
         onClose={() => actions.setAction(null)}
         onSubmit={actions.submitAction}
+      />
+      <CatalogDeleteDialog
+        target={actions.deleteTarget}
+        loading={actions.deleteLoading}
+        onClose={actions.closeDeleteDialog}
+        onSendToTrash={actions.sendToTrash}
+        onPermanentDelete={actions.permanentlyDelete}
       />
     </div>
   );

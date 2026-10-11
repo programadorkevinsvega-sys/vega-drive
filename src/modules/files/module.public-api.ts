@@ -5,6 +5,7 @@ import { createFolderMutations } from "./application/folder-mutations.js";
 import { createItemCatalog } from "./application/item-catalog.js";
 import { createItemMutations } from "./application/item-mutations.js";
 import { createFileTransfers } from "./application/file-transfers.js";
+import { createTrashMutations } from "./application/trash-mutations.js";
 import type { FilesDownloadResult } from "./application/file-download.js";
 import type { IFileStoragePort } from "./application/ports/file-storage.js";
 import type {
@@ -66,6 +67,9 @@ export interface FilesPublicApi {
     folderId: unknown,
   ): Promise<CatalogResult<FilesFileView>>;
   deleteFile(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
+  permanentlyDeleteFile(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
+  permanentlyDeleteFolder(actor: FilesActor, id: unknown): Promise<CatalogResult<void>>;
+  cleanupExpiredTrash(nowIso: string, limit: number): Promise<number>;
   restoreFile(
     actor: FilesActor,
     id: unknown,
@@ -100,6 +104,10 @@ export function createFilesModule(
   const itemCatalog = createItemCatalog(deps);
   const itemMutations = createItemMutations(deps);
   const listing = createCatalogListing(deps);
+  const trash = deps.storage ? createTrashMutations({
+    folders: deps.folders, items: deps.items, names: deps.names, storage: deps.storage,
+    ...(deps.now ? { now: deps.now } : {}),
+  }) : null;
   const transfers =
     deps.uploads && deps.transferEvents && deps.storage
       ? createFileTransfers({
@@ -136,5 +144,13 @@ export function createFilesModule(
       transfers
         ? transfers.cleanupExpiredUploads(nowIso, limit)
         : Promise.resolve(0),
+    permanentlyDeleteFile: (...args) => trash
+      ? trash.permanentlyDeleteFile(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    permanentlyDeleteFolder: (...args) => trash
+      ? trash.permanentlyDeleteFolder(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    cleanupExpiredTrash: (nowIso, limit) => trash
+      ? trash.cleanupExpiredTrash(nowIso, limit) : Promise.resolve(0),
   };
 }

@@ -21,8 +21,10 @@ export default {
     ctx: ExecutionContext,
   ): Promise<void> {
     const nowIso = new Date(controller.scheduledTime).toISOString();
-    ctx.waitUntil(
-      createCompositionRoot(env).files.cleanupExpiredUploads(nowIso, 100),
-    );
+    const files = createCompositionRoot(env).files;
+    ctx.waitUntil(Promise.all([
+      files.cleanupExpiredUploads(nowIso, 100),
+      files.cleanupExpiredTrash(nowIso, 10),
+    ]).then(() => undefined));
   },
 };

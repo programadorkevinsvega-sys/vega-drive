@@ -114,6 +114,35 @@ export class D1FilesFolderRepository implements FilesFolderRepository {
     return result.results;
   }
 
+  async listExpiredTrash(cutoff: string, limit: number): Promise<FilesFolderRecord[]> {
+    const result = await this.db.prepare(
+      "SELECT " + FOLDER_COLUMNS + " FROM files_folders " +
+      "WHERE deleted_at IS NOT NULL AND deleted_at <= ? ORDER BY deleted_at ASC, id ASC LIMIT ?",
+    ).bind(cutoff, boundedLimit(limit)).all<FilesFolderRecord>();
+    return result.results;
+  }
+
+  async listDescendants(ownerId: string, parentFolderId: string): Promise<FilesFolderRecord[]> {
+    const result = await this.db.prepare(
+      "WITH RECURSIVE descendants AS (" +
+      "SELECT id, owner_id, parent_folder_id, name, created_at, updated_at, deleted_at, 1 AS depth " +
+      "FROM files_folders WHERE owner_id = ? AND parent_folder_id = ? UNION ALL " +
+      "SELECT f.id, f.owner_id, f.parent_folder_id, f.name, f.created_at, f.updated_at, f.deleted_at, d.depth + 1 " +
+      "FROM files_folders f JOIN descendants d ON f.parent_folder_id = d.id WHERE f.owner_id = ?) " +
+      "SELECT id, owner_id AS ownerId, parent_folder_id AS parentFolderId, name, " +
+      "created_at AS createdAt, updated_at AS updatedAt, deleted_at AS deletedAt " +
+      "FROM descendants ORDER BY depth DESC",
+    ).bind(ownerId, parentFolderId, ownerId).all<FilesFolderRecord>();
+    return result.results;
+  }
+
+  async deletePermanently(id: string, ownerId: string): Promise<boolean> {
+    const result = await this.db.prepare(
+      "DELETE FROM files_folders WHERE id = ? AND owner_id = ?",
+    ).bind(id, ownerId).run();
+    return result.meta.changes > 0;
+  }
+
   async insert(folder: FilesFolderRecord): Promise<void> {
     await this.db
       .prepare(

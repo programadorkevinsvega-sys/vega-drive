@@ -48,6 +48,8 @@ export interface FilesItemRepository {
   ): Promise<FilesItemRecord[]>;
   insert(item: FilesItemRecord): Promise<void>;
   deletePermanently(id: string, ownerId: string): Promise<boolean>;
+  listExpiredTrash?(cutoff: string, limit: number): Promise<FilesItemRecord[]>;
+  listByFolderIds?(ownerId: string, folderIds: string[], limit: number): Promise<FilesItemRecord[]>;
   updateMetadata(
     id: string,
     ownerId: string,
@@ -97,6 +99,9 @@ export interface FilesFolderRepository {
     cursor?: FilesTrashCursor | null,
   ): Promise<FilesFolderRecord[]>;
   insert(folder: FilesFolderRecord): Promise<void>;
+  deletePermanently?(id: string, ownerId: string): Promise<boolean>;
+  listExpiredTrash?(cutoff: string, limit: number): Promise<FilesFolderRecord[]>;
+  listDescendants?(ownerId: string, parentFolderId: string): Promise<FilesFolderRecord[]>;
   updateMetadata(
     id: string,
     ownerId: string,
