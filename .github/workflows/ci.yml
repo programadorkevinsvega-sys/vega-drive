@@ -32,6 +32,11 @@ jobs:
         run: pnpm run db:migrate:local
       - name: Verify local D1 schema
         run: pnpm run db:verify:schema:local
+      - name: Temporary formatter diagnostic
+        if: startsWith(github.event.head_commit.message, 'debug(format):')
+        run: |
+          pnpm exec prettier --write FILES_PHASE_4.md src/bff/routes/files-transfer-routes.ts src/modules/files/application/file-download.ts src/modules/files/application/file-transfer-cleanup.ts src/modules/files/application/file-upload.ts src/modules/files/application/ports/files-repositories.ts src/modules/files/infrastructure/persistence/d1/d1-files-item.repository.ts src/modules/files/infrastructure/persistence/d1/d1-files-upload.repository.ts src/modules/files/module.public-api.ts src/worker/composition-root.ts tests/files-catalog-http.test.ts tests/files-transfer-storage.test.ts tests/helpers/files-catalog.ts tests/helpers/memory-r2-bucket.ts
+          git diff -- FILES_PHASE_4.md src/bff/routes/files-transfer-routes.ts src/modules/files/application/file-download.ts src/modules/files/application/file-transfer-cleanup.ts src/modules/files/application/file-upload.ts src/modules/files/application/ports/files-repositories.ts src/modules/files/infrastructure/persistence/d1/d1-files-item.repository.ts src/modules/files/infrastructure/persistence/d1/d1-files-upload.repository.ts src/modules/files/module.public-api.ts src/worker/composition-root.ts tests/files-catalog-http.test.ts tests/files-transfer-storage.test.ts tests/helpers/files-catalog.ts tests/helpers/memory-r2-bucket.ts
       - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest
