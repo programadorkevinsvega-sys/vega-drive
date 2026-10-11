@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface TurnstileRenderOptions {
   sitekey: string;
+  action: "register" | "login";
   callback(token: string): void;
   "expired-callback"(): void;
   "error-callback"(): void;
@@ -55,11 +56,13 @@ function loadTurnstile(): Promise<void> {
 
 export function TurnstileWidget({
   siteKey,
+  action,
   onToken,
   onError,
   resetKey,
 }: {
   siteKey: string;
+  action: "register" | "login";
   onToken(token: string): void;
   onError(): void;
   resetKey: number;
@@ -76,6 +79,7 @@ export function TurnstileWidget({
         if (disposed || !containerRef.current || !window.turnstile) return;
         widgetId = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
+          action,
           callback: (token) => onToken(token),
           "expired-callback": () => onToken(""),
           "error-callback": () => {
@@ -97,7 +101,7 @@ export function TurnstileWidget({
       if (widgetId && window.turnstile?.remove)
         window.turnstile.remove(widgetId);
     };
-  }, [siteKey, resetKey, onToken, onError]);
+  }, [siteKey, action, resetKey, onToken, onError]);
   return (
     <div className="vd-auth__turnstile">
       <div ref={containerRef} />
