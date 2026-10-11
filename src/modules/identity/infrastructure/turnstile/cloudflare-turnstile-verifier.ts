@@ -1,7 +1,12 @@
-import type { TurnstileVerifier } from "../../application/registration/register-user.types.js";
+import type {
+  TurnstileAction,
+  TurnstileVerifier,
+} from "../../application/registration/register-user.types.js";
 
 interface SiteverifyResponse {
   success?: boolean;
+  action?: string;
+  hostname?: string;
   "error-codes"?: string[];
 }
 
@@ -24,17 +29,42 @@ function safeErrorCodes(value: unknown): string[] {
 }
 
 export class CloudflareTurnstileVerifier implements TurnstileVerifier {
+  private readonly expectedHostnames: ReadonlySet<string>;
+
   constructor(
     private readonly secretKey: string,
+    expectedHostnames: readonly string[],
     private readonly fetcher: typeof fetch = fetch,
-  ) {}
+  ) {
+    this.expectedHostnames = new Set(
+      expectedHostnames
+        .map((hostname) => hostname.trim().toLowerCase())
+        .filter(Boolean),
+    );
+  }
 
-  async verify(token: string, clientIp?: string | null): Promise<boolean> {
-    if (!this.secretKey || !token || token.length > 2048) {
+  async verify(
+    token: string,
+    expectedAction: TurnstileAction,
+    clientIp?: string | null,
+  ): Promise<boolean> {
+    if (
+      !this.secretKey ||
+      !token ||
+      token.length > 2048 ||
+      !expectedAction ||
+      this.expectedHostnames.size === 0
+    ) {
       console.warn("[turnstile] Siteverify skipped", {
         reason: !this.secretKey
           ? "missing-secret"
-          : "missing-or-oversized-token",
+          : !token
+            ? "missing-token"
+            : token.length > 2048
+              ? "token-too-large"
+              : !expectedAction
+                ? "missing-action"
+                : "missing-hostname-allowlist",
       });
       return false;
     }
@@ -51,6 +81,7 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
+          signal: AbortSignal.timeout(10_000),
         },
       );
 
@@ -75,6 +106,28 @@ export class CloudflareTurnstileVerifier implements TurnstileVerifier {
         });
         return false;
       }
+
+      const hostname =
+        typeof result.hostname === "string"
+          ? result.hostname.toLowerCase()
+          : "";
+      if (!this.expectedHostnames.has(hostname)) {
+        console.warn("[turnstile] Siteverify hostname mismatch", {
+          hostname: hostname || null,
+          expectedHostnames: [...this.expectedHostnames],
+        });
+        return false;
+      }
+
+      if (result.action !== expectedAction) {
+        console.warn("[turnstile] Siteverify action mismatch", {
+          action:
+            typeof result.action === "string" ? result.action.slice(0, 32) : null,
+          expectedAction,
+        });
+        return false;
+      }
+
       return true;
     } catch {
       // Do not log exception messages: they can contain request details.
