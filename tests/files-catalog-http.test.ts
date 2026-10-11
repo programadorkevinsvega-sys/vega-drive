@@ -272,6 +272,41 @@ describe("files catalog HTTP routes", () => {
     });
   });
 
+  it("accepts empty DELETE request streams but rejects non-empty bodies", async () => {
+    const folderResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Delete body validation folder",
+    });
+    const folder = await json<{ id: string }>(folderResponse);
+    const fileResponse = await sendFile("delete-body-validation.txt", "content");
+    const file = await json<{ id: string }>(fileResponse);
+
+    const emptyItemDelete = await send("/api/files/items/" + file.id, {
+      method: "DELETE",
+      body: "",
+    });
+    expect(emptyItemDelete.status).toBe(200);
+
+    const emptyFolderDelete = await send("/api/files/folders/" + folder.id, {
+      method: "DELETE",
+      body: "",
+    });
+    expect(emptyFolderDelete.status).toBe(200);
+
+    const protectedFileResponse = await sendFile("protected-delete.txt", "keep");
+    const protectedFile = await json<{ id: string }>(protectedFileResponse);
+    const nonEmptyDelete = await send("/api/files/items/" + protectedFile.id, {
+      method: "DELETE",
+      body: "unexpected",
+    });
+    expect(nonEmptyDelete.status).toBe(400);
+    expect(await json(nonEmptyDelete)).toEqual({ error: "Invalid request" });
+
+    const stillExists = await send("/api/files");
+    expect(await json<{ files: Array<{ id: string }> }>(stillExists)).toMatchObject({
+      files: [{ id: protectedFile.id }],
+    });
+  });
+
   it("soft-deletes, lists trash and restores folders and items", async () => {
     const folderResponse = await sendJson("/api/files/folders", "POST", {
       name: "Trash folder",
