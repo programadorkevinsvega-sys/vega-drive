@@ -58,6 +58,23 @@ describe("independent architecture verification scripts", () => {
     expect(result.stderr).toContain("prefijo ajeno identity_");
   });
 
+  it("allows JavaScript array join methods in module repositories", async () => {
+    const result = await runFixture("sql", {
+      "src/modules/files/infrastructure/persistence/d1/repository.ts":
+        'const placeholders = ids.map(() => "?").join(", ");',
+    });
+    expect(result.status).toBe(0);
+  });
+
+  it("rejects SQL JOIN statements inside module repositories", async () => {
+    const result = await runFixture("sql", {
+      "src/modules/files/infrastructure/persistence/d1/repository.ts":
+        'const query = "SELECT * FROM files_items JOIN files_folders ON files_items.folder_id = files_folders.id";',
+    });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("JOIN prohibido entre límites modulares");
+  });
+
   it("rejects R2 binding access outside the files storage adapter", async () => {
     const result = await runFixture("r2Port", {
       "src/bff/app.ts": "const bucket = env.FILES_BUCKET;",
