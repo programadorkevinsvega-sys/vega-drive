@@ -53,11 +53,11 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Confirmar en el panel de Cloudflare que el bucket `vega-drive-files` es privado (confirmación del usuario, 2026-10-10).
 - [ ] **Antes de la Fase 4 (transferencias R2):** verificar en el panel que no haya dominio público ni `r2.dev` habilitado y que no exista CORS de navegador. El bucket está confirmado como privado; esta comprobación adicional no bloquea el cierre de Fase 0 porque todavía no existe flujo de archivos.
 - [ ] **Antes de la Fase 4:** confirmar permisos mínimos para el acceso de R2, limitado al bucket requerido, cuando se implemente el adaptador real. No hay todavía un adaptador de almacenamiento de archivos.
-- [ ] **En la Fase 2 (registro/login):** configurar Turnstile y su secreto en el Worker; actualmente `TURNSTILE_SITE_KEY` está vacío y no hay flujo de autenticación en Fase 0.
+- [x] Configurar Turnstile y su secreto en el Worker durante la Fase 2; la verificación de producción confirmó que la configuración pública y el secreto server-side están presentes y el propietario probó tokens válidos e inválidos.
 - [ ] Revisar los secretos operativos del Worker antes de habilitar funciones que los requieran; Gitleaks ya pasó en GitHub Actions y no se presenta como parte del build de Cloudflare.
 - [x] Ejecutar `pnpm audit --audit-level=high` dentro de `pnpm run cloudflare:build`.
 - [ ] Definir un control de secretos que forme parte del camino de despliegue si se requiere que también bloquee despliegues. Gitleaks existe en GitHub Actions, pero ese job no debe presentarse como una comprobación ejecutada por `cloudflare:build`. Mantener secretos fuera de archivos versionados.
-- **Aceptación de Fase 0:** bindings D1/R2 configurados, D1 verificada, bucket confirmado como privado y Gitleaks sin fugas detectadas en CI. Cumplido con la evidencia disponible del 2026-10-10. Las verificaciones adicionales de exposición/permisos de R2 se deben completar antes de implementar o habilitar transferencias en la Fase 4; Turnstile se configura en la Fase 2. Estos pendientes no impiden cerrar el esqueleto fundacional y no certifican la seguridad global.
+- **Aceptación de Fase 0:** bindings D1/R2 configurados, D1 verificada, bucket confirmado como privado y Gitleaks sin fugas detectadas en CI. Cumplido con la evidencia disponible del 2026-10-10. Las verificaciones adicionales de exposición/permisos de R2 se deben completar antes de implementar o habilitar transferencias en la Fase 4; Turnstile quedó configurado y probado durante la Fase 2. Estos pendientes no impiden cerrar el esqueleto fundacional y no certifican la seguridad global.
 - 🔒 SEC-R2-01, SEC-R2-02, SEC-R2-08, SEC-SEC-01.
 
 ### 0.3 Esqueleto único del Worker
@@ -128,9 +128,16 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 
 ## Fase 2 — Módulo identity
 
-**Estado: IMPLEMENTACIÓN EN CURSO (2026-10-11).** Registro, login, logout, resolución de sesión, cambio de contraseña en backend, limitación progresiva y auditoría están implementados. El propietario confirmó manualmente que el Worker actualizado permite registro/login y que Turnstile funciona en producción. La interfaz real de cambio de contraseña acaba de incorporarse a `main` en `#/settings`, con cliente HTTP y pruebas de validación; ese cambio de frontend todavía debe superar las comprobaciones del repositorio y desplegarse de forma autorizada. La fase permanece abierta hasta verificar el cambio real de contraseña, la renovación de la sesión actual, la revocación de sesiones anteriores y el rechazo de tokens Turnstile inválidos en un entorno aprobado. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md).
+**Estado: CERRADA (2026-10-10, hora local de Colombia).** La implementación y aceptación funcional del módulo identity quedaron completadas. Este cierre cubre registro, autenticación, sesiones, Turnstile y cambio de contraseña; no implica que Vega Drive ya tenga el catálogo o las transferencias de archivos, ni que la certificación transversal de seguridad o el procedimiento de rollback estén cerrados. Véase [IDENTITY_PHASE_2.md](./IDENTITY_PHASE_2.md).
 
-**Precondiciones antes de empezar a implementar:** leer de nuevo `AGENTS.md`, `roadmap.md`, `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`, `Security.md` y `Rollback.md`; comprobar el estado de `main` y el árbol de trabajo; revisar la estructura actual de identity y los scripts/pruebas existentes; convertir cada requisito de esta fase en cambios pequeños con pruebas. Mantener todo directamente en `main`, sin ramas ni PRs. No avanzar a fases posteriores ni afirmar verificaciones que no se hayan ejecutado.
+### Evidencia de cierre
+
+- [x] El propietario confirmó en producción el registro y el inicio de sesión con Turnstile válido.
+- [x] El propietario ejecutó una prueba de extremo a extremo con un token Turnstile inválido y confirmó que el servidor lo rechaza.
+- [x] El propietario cambió la contraseña desde Ajustes, inició sesión con la nueva y confirmó el rechazo de la contraseña anterior.
+- [x] El propietario confirmó que la sesión actual sigue funcionando tras el cambio y que las demás sesiones quedan revocadas.
+- [x] El despliegue aportado por el propietario publicó la versión Worker `aa3c2aa4-1e86-4c38-9d52-a587dbfea36c`; la verificación de producción informó HTTP 200 en `/api/health` y presencia de la site key pública y del secreto server-side de Turnstile. El log compartido no identifica el SHA de Git asociado a esa versión.
+- [x] La ejecución de GitHub Actions del commit `bd7e192f1afe6e89af2b6c10442f2b51e7d60ed5` terminó correctamente en los jobs `verify` y `secrets`: [ver CI](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38112184984).
 
 ### 2.1 Registro cerrado
 
@@ -138,7 +145,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Aplicar MAX_USERS validado en servidor con inserción atómica.
 - [x] Normalizar correo, aplicar política de contraseña y almacenar hashes seguros.
 - [x] Verificar Turnstile en el backend y fallar de forma cerrada.
-- **Aceptación:** el controller no llama repositorios ni maneja reglas de registro.
+- **Aceptación:** el controller no llama repositorios ni maneja reglas de registro; se mantiene el límite cerrado en servidor y la verificación de Turnstile falla de forma cerrada.
 - 🔒 SEC-AUTH-01, SEC-AUTH-03, SEC-AUTH-05, SEC-AUTH-06, SEC-AUTH-07.
 
 ### 2.2 Login y sesiones
@@ -152,7 +159,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Añadir bloqueo progresivo por correo/IP con claves hasheadas y expiración de ventana.
 - [x] Limitar el cuerpo JSON a 64 KiB durante lectura, verificar Origin y aplicar cabeceras de seguridad.
 - [x] Añadir pruebas de casos de uso y límites HTTP para registro, login, logout, sesiones, contraseña, Turnstile y rate limiting.
-- **Aceptación:** las rutas protegidas responden 401 sin sesión y los campos de autoridad enviados por cliente son rechazados. El propietario confirmó el flujo positivo de Turnstile en producción; la pantalla de cambio de contraseña recién integrada aún requiere checks, despliegue autorizado y prueba de aceptación de rotación de sesiones. Sigue pendiente probar el rechazo de tokens inválidos en un entorno aprobado.
+- **Aceptación:** las rutas protegidas responden 401 sin sesión y rechazan campos de autoridad enviados por cliente. Las pruebas automatizadas y la aceptación manual en producción cubren Turnstile válido/inválido, cambio de contraseña, continuidad de la sesión actual y revocación de las demás sesiones.
 - 🔒 SEC-SES-01…05, SEC-ISO-01, SEC-AUTH-02, SEC-AUTH-04.
 
 ---
