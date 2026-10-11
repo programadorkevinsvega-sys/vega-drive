@@ -6,18 +6,35 @@ afterEach(() => {
 });
 
 describe("Cloudflare Turnstile verifier", () => {
-  it("posts the token and secret to Siteverify and accepts only success=true", async () => {
+  it("posts the token and secret to Siteverify and validates action and hostname", async () => {
     const fetcher = vi.fn(
       async (_input: RequestInfo | URL, _init?: RequestInit) =>
-        new Response(JSON.stringify({ success: true }), { status: 200 }),
+        new Response(
+          JSON.stringify({
+            success: true,
+            action: "register",
+            hostname: "vega-drive.test",
+          }),
+          { status: 200 },
+        ),
     );
-    const verifier = new CloudflareTurnstileVerifier("test-secret", fetcher);
+    const verifier = new CloudflareTurnstileVerifier(
+      "test-secret",
+      ["vega-drive.test"],
+      fetcher,
+    );
     await expect(
-      verifier.verify("captcha-token", "203.0.113.10"),
+      verifier.verify("captcha-token", "register", "203.0.113.10"),
     ).resolves.toBe(true);
     expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      expect.objectContaining({
+        method: "POST",
+        signal: expect.any(AbortSignal),
+      }),
+    );
     const [, init] = fetcher.mock.calls[0]!;
-    expect(init?.method).toBe("POST");
     expect(init?.headers).toEqual({
       "Content-Type": "application/x-www-form-urlencoded",
     });
@@ -29,41 +46,66 @@ describe("Cloudflare Turnstile verifier", () => {
 
   it("fails closed for missing configuration, HTTP failures, invalid results and network errors", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    const fetcher = vi.fn(
+    const unusedFetcher = vi.fn(
       async () =>
-        new Response(JSON.stringify({ success: true }), { status: 200 }),
+        new Response(
+          JSON.stringify({
+            success: true,
+            action: "register",
+            hostname: "vega-drive.test",
+          }),
+          { status: 200 },
+        ),
     );
     await expect(
-      new CloudflareTurnstileVerifier("", fetcher).verify("token"),
-    ).resolves.toBe(false);
-    await expect(
-      new CloudflareTurnstileVerifier("secret", fetcher).verify(""),
+      new CloudflareTurnstileVerifier("", ["vega-drive.test"], unusedFetcher)
+        .verify("token", "register"),
     ).resolves.toBe(false);
     await expect(
       new CloudflareTurnstileVerifier(
         "secret",
+        ["vega-drive.test"],
+        unusedFetcher,
+      ).verify("", "register"),
+    ).resolves.toBe(false);
+    await expect(
+      new CloudflareTurnstileVerifier(
+        "secret",
+        ["vega-drive.test"],
         async () => new Response("unavailable", { status: 503 }),
-      ).verify("token"),
+      ).verify("token", "register"),
     ).resolves.toBe(false);
     await expect(
       new CloudflareTurnstileVerifier(
         "secret",
+        ["vega-drive.test"],
         async () =>
           new Response(JSON.stringify({ success: false }), { status: 200 }),
-      ).verify("token"),
+      ).verify("token", "register"),
     ).resolves.toBe(false);
     await expect(
-      new CloudflareTurnstileVerifier("secret", async () => {
-        throw new Error("network");
-      }).verify("token"),
+      new CloudflareTurnstileVerifier(
+        "secret",
+        ["vega-drive.test"],
+        async () => {
+          throw new Error("network");
+        },
+      ).verify("token", "register"),
     ).resolves.toBe(false);
-    expect(fetcher).not.toHaveBeenCalled();
+    await expect(
+      new CloudflareTurnstileVerifier("secret", [], unusedFetcher).verify(
+        "token",
+        "register",
+      ),
+    ).resolves.toBe(false);
+    expect(unusedFetcher).not.toHaveBeenCalled();
   });
 
   it("logs allowlisted Siteverify error codes without exposing secrets or tokens", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const verifier = new CloudflareTurnstileVerifier(
       "sensitive-secret",
+      ["vega-drive.test"],
       async () =>
         new Response(
           JSON.stringify({
@@ -78,7 +120,9 @@ describe("Cloudflare Turnstile verifier", () => {
         ),
     );
 
-    await expect(verifier.verify("sensitive-token-value")).resolves.toBe(false);
+    await expect(
+      verifier.verify("sensitive-token-value", "register"),
+    ).resolves.toBe(false);
 
     const diagnostic = JSON.stringify(warn.mock.calls);
     expect(diagnostic).toContain("invalid-input-secret");
@@ -87,16 +131,60 @@ describe("Cloudflare Turnstile verifier", () => {
     expect(diagnostic).not.toContain("sensitive-token-value");
   });
 
+  it("rejects a successful Siteverify response with the wrong hostname or action", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const wrongHostname = new CloudflareTurnstileVerifier(
+      "secret",
+      ["vega-drive.test"],
+      async () =>
+        new Response(
+          JSON.stringify({
+            success: true,
+            action: "register",
+            hostname: "attacker.example",
+          }),
+          { status: 200 },
+        ),
+    );
+    const wrongAction = new CloudflareTurnstileVerifier(
+      "secret",
+      ["vega-drive.test"],
+      async () =>
+        new Response(
+          JSON.stringify({
+            success: true,
+            action: "login",
+            hostname: "vega-drive.test",
+          }),
+          { status: 200 },
+        ),
+    );
+
+    await expect(wrongHostname.verify("token", "register")).resolves.toBe(
+      false,
+    );
+    await expect(wrongAction.verify("token", "register")).resolves.toBe(false);
+  });
+
   it("rejects oversized tokens before making a request", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const fetcher = vi.fn(
       async () =>
-        new Response(JSON.stringify({ success: true }), { status: 200 }),
+        new Response(
+          JSON.stringify({
+            success: true,
+            action: "register",
+            hostname: "vega-drive.test",
+          }),
+          { status: 200 },
+        ),
     );
     await expect(
-      new CloudflareTurnstileVerifier("secret", fetcher).verify(
-        "x".repeat(2049),
-      ),
+      new CloudflareTurnstileVerifier(
+        "secret",
+        ["vega-drive.test"],
+        fetcher,
+      ).verify("x".repeat(2049), "register"),
     ).resolves.toBe(false);
     expect(fetcher).not.toHaveBeenCalled();
   });
