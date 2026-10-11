@@ -51,9 +51,16 @@ describe("integración de assets frontend/Cloudflare", () => {
     expect(rootPackage.scripts["cloudflare:build"]).toContain(
       "wrangler deploy --dry-run",
     );
-    expect(rootPackage.scripts["deploy"]).toMatch(
-      /^pnpm run cloudflare:build &&/,
-    );
+    const deploy = rootPackage.scripts["deploy"];
+    expect(deploy).toMatch(/^pnpm run deploy:preflight &&/);
+    expect(deploy).toContain("pnpm run check");
+    expect(deploy).toContain("pnpm run frontend:check");
+    expect(deploy).toContain("pnpm run frontend:audit");
+
+    const dryRunIndex = deploy.indexOf("wrangler deploy --dry-run");
+    const migrationIndex = deploy.indexOf("db:migrate:production");
+    expect(dryRunIndex).toBeGreaterThanOrEqual(0);
+    expect(migrationIndex).toBeGreaterThan(dryRunIndex);
     expect(frontendPackage.scripts.check).toBe(
       "pnpm run typecheck && pnpm run test && pnpm run build",
     );

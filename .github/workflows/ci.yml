@@ -28,6 +28,7 @@ jobs:
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run frontend:install
+      - run: pnpm run verify:module-migrations
       - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest
