@@ -45,7 +45,10 @@ export function FilesCatalogScreen({
         </div>
         {view === "drive" ? (
           <div className="vd-catalog__heading-actions">
-            <FileTransferControls folderId={folderId} onUploaded={data.refresh} />
+            <FileTransferControls
+              folderId={folderId}
+              onUploaded={data.refresh}
+            />
             <Button
               icon="plus"
               onClick={() => actions.setAction({ type: "create-folder" })}

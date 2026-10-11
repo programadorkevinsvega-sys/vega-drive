@@ -62,9 +62,7 @@ export function FileTransferControls({
 
     if (uploaded > 0) onUploaded();
     if (failed.length > 0) {
-      setError(
-        "No se pudieron subir " + failed.join(", ") + ". " + lastError,
-      );
+      setError("No se pudieron subir " + failed.join(", ") + ". " + lastError);
       setStatus(
         uploaded > 0
           ? "Se subieron " + uploaded + " de " + files.length + " archivos."
