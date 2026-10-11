@@ -41,19 +41,17 @@ La migración src/modules/identity/infrastructure/persistence/d1/migrations/0002
 
 El adaptador D1 de identity es el único que consulta esa tabla. Las claves de correo/IP se hashean antes de persistirse. Los registros antiguos de limitación pueden requerir una política de limpieza operacional futura si el volumen de intentos aumenta.
 
-## Configuración operativa requerida
+## Configuración operativa verificada en producción
 
-La aplicación deshabilita registro/login con HTTP 503 cuando falta la site key o el secreto de Turnstile. Antes de habilitar autenticación en producción:
+El despliegue y la aceptación manual confirmaron que la configuración de Turnstile está activa en el hostname de producción. La comprobación publicada informó que la site key pública está presente y que el secreto server-side está configurado; nunca se registra ni se expone el valor del secreto.
 
-1. Configurar una site key real de Turnstile en TURNSTILE_SITE_KEY para el hostname de producción.
-2. Configurar el secreto correspondiente como secreto del Worker TURNSTILE_SECRET_KEY; no guardarlo en Git ni en wrangler.toml. Confirmar que pertenece al mismo widget que TURNSTILE_SITE_KEY.
-3. Configurar `TURNSTILE_HOSTNAMES` con los hostnames exactos permitidos por despliegue; producción no debe incluir `localhost` ni `127.0.0.1`.
-4. Confirmar que MAX_USERS es el límite de registro aprobado (actualmente el valor versionado es 10).
-5. Aplicar la migración 0002_identity_auth_attempts.sql a D1 remota mediante el flujo de despliegue autorizado y verificar el esquema.
-6. Confirmar que `GET /api/auth/config` devuelve `ready: true` sin revelar el secreto.
-7. Probar login y registro con tokens Turnstile válidos en el hostname de producción o en un staging aislado con sus propias claves; verificar también el rechazo de tokens inválidos. No automatizar estos escenarios contra datos reales de producción sin una cuenta y un procedimiento de limpieza aprobados.
-
-La salida del despliegue de Cloudflare del 2026-10-11 muestra TURNSTILE_SITE_KEY presente entre las variables del Worker. Esa salida no revela ni valida el secreto y no demuestra que Siteverify acepte tokens. El script `deploy` comprueba ahora `GET /api/auth/config` antes de migraciones/publicación y exige `ready: true`, lo que acredita que ambas variables están presentes, pero no sustituye el E2E con tokens válidos e inválidos en el hostname real. Nunca se deben usar las claves de prueba de Turnstile en producción.
+- [x] La site key pública y el secreto del Worker están configurados.
+- [x] `TURNSTILE_HOSTNAMES` incluye el hostname de producción permitido, sin depender de localhost.
+- [x] El límite de registro permanece definido por `MAX_USERS` (valor versionado: 10).
+- [x] La configuración de `/api/auth/config` se verificó durante la comprobación de producción.
+- [x] Se probó el flujo positivo de autenticación con Turnstile válido.
+- [x] El propietario probó de extremo a extremo un token Turnstile inválido y confirmó que el servidor lo rechaza.
+- [x] El registro/login funcionan en el Worker desplegado; cualquier prueba adicional debe usar un entorno aprobado y no exponer tokens, contraseñas ni secretos.
 
 ## Verificación
 
@@ -74,13 +72,24 @@ La suite incluye pruebas de registro y límite atómico, política/derivación d
 
 El frontend incorpora la pantalla real en `#/settings`, con contraseña actual, nueva contraseña, confirmación, controles de mostrar/ocultar, validación de longitud y coincidencia, estados accesibles de error/éxito y limpieza de los campos tras cada intento enviado. El cliente llama a `POST /api/auth/password` en el mismo origen y no persiste los valores en almacenamiento local. La validación del navegador mejora la experiencia, pero el backend sigue siendo la autoridad para las reglas de contraseña y la contraseña actual.
 
-El endpoint existente renueva la cookie de la sesión actual y revoca las demás sesiones del usuario. La incorporación de esta pantalla en `main` no implica que esté desplegada; el despliegue autorizado del frontend y la comprobación de cambio real de contraseña siguen pendientes.
+El endpoint renueva la cookie de la sesión actual y revoca las demás sesiones del usuario. El propietario confirmó en producción el cambio real de contraseña, que la nueva contraseña permite iniciar sesión, que la anterior se rechaza, que la sesión actual sigue operativa y que las demás sesiones quedan revocadas.
 
-## Estado honesto
+## Estado y evidencia de cierre
 
-El verificador de Turnstile exige que Siteverify confirme `success: true`, la acción esperada (`register` o `login`) y un hostname permitido. Los diagnósticos omiten secretos y tokens. El fallo `Illegal invocation` en `siteverify-fetch` se corrigió envolviendo la llamada al `fetch` global para que no reciba la instancia del verificador como `this`.
+**Estado de la Fase 2: CERRADA (2026-10-10, hora local de Colombia).** El código, las verificaciones automatizadas disponibles y las pruebas manuales de aceptación descritas a continuación cubren el alcance de identidad, autenticación y sesiones.
 
-El 2026-10-11, el propietario confirmó que el Worker actualizado permite registro e inicio de sesión y que Turnstile funciona en producción. Esto sustituye la observación histórica de cero solicitudes Siteverify documentada durante el diagnóstico inicial. La evidencia es una comprobación manual reportada por el propietario; no afirma que ya se haya probado el rechazo de tokens inválidos. Para cerrar la fase faltan las verificaciones automatizadas del frontend actualizado, desplegar la pantalla de cambio de contraseña con autorización y comprobar el cambio real, la renovación de la sesión actual y el rechazo de la contraseña antigua en un nuevo inicio de sesión. La prueba de rechazo de token inválido debe realizarse en un entorno aprobado, sin automatizar cuentas de producción sin plan de limpieza.
+El verificador de Turnstile exige que Siteverify confirme `success: true`, la acción esperada (`register` o `login`) y un hostname permitido; falla de forma cerrada y los diagnósticos omiten secretos y tokens. El fallo `Illegal invocation` en `siteverify-fetch` se corrigió envolviendo la llamada al `fetch` global para que no reciba la instancia del verificador como `this`.
+
+**Evidencia reportada por el propietario en producción (2026-10-10):**
+
+- Registro e inicio de sesión funcionan con Turnstile válido.
+- La prueba de extremo a extremo con un token Turnstile inválido fue rechazada por el servidor.
+- El cambio de contraseña desde Ajustes se completó correctamente; la nueva contraseña permite iniciar sesión y la anterior es rechazada.
+- La sesión actual sigue funcionando después del cambio y las demás sesiones del usuario quedan revocadas.
+- El despliegue proporcionado publicó la versión Worker `aa3c2aa4-1e86-4c38-9d52-a587dbfea36c`; el log mostró `/api/health` HTTP 200 y confirmó que la site key pública y el secreto server-side de Turnstile están configurados. El log no incluye el SHA de Git de la versión publicada.
+- GitHub Actions terminó correctamente para el commit `bd7e192f1afe6e89af2b6c10442f2b51e7d60ed5`, con los jobs `verify` y `secrets` aprobados: [ver ejecución de CI](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38112184984).
+
+El cierre de la Fase 2 no certifica la seguridad global ni implica que el almacenamiento de archivos esté listo: siguen pendientes el catálogo y las transferencias de archivos, las pruebas de autorización por recurso, la certificación transversal indicada en `Security.md` y el procedimiento de rollback de `Rollback.md`.
 
 ## Diagnóstico operativo de Turnstile / Siteverify
 
