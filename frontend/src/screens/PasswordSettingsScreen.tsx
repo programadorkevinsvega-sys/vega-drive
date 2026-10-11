@@ -240,8 +240,8 @@ export function PasswordSettingsScreen() {
 
           <p className="vd-settings__security-note">
             Al guardar, el servidor renovará esta sesión y revocará las demás.
-            Las contraseñas nunca se guardan en el navegador ni se muestran en
-            los registros de la aplicación.
+            Las contraseñas no se guardan en almacenamiento local ni se
+            escriben en los registros de la aplicación.
           </p>
         </div>
       </section>
