@@ -58,8 +58,11 @@ describe("Cloudflare Turnstile verifier", () => {
         ),
     );
     await expect(
-      new CloudflareTurnstileVerifier("", ["vega-drive.test"], unusedFetcher)
-        .verify("token", "register"),
+      new CloudflareTurnstileVerifier(
+        "",
+        ["vega-drive.test"],
+        unusedFetcher,
+      ).verify("token", "register"),
     ).resolves.toBe(false);
     await expect(
       new CloudflareTurnstileVerifier(
