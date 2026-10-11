@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/bff/app.js";
 import type { Env } from "../src/worker/env.js";
+import { createCompositionRoot } from "../src/worker/composition-root.js";
 import { sha256Hex } from "../src/modules/identity/application/sessions/session-tokens.js";
 import { createSqliteD1 } from "./helpers/sqlite-d1.js";
 import { createMemoryR2Bucket } from "./helpers/memory-r2-bucket.js";
@@ -313,6 +314,92 @@ describe("files catalog HTTP routes", () => {
     ).toMatchObject({
       files: [{ id: protectedFile.id }],
     });
+  });
+
+  it("permanently deletes file objects and nested folder contents from R2", async () => {
+    const parentResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Permanent parent",
+    });
+    const parent = await json<{ id: string }>(parentResponse);
+    const childResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Permanent child",
+      parentFolderId: parent.id,
+    });
+    const child = await json<{ id: string }>(childResponse);
+    const upload = await sendFile(
+      "permanent.txt",
+      "stored bytes",
+      fixture.tokenA,
+      child.id,
+    );
+    const file = await json<{ id: string }>(upload);
+    const stored = await fixture.db
+      .prepare(
+        "SELECT storage_key AS storageKey FROM files_items WHERE id = ?",
+      )
+      .bind(file.id)
+      .first<{ storageKey: string }>();
+    expect(stored).not.toBeNull();
+    expect(
+      await fixture.env.FILES_BUCKET.head(stored!.storageKey),
+    ).not.toBeNull();
+
+    const response = await send(
+      "/api/files/folders/" + parent.id + "/permanent-delete",
+      { method: "POST" },
+    );
+    expect(response.status).toBe(200);
+    expect(await json(response)).toEqual({ ok: true });
+    expect(
+      await fixture.env.FILES_BUCKET.head(stored!.storageKey),
+    ).toBeNull();
+    expect(
+      await fixture.db
+        .prepare("SELECT id FROM files_items WHERE id = ?")
+        .bind(file.id)
+        .first(),
+    ).toBeNull();
+    expect(
+      await fixture.db
+        .prepare("SELECT id FROM files_folders WHERE id IN (?, ?)")
+        .bind(parent.id, child.id)
+        .all(),
+    ).toMatchObject({ results: [] });
+  });
+
+  it("automatically purges trash older than 30 days from D1 and R2", async () => {
+    const upload = await sendFile("expired.txt", "expired bytes");
+    const file = await json<{ id: string }>(upload);
+    const stored = await fixture.db
+      .prepare(
+        "SELECT storage_key AS storageKey FROM files_items WHERE id = ?",
+      )
+      .bind(file.id)
+      .first<{ storageKey: string }>();
+    expect(stored).not.toBeNull();
+
+    const expiredAt = new Date(
+      Date.now() - 31 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    await runSql(
+      fixture.db,
+      "UPDATE files_items SET deleted_at = ?, updated_at = ? WHERE id = ?",
+      [expiredAt, expiredAt, file.id],
+    );
+    const cleaned = await createCompositionRoot(
+      fixture.env,
+    ).files.cleanupExpiredTrash(new Date().toISOString(), 10);
+
+    expect(cleaned).toBeGreaterThan(0);
+    expect(
+      await fixture.env.FILES_BUCKET.head(stored!.storageKey),
+    ).toBeNull();
+    expect(
+      await fixture.db
+        .prepare("SELECT id FROM files_items WHERE id = ?")
+        .bind(file.id)
+        .first(),
+    ).toBeNull();
   });
 
   it("soft-deletes, lists trash and restores folders and items", async () => {
