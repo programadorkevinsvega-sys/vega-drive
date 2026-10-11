@@ -179,7 +179,9 @@ describe("Cloudflare Turnstile verifier", () => {
       "fetch failed for secret-never-log and token-never-log",
     );
     const networkCause = Object.assign(
-      new Error("private network detail with secret-never-log and token-never-log"),
+      new Error(
+        "private network detail with secret-never-log and token-never-log",
+      ),
       { code: "UND_ERR_CONNECT_TIMEOUT" },
     );
     Object.defineProperty(networkError, "cause", {

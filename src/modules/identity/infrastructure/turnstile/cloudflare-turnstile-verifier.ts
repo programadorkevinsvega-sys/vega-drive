@@ -63,7 +63,10 @@ function safeErrorMessage(
     if (secret) message = message.split(secret).join("[redacted]");
   }
   message = message
-    .replace(/([?&](?:secret|response|token|remoteip)=)[^&\s]+/gi, "$1[redacted]")
+    .replace(
+      /([?&](?:secret|response|token|remoteip)=)[^&\s]+/gi,
+      "$1[redacted]",
+    )
     .replace(/[\r\n\t]+/g, " ")
     .replace(/\s{2,}/g, " ")
     .trim();
