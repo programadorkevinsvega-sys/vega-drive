@@ -11,8 +11,8 @@ interface PasswordFieldProps {
   loading: boolean;
   showLabel: string;
   hideLabel: string;
-  error?: string;
-  hint?: string;
+  error: string | undefined;
+  hint: string | undefined;
 }
 
 export function PasswordField({
