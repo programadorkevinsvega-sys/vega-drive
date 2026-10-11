@@ -91,9 +91,7 @@ export function PasswordSettingsScreen() {
         <div className="vd-settings__card">
           <div className="vd-settings__card-heading">
             <h3>Cambiar contraseña</h3>
-            <p>
-              Necesitarás tu contraseña actual para confirmar este cambio.
-            </p>
+            <p>Necesitarás tu contraseña actual para confirmar este cambio.</p>
           </div>
 
           {success ? (
@@ -179,8 +177,8 @@ export function PasswordSettingsScreen() {
 
           <p className="vd-settings__security-note">
             Al guardar, el servidor renovará esta sesión y revocará las demás.
-            Las contraseñas no se guardan en almacenamiento local ni se
-            escriben en los registros de la aplicación.
+            Las contraseñas no se guardan en almacenamiento local ni se escriben
+            en los registros de la aplicación.
           </p>
         </div>
       </section>
