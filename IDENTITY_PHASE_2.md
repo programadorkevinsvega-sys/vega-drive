@@ -76,20 +76,19 @@ El código en `main` ahora configura una allowlist de hostnames, etiqueta los to
 
 Estos commits no despliegan el Worker activo. La captura de producción sigue mostrando cero solicitudes de Siteverify, así que no se puede afirmar que el problema esté resuelto en producción ni que el secreto configurado corresponda a esta site key. Después del despliegue autorizado, los nuevos logs deben distinguir una clave secreta inválida, un token rechazado/duplicado, un hostname inesperado y un fallo de red. Sigue pendiente el E2E real con un token nuevo válido e inválido en un entorno apropiado; no se debe crear una cuenta de producción solo para validar sin un plan de limpieza aprobado.
 
-
 ## Diagnóstico operativo de Turnstile / Siteverify
 
 El verificador registra eventos estructurados bajo el prefijo `[turnstile]` en Cloudflare Worker Logs. Cada evento omite deliberadamente el token, la clave secreta, la IP del cliente, el cuerpo de respuesta y los mensajes de excepción sin filtrar.
 
 | Evento | Interpretación |
 | --- | --- |
-| `Siteverify accepted token` | Siteverify respondió correctamente y `success`, `hostname` y `action` pasaron las validaciones locales. |
-| `Siteverify rejected token` | Siteverify respondió, pero no aceptó el token. `errorCodes` contiene solo códigos oficiales permitidos. |
-| `Siteverify HTTP failure` | Siteverify devolvió un estado HTTP no exitoso; revisar `status`, `contentType`, `cloudflareRayId` y `errorCodes`. |
-| `Siteverify exception` | La llamada o preparación de la petición lanzó una excepción. `stage`, `errorName`, `causeName` y `causeCode` permiten localizar la clase de fallo sin exponer el mensaje original. |
-| `Siteverify returned invalid JSON` / `malformed response` | Se recibió respuesta HTTP pero su cuerpo no tenía el formato JSON esperado. |
-| `Siteverify hostname mismatch` / `action mismatch` | Siteverify respondió con éxito, pero la validación adicional del backend rechazó el hostname o la acción. |
-| `Siteverify skipped` | No se hizo una llamada de red por configuración o entrada inválida; `reason` explica la condición. |
+| `Siteverify accepted token` | Siteverify respondió y `success`, `hostname` y `action` pasaron las validaciones locales. |
+| `Siteverify rejected token` | Siteverify respondió, pero rechazó el token. `errorCodes` incluye códigos permitidos. |
+| `Siteverify HTTP failure` | La respuesta tuvo estado HTTP no exitoso; revisa `status`, `contentType`, `cloudflareRayId` y `errorCodes`. |
+| `Siteverify exception` | Falló la preparación o llamada. `stage`, `errorName`, `causeName` y `causeCode` ayudan a localizar el fallo. |
+| `Siteverify returned invalid JSON` / `malformed response` | Se recibió una respuesta HTTP, pero el cuerpo no tenía el formato esperado. |
+| `Siteverify hostname mismatch` / `action mismatch` | Siteverify respondió con éxito, pero el backend rechazó el hostname o la acción. |
+| `Siteverify skipped` | No se llamó a la red por configuración o entrada inválida; `reason` indica la condición. |
 
 Los eventos de respuesta incluyen `status`, `durationMs`, `contentType` y `cloudflareRayId` cuando están disponibles. El `cloudflareRayId` es el encabezado `cf-ray` de la respuesta a Siteverify, no el Ray ID de la petición entrante al Worker. Si hay una respuesta HTTP, este ID ayuda a identificar la transacción del lado de Cloudflare; una excepción de red puede no tener ID porque no se recibió respuesta.
 
