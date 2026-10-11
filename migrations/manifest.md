@@ -46,6 +46,10 @@ Una migración nueva debe ser propiedad de un módulo, permanecer dentro de su d
 
 El verificador estructural rechaza DDL que todavía no pueda modelar, objetos incompatibles u objetos inesperados. Si se necesita `ALTER`, `DROP` u otra operación no admitida, primero amplía y prueba el verificador para representar explícitamente el esquema final. La lista de Wrangler demuestra el historial de migraciones, no la compatibilidad de columnas y restricciones ni la seguridad funcional de la aplicación.
 
+## Incidencia de verificación local registrada
+
+La última ejecución local reportada el 2026-10-11 de `pnpm run db:verify:schema:local` falló por objetos ausentes de las migraciones de `files` e `identity`. La incidencia y el procedimiento de reconciliación exclusivamente local están documentados en [FILES_PHASE_3.md](../FILES_PHASE_3.md). Hasta obtener una verificación local satisfactoria, no se debe considerar cerrado el criterio de esquema de la Fase 3 ni proceder a un despliegue. Este apunte no afirma que la D1 remota esté afectada ni autoriza cambios remotos.
+
 ## Compatibilidad y rollback
 
 Un rollback del Worker no revierte D1. Usa expansión/contracción: añade estructuras compatibles primero, despliega código compatible, realiza backfills idempotentes y retira estructuras obsoletas en otro release, cuando ninguna versión anterior las necesite. Antes de cambios de riesgo, revisa el esquema remoto, backups y el procedimiento de restauración según [Rollback.md](../Rollback.md).
