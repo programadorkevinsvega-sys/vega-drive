@@ -265,9 +265,14 @@ filesRoutes.post("/folders/:id/permanent-delete", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
   if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
-  return catalogResponse(c, await createCompositionRoot(c.env).files.permanentlyDeleteFolder(
-    actorFor(c), c.req.param("id"),
-  ));
+
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.permanentlyDeleteFolder(
+      actorFor(c),
+      c.req.param("id"),
+    ),
+  );
 });
 
 filesRoutes.post("/trash/folders/:id/restore", async (c) => {
@@ -342,9 +347,14 @@ filesRoutes.post("/items/:id/permanent-delete", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
   if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
-  return catalogResponse(c, await createCompositionRoot(c.env).files.permanentlyDeleteFile(
-    actorFor(c), c.req.param("id"),
-  ));
+
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.permanentlyDeleteFile(
+      actorFor(c),
+      c.req.param("id"),
+    ),
+  );
 });
 
 filesRoutes.post("/trash/items/:id/restore", async (c) => {
