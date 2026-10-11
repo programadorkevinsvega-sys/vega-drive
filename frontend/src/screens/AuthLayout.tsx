@@ -37,9 +37,7 @@ export function AuthLayout({ route }: AuthLayoutProps) {
   const handleToken = useCallback((value: string) => setToken(value), []);
   const handleWidgetError = useCallback(() => {
     setToken("");
-    setError(
-      "No se pudo completar la verificación de seguridad. Inténtalo de nuevo.",
-    );
+    setError("No se pudo verificar la seguridad. Inténtalo de nuevo.");
   }, []);
 
   useEffect(() => {
