@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
 import { CatalogActionDialog } from "./CatalogActionDialog";
@@ -9,13 +8,16 @@ import { useCatalogData } from "./useCatalogData";
 interface CatalogDialogsProps {
   actions: ReturnType<typeof useCatalogActions>;
   folderTargets: ReturnType<typeof useCatalogData>["folderTargets"];
+  emptyTrashOpen: boolean;
+  setEmptyTrashOpen: (open: boolean) => void;
 }
 
 export function CatalogDialogs({
   actions,
   folderTargets,
+  emptyTrashOpen,
+  setEmptyTrashOpen,
 }: CatalogDialogsProps) {
-  const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
 
   return (
         <Modal
@@ -57,7 +59,7 @@ export function CatalogDialogs({
   
         <CatalogActionDialog
           action={actions.action}
-          folders={data.folderTargets}
+          folders={folderTargets}
           onClose={() => actions.setAction(null)}
           onSubmit={actions.submitAction}
         />
