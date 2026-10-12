@@ -139,10 +139,7 @@ function requestJson<T>(
       finish(() => {
         if (request.status < 200 || request.status >= 300) {
           reject(
-            new FilesApiError(
-              messageForStatus(request.status),
-              request.status,
-            ),
+            new FilesApiError(messageForStatus(request.status), request.status),
           );
           return;
         }
@@ -325,10 +322,7 @@ function uploadSingleFile(
       finish(() => {
         if (request.status < 200 || request.status >= 300) {
           reject(
-            new FilesApiError(
-              messageForStatus(request.status),
-              request.status,
-            ),
+            new FilesApiError(messageForStatus(request.status), request.status),
           );
           return;
         }
