@@ -321,7 +321,12 @@ function uploadSingleFile(
     request.addEventListener("load", () =>
       finish(() => {
         if (request.status < 200 || request.status >= 300) {
-          reject(new FilesApiError(messageForStatus(request.status), request.status));
+          reject(
+            new FilesApiError(
+              messageForStatus(request.status),
+              request.status,
+            ),
+          );
           return;
         }
         let payload: unknown;
