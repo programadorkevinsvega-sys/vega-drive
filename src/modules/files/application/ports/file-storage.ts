@@ -30,6 +30,11 @@ export interface IFileStoragePort {
   get(key: string, range?: FileStorageRange): Promise<FileStorageBody | null>;
   delete(key: string): Promise<void>;
   /** Optional short-lived URL; callers must authorize the logical file first. */
+  presignPutUrl?(
+    key: string,
+    contentType: string,
+    expiresInSeconds: number,
+  ): Promise<string | null>;
   presignGetUrl?(
     key: string,
     expiresInSeconds: number,
