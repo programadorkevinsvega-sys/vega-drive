@@ -5,7 +5,6 @@ import { uploadFile } from "../services/files-transfer-service";
 import { Button } from "../ui/Button";
 import { UploadQueue, type UploadItem } from "./UploadQueue";
 
-
 interface FileTransferControlsProps {
   folderId: string | null;
   onUploaded: () => void;
