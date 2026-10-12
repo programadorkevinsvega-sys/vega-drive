@@ -5,6 +5,7 @@ import { NotFoundScreen } from "./NotFoundScreen";
 import { ScreenPlaceholder } from "./ScreenPlaceholder";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 import { FilesCatalogScreen } from "./FilesCatalogScreen";
+import { RecentFilesScreen } from "./RecentFilesScreen";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
@@ -19,10 +20,11 @@ export function renderScreen(route: Route): ReactNode {
     case "trash":
       return <FilesCatalogScreen view="trash" folderId={null} />;
     case "recent":
+      return <RecentFilesScreen />;
     case "favorites":
       return (
         <ScreenPlaceholder
-          icon={route.name === "recent" ? "clock" : "star"}
+          icon="star"
           title={title}
           crumbs={[DRIVE_HOME, { label: title }]}
           delivery="Entrega 3"
