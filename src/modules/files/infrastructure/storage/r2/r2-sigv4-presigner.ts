@@ -14,6 +14,7 @@ export interface R2PresignInput {
   key: string;
   expiresInSeconds: number;
   query?: Record<string, string>;
+  contentType?: string;
 }
 
 const encoder = new TextEncoder();
@@ -86,7 +87,7 @@ export async function presignR2Object(
     "X-Amz-Credential": config.accessKeyId + "/" + scope,
     "X-Amz-Date": timestamp,
     "X-Amz-Expires": String(input.expiresInSeconds),
-    "X-Amz-SignedHeaders": "host",
+    "X-Amz-SignedHeaders": input.contentType ? "content-type;host" : "host",
     ...(input.query ?? {}),
   };
   const canonicalQuery = Object.entries(query)
@@ -97,8 +98,9 @@ export async function presignR2Object(
     input.method,
     path,
     canonicalQuery,
-    "host:" + host + "\n",
-    "host",
+    (input.contentType ? "content-type:" + input.contentType + "\n" : "") +
+      "host:" + host + "\n",
+    input.contentType ? "content-type;host" : "host",
     "UNSIGNED-PAYLOAD",
   ].join("\n");
   const requestHash = hex(await crypto.subtle.digest("SHA-256", encoder.encode(canonicalRequest)));
