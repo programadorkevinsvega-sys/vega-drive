@@ -51,8 +51,8 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Configurar el binding `VEGA_DRIVE_DB` y verificar remotamente que las 17 tablas/índices coinciden con la migración versionada.
 - [x] Configurar el binding `FILES_BUCKET` al bucket `vega-drive-files`.
 - [x] Confirmar en el panel de Cloudflare que el bucket `vega-drive-files` es privado (confirmación del usuario, 2026-10-10).
-- [ ] **Antes de la Fase 4 (transferencias R2):** verificar que no haya dominio público ni `r2.dev` habilitado; al habilitar transferencias directas, configurar CORS con una lista exacta de orígenes y métodos/cabeceras mínimos. El bucket está confirmado como privado; esta comprobación adicional no bloquea el cierre de Fase 0 porque todavía no existe flujo de archivos.
-- [ ] **Antes de la Fase 4:** confirmar permisos mínimos para el acceso de R2, limitado al bucket requerido, cuando se implemente el adaptador real. No hay todavía un adaptador de almacenamiento de archivos.
+- [x] **Completado en la Fase 4 (2026-10-12):** el propietario confirmó la verificación operativa de privacidad del bucket, ausencia de dominio público y `r2.dev`, y CORS con orígenes exactos y métodos/cabeceras mínimos, sin comodines. La evidencia detallada está registrada en [FILES_PHASE_4.md](./FILES_PHASE_4.md).
+- [x] **Completado en la Fase 4 (2026-10-12):** el propietario confirmó que el acceso de R2 fue probado con permisos mínimos limitados al bucket `vega-drive-files`.
 - [x] Configurar Turnstile y su secreto en el Worker durante la Fase 2; la verificación de producción confirmó que la configuración pública y el secreto server-side están presentes y el propietario probó tokens válidos e inválidos.
 - [ ] Revisar los secretos operativos del Worker antes de habilitar funciones que los requieran; Gitleaks ya pasó en GitHub Actions y no se presenta como parte del build de Cloudflare.
 - [x] Ejecutar `pnpm audit --audit-level=high` dentro de `pnpm run cloudflare:build`.
@@ -255,13 +255,17 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 ### 4.4 Validación operativa obligatoria antes de cerrar
 
-- [ ] En el panel de Cloudflare, comprobar que el bucket vega-drive-files no tiene dominio público, r2.dev deshabilitado, CORS con AllowedOrigins exactos y métodos/cabeceras mínimos, sin `*`.
-- [ ] Confirmar que los permisos de acceso están limitados al bucket vega-drive-files y solo permiten lectura/escritura de los objetos necesarios.
-- [ ] Ejecutar el despliegue revisado mediante pnpm run deploy, que aplica la nueva migración files/.../0003_files_transfers.sql antes de publicar el Worker.
-- [ ] En producción, subir un archivo de prueba pequeño, descargarlo y comprobar los bytes; probar rango parcial y rechazo de acceso desde otra cuenta.
-- [ ] Registrar el SHA del commit desplegado y la evidencia de producción sin almacenar archivos sensibles, tokens ni cookies.
+**Estado operativo: COMPLETADO (2026-10-12, confirmación explícita del propietario).**
 
-La CI y un wrangler deploy --dry-run no sustituyen los pasos operativos anteriores. La fase no se anunciará como 100 % cerrada hasta que los cinco puntos estén comprobados.
+- [x] Verificación de producción: bucket `vega-drive-files` privado, sin dominio público y con `r2.dev` deshabilitado.
+- [x] CORS de producción comprobado con orígenes exactos, métodos y cabeceras mínimos; sin `*`.
+- [x] Permisos de R2 comprobados y limitados al bucket requerido.
+- [x] Migración `files/.../0003_files_transfers.sql` y versión de Worker correspondientes desplegadas.
+- [x] Prueba E2E real de subida y descarga; el propietario confirma la comparación de bytes.
+- [x] Rango parcial y rechazo de acceso desde otra cuenta comprobados en producción.
+- [x] El propietario confirma que el SHA desplegado y las evidencias de producción quedaron registrados; no incluir credenciales, URLs firmadas ni cookies en el repositorio.
+
+Estas validaciones se registran como realizadas por confirmación explícita del propietario. La CI y `wrangler deploy --dry-run` por sí solos no sustituyen estas pruebas. El endurecimiento transversal, cuotas, compartición y rollback continúan en sus fases respectivas.
 
 ## Fase 5 — Frontend y BFF del mismo Worker
 
