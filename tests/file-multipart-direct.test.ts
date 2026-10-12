@@ -22,61 +22,61 @@ const session: FilesMultipartSession = {
 describe("autorizaciones multipart directas a R2", () => {
   it(
     "recupera una reserva de nombre de una sesión abandonada sin partes",
-    async () => {
-    const fixture = await createFilesCatalogFixture();
-    try {
-      const createMultipartUpload = vi
-        .fn()
-        .mockResolvedValue("r2-upload-stale");
-      const abortMultipartUpload = vi.fn().mockResolvedValue(undefined);
-      fixture.storage.createMultipartUpload = createMultipartUpload;
-      fixture.storage.abortMultipartUpload = abortMultipartUpload;
-      const input = {
-        name: "Antigravity-x64.exe",
-        folderId: null,
-        sizeBytes: 164_080_000,
-        contentType: "application/octet-stream",
-      };
+      async () => {
+      const fixture = await createFilesCatalogFixture();
+      try {
+        const createMultipartUpload = vi
+          .fn()
+          .mockResolvedValue("r2-upload-stale");
+        const abortMultipartUpload = vi.fn().mockResolvedValue(undefined);
+        fixture.storage.createMultipartUpload = createMultipartUpload;
+        fixture.storage.abortMultipartUpload = abortMultipartUpload;
+        const input = {
+          name: "Antigravity-x64.exe",
+          folderId: null,
+          sizeBytes: 164_080_000,
+          contentType: "application/octet-stream",
+        };
 
-      const first = await fixture.api.beginMultipartUpload(
-        { userId: "owner-a" },
-        input,
-      );
-      expect(first.ok).toBe(true);
-      if (!first.ok) throw new Error("No se creó la sesión de prueba.");
+        const first = await fixture.api.beginMultipartUpload(
+          { userId: "owner-a" },
+          input,
+        );
+        expect(first.ok).toBe(true);
+        if (!first.ok) throw new Error("No se creó la sesión de prueba.");
 
-      await fixture.db
-        .prepare(
-          "UPDATE files_multipart_uploads SET created_at = ? WHERE id = ?",
-        )
-        .bind(
-          new Date(Date.now() - 16 * 60 * 1000).toISOString(),
-          first.value.uploadId,
-        )
-        .run();
-
-      const retried = await fixture.api.beginMultipartUpload(
-        { userId: "owner-a" },
-        input,
-      );
-      expect(retried.ok).toBe(true);
-      if (!retried.ok) {
-        throw new Error("No se recuperó la reserva de nombre abandonada.");
-      }
-      expect(retried.value.uploadId).not.toBe(first.value.uploadId);
-      expect(abortMultipartUpload).toHaveBeenCalledWith(
-        expect.stringMatching(/^u\/owner-a\//),
-        "r2-upload-stale",
-      );
-      expect(
         await fixture.db
-          .prepare("SELECT id FROM files_multipart_uploads WHERE id = ?")
-          .bind(first.value.uploadId)
-          .first(),
-      ).toBeNull();
-    } finally {
-      fixture.close();
-    }
+          .prepare(
+            "UPDATE files_multipart_uploads SET created_at = ? WHERE id = ?",
+          )
+          .bind(
+            new Date(Date.now() - 16 * 60 * 1000).toISOString(),
+            first.value.uploadId,
+          )
+          .run();
+
+        const retried = await fixture.api.beginMultipartUpload(
+          { userId: "owner-a" },
+          input,
+        );
+        expect(retried.ok).toBe(true);
+        if (!retried.ok) {
+          throw new Error("No se recuperó la reserva de nombre abandonada.");
+        }
+        expect(retried.value.uploadId).not.toBe(first.value.uploadId);
+        expect(abortMultipartUpload).toHaveBeenCalledWith(
+          expect.stringMatching(/^u\/owner-a\//),
+          "r2-upload-stale",
+        );
+        expect(
+          await fixture.db
+            .prepare("SELECT id FROM files_multipart_uploads WHERE id = ?")
+            .bind(first.value.uploadId)
+            .first(),
+        ).toBeNull();
+      } finally {
+        fixture.close();
+      }
     },
   );
 
