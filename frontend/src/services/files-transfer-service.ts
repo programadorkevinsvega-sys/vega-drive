@@ -306,7 +306,9 @@ function uploadSingleFile(
     control.attach(request);
     request.upload.addEventListener("progress", (event) => {
       if (!event.lengthComputable || file.size === 0) return;
-      onProgress?.(Math.min(99, Math.floor((event.loaded / event.total) * 100)));
+      onProgress?.(
+        Math.min(99, Math.floor((event.loaded / event.total) * 100)),
+      );
     });
     request.addEventListener("error", () =>
       finish(() => reject(new FilesApiError(messageForStatus(0), 0))),
