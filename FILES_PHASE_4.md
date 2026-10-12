@@ -1,6 +1,6 @@
 # Fase 4 — Transferencias privadas con R2
 
-**Estado:** flujo original same-origin disponible como rollback; migración a transferencias directas implementada detrás de `DIRECT_R2_TRANSFERS_ENABLED=false`, pendiente de formato/CI, configuración CORS/secretos y E2E real. No habilitar el flag hasta comprobar interoperabilidad de multipart binding↔S3, aislamiento y concurrencia.
+**Estado:** flujo original same-origin disponible como rollback; la migración a transferencias directas está implementada detrás de `DIRECT_R2_TRANSFERS_ENABLED=false`. CI pasó en el commit `51b413bfc544ef79ede9fff11ad5793759fa88c1` ([ejecución](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38205025237)). Siguen pendientes CORS/secretos y E2E real; no habilitar el flag hasta verificar aislamiento, multipart y concurrencia.
 
 ## Alcance implementado
 
