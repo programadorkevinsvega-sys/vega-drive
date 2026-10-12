@@ -147,7 +147,7 @@ export function FileTransferControls({
           {uploading ? "Subiendo…" : "Subir archivos"}
         </Button>
         <Button
-          icon="folder-up"
+          icon="folder"
           variant="secondary"
           disabled={uploading}
           onClick={() => folderInputRef.current?.click()}
