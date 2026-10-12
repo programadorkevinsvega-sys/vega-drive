@@ -119,7 +119,7 @@ export function RecentFilesScreen() {
           <EmptyState
             icon="clock"
             title="Todavía no hay actividad reciente"
-            description="Los archivos aparecerán aquí cuando abras uno desde una vista compatible o inicies una descarga."
+            description="Los archivos aparecerán aquí cuando la aplicación registre una apertura o inicies una descarga."
           />
         </section>
       ) : null}
