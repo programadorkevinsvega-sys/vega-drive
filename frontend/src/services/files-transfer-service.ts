@@ -138,7 +138,12 @@ function requestJson<T>(
     request.addEventListener("load", () =>
       finish(() => {
         if (request.status < 200 || request.status >= 300) {
-          reject(new FilesApiError(messageForStatus(request.status), request.status));
+          reject(
+            new FilesApiError(
+              messageForStatus(request.status),
+              request.status,
+            ),
+          );
           return;
         }
         try {
@@ -183,14 +188,19 @@ async function uploadMultipartFile(
     !Number.isSafeInteger(started.totalParts) ||
     started.totalParts < 2
   ) {
-    throw new FilesApiError("El servidor devolvió una sesión de subida inválida.", 500);
+    throw new FilesApiError(
+      "El servidor devolvió una sesión de subida inválida.",
+      500,
+    );
   }
 
   const abortSession = async () => {
     try {
       await requestJson(
         "POST",
-        "/api/files/multipart/" + encodeURIComponent(started.uploadId) + "/abort",
+        "/api/files/multipart/" +
+          encodeURIComponent(started.uploadId) +
+          "/abort",
         null,
       );
     } catch {
@@ -253,7 +263,9 @@ async function uploadMultipartFile(
     await control.waitUntilReady();
     const result = await requestJson<unknown>(
       "POST",
-      "/api/files/multipart/" + encodeURIComponent(started.uploadId) + "/complete",
+      "/api/files/multipart/" +
+        encodeURIComponent(started.uploadId) +
+        "/complete",
       null,
     );
     const uploadedFile = parseFileResponse(result, 201);
@@ -283,7 +295,10 @@ function uploadSingleFile(
     };
     request.open("POST", "/api/files", true);
     request.setRequestHeader("Accept", "application/json");
-    request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    request.setRequestHeader(
+      "Content-Type",
+      file.type || "application/octet-stream",
+    );
     request.setRequestHeader("Cache-Control", "no-store");
     request.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
     request.setRequestHeader("X-File-Size", String(file.size));
