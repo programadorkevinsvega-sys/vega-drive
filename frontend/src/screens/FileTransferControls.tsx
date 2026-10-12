@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { FilesApiError } from "../services/files-service";
 import { createFolderResolver } from "../services/files-folder-upload";
 import {
@@ -8,6 +8,13 @@ import {
 } from "../services/files-transfer-service";
 import { type UploadItem } from "./UploadQueue";
 import { FileTransferPanel } from "./FileTransferPanel";
+import {
+  cancelUpload,
+  cancelUploadGroup,
+  pauseUpload,
+  removePendingUpload,
+  resumeUpload,
+} from "./upload-queue-actions";
 
 interface FileTransferControlsProps {
   folderId: string | null;
@@ -19,8 +26,6 @@ export function FileTransferControls({
   folderId,
   onUploaded,
 }: FileTransferControlsProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
   const controlsRef = useRef(new Map<string, UploadController>());
   const [uploading, setUploading] = useState(false);
   const [items, setItems] = useState<UploadItem[]>([]);
@@ -32,38 +37,13 @@ export function FileTransferControls({
     );
   }
 
-  function pauseItem(id: string) {
-    controlsRef.current.get(id)?.pause();
-    updateItem(id, { state: "paused" });
-  }
-
-  function resumeItem(id: string) {
-    controlsRef.current.get(id)?.resume();
-    updateItem(id, { state: "uploading" });
-  }
-
-  function cancelItem(id: string) {
-    controlsRef.current.get(id)?.cancel();
-    updateItem(id, { state: "cancelled", error: "" });
-  }
-
-  function removePendingItem(id: string) {
-    controlsRef.current.get(id)?.cancel();
-    controlsRef.current.delete(id);
-    setItems((current) => current.filter((item) => item.id !== id));
-  }
-
-  function cancelGroup(groupId: string) {
-    for (const item of items) {
-      if (
-        item.groupId === groupId &&
-        ["pending", "uploading", "paused"].includes(item.state)
-      ) {
-        controlsRef.current.get(item.id)?.cancel();
-        updateItem(item.id, { state: "cancelled", error: "" });
-      }
-    }
-  }
+  const pauseItem = (id: string) => pauseUpload(controlsRef.current, updateItem, id);
+  const resumeItem = (id: string) => resumeUpload(controlsRef.current, updateItem, id);
+  const cancelItem = (id: string) => cancelUpload(controlsRef.current, updateItem, id);
+  const removePendingItem = (id: string) =>
+    removePendingUpload(controlsRef.current, setItems, id);
+  const cancelGroup = (groupId: string) =>
+    cancelUploadGroup(controlsRef.current, items, updateItem, groupId);
 
   async function handleSelection(
     event: ChangeEvent<HTMLInputElement>,
