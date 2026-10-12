@@ -58,6 +58,10 @@ export interface FilesPublicApi {
     range: string | null,
   ): Promise<FilesDownloadResult>;
   cleanupExpiredUploads(nowIso: string, limit: number): Promise<number>;
+  beginMultipartUpload(actor: FilesActor, input: unknown): Promise<CatalogResult<MultipartStarted>>;
+  uploadMultipartPart(actor: FilesActor, sessionId: string, partNumber: number, body: ReadableStream<Uint8Array> | null, sizeBytes: number): Promise<CatalogResult<{ partNumber: number }>>;
+  completeMultipartUpload(actor: FilesActor, sessionId: string): Promise<CatalogResult<FilesFileView>>;
+  abortMultipartUpload(actor: FilesActor, sessionId: string): Promise<CatalogResult<void>>;
   renameFile(
     actor: FilesActor,
     id: unknown,
@@ -99,6 +103,7 @@ export interface FilesModuleDependencies {
   names: FilesCatalogNameRepository;
   uploads?: FilesUploadRepository;
   transferEvents?: FilesTransferEventRepository;
+  multipartUploads?: FilesMultipartUploadRepository;
   storage?: IFileStoragePort;
   ready?: boolean;
   now?: () => Date;
