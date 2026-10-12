@@ -6,6 +6,7 @@ import { D1FilesFolderRepository } from "../../src/modules/files/infrastructure/
 import { D1FilesItemRepository } from "../../src/modules/files/infrastructure/persistence/d1/d1-files-item.repository.js";
 import { D1FilesUploadRepository } from "../../src/modules/files/infrastructure/persistence/d1/d1-files-upload.repository.js";
 import { D1FilesTransferEventRepository } from "../../src/modules/files/infrastructure/persistence/d1/d1-files-transfer-event.repository.js";
+import { D1FilesMultipartUploadRepository } from "../../src/modules/files/infrastructure/persistence/d1/d1-files-multipart-upload.repository.js";
 import type { FilesActor } from "../../src/modules/files/application/catalog-contracts.js";
 import type { IFileStoragePort } from "../../src/modules/files/application/ports/file-storage.js";
 import { createSqliteD1 } from "./sqlite-d1.js";
@@ -71,6 +72,7 @@ export async function createFilesCatalogFixture() {
     names: new D1FilesCatalogNameRepository(fixture.db),
     uploads: new D1FilesUploadRepository(fixture.db),
     transferEvents: new D1FilesTransferEventRepository(fixture.db),
+    multipartUploads: new D1FilesMultipartUploadRepository(fixture.db),
     storage,
     ready: true,
   });
@@ -85,5 +87,5 @@ export async function createFilesCatalogFixture() {
       );
     },
   });
-  return { ...fixture, api: testApi, objects };
+  return { ...fixture, api: testApi, objects, storage };
 }
