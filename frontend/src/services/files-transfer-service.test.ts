@@ -173,8 +173,7 @@ describe("subida binaria con progreso", () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const oversized = file({
       size: 96 * 1024 * 1024,
-      slice: (start: number, end: number) =>
-        ({ size: end - start }) as Blob,
+      slice: (start: number, end: number) => ({ size: end - start }) as Blob,
     });
     void uploadFile(oversized, null);
     const start = FakeXMLHttpRequest.instances[0];
