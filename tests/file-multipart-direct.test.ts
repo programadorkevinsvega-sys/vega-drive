@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createMultipartPartAuthorizations,
 } from "../src/modules/files/application/file-multipart-direct.js";
-import type { FilesMultipartSession } from "../src/modules/files/application/ports/files-multipart-repository.js";
+import type {
+  FilesMultipartSession,
+} from "../src/modules/files/application/ports/files-multipart-repository.js";
 
 const session: FilesMultipartSession = {
   id: "session-a",
@@ -99,6 +101,22 @@ describe("autorizaciones multipart directas a R2", () => {
       ok: false,
       reason: "not-found",
     });
+    expect(presignMultipartPartUrl).not.toHaveBeenCalled();
+
+    const activeService = createMultipartPartAuthorizations({
+      multipart: {
+        findByIdForOwner: vi.fn().mockResolvedValue(session),
+      } as never,
+      storage: { presignMultipartPartUrl } as never,
+      now: () => new Date("2026-10-11T14:00:00.000Z"),
+    });
+    await expect(
+      activeService.authorizeMultipartPart(
+        { userId: "owner-a" },
+        session.id,
+        8,
+      ),
+    ).resolves.toEqual({ ok: false, reason: "invalid-input" });
     expect(presignMultipartPartUrl).not.toHaveBeenCalled();
   });
 

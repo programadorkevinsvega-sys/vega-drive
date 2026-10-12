@@ -17,7 +17,9 @@ describe("transferencias directas a R2", () => {
         },
       );
       expect(started.ok).toBe(true);
-      if (!started.ok) throw new Error("No se pudo iniciar la subida de prueba.");
+      if (!started.ok) {
+        throw new Error("No se pudo iniciar la subida de prueba.");
+      }
 
       expect(started.value.url).toBe("https://r2.test/object");
       expect(started.value.expiresInSeconds).toBe(120);
@@ -60,7 +62,9 @@ describe("transferencias directas a R2", () => {
         { name: "private.txt", sizeBytes: 4, contentType: "text/plain" },
       );
       expect(created.ok).toBe(true);
-      if (!created.ok) throw new Error("No se pudo crear el archivo de prueba.");
+      if (!created.ok) {
+        throw new Error("No se pudo crear el archivo de prueba.");
+      }
 
       const presignGetUrl = vi
         .fn()
