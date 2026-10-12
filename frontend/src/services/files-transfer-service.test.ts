@@ -64,7 +64,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-
 describe("control de transferencias", () => {
   it("pausa el trabajo y lo deja continuar al reanudar", async () => {
     const control = new UploadController();
