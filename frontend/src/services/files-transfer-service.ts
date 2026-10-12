@@ -1,7 +1,7 @@
 import type { FilesFileView } from "./files-contract";
 import { FilesApiError, messageForStatus } from "./files-api-error";
 import { uploadMultipartFile } from "./files-transfer-multipart";
-import { parseFileResponse, createRequest } from "./files-transfer-http";
+import { parseFileResponse } from "./files-transfer-http";
 import {
   UploadCancelledError,
   UploadPausedError,
@@ -12,6 +12,10 @@ export { UploadCancelledError, UploadController } from "./files-transfer-control
 export type { UploadProgressListener } from "./files-transfer-controller";
 
 const MAX_SINGLE_UPLOAD_BYTES = 95 * 1024 * 1024;
+
+export function createRequest() {
+  return new XMLHttpRequest();
+}
 
 function uploadSingleFile(
   file: File,
