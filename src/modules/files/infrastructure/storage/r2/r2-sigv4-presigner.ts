@@ -15,6 +15,7 @@ export interface R2PresignInput {
   expiresInSeconds: number;
   query?: Record<string, string>;
   contentType?: string;
+  ifNoneMatch?: string;
 }
 
 const encoder = new TextEncoder();
@@ -88,23 +89,28 @@ export async function presignR2Object(
     "/" +
     input.key.split("/").map(encode).join("/");
   const scope = day + "/" + AWS_REGION + "/" + AWS_SERVICE + "/aws4_request";
+  const signedHeaders = [
+    ...(input.contentType ? ["content-type"] : []),
+    ...(input.ifNoneMatch ? ["if-none-match"] : []),
+    "host",
+  ].join(";");
   const query: Record<string, string> = {
     ...(input.query ?? {}),
     "X-Amz-Algorithm": AWS_ALGORITHM,
     "X-Amz-Credential": config.accessKeyId + "/" + scope,
     "X-Amz-Date": timestamp,
     "X-Amz-Expires": String(input.expiresInSeconds),
-    "X-Amz-SignedHeaders": input.contentType ? "content-type;host" : "host",
+    "X-Amz-SignedHeaders": signedHeaders,
   };
   const canonicalQuery = Object.entries(query)
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, value]) => encode(key) + "=" + encode(value))
     .join("&");
-  const canonicalHeaders =
-    (input.contentType ? "content-type:" + input.contentType + "\n" : "") +
-    "host:" +
-    host;
-  const signedHeaders = input.contentType ? "content-type;host" : "host";
+  const canonicalHeaders = [
+    ...(input.contentType ? ["content-type:" + input.contentType] : []),
+    ...(input.ifNoneMatch ? ["if-none-match:" + input.ifNoneMatch] : []),
+    "host:" + host,
+  ].join("\n");
   const canonicalRequest = [
     input.method,
     path,
