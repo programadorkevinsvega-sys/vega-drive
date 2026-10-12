@@ -75,8 +75,7 @@ describe("transferencia multipart con direct R2 deshabilitado", () => {
       size,
       type: "application/x-msdownload",
       lastModified: 1,
-      slice: (start: number, end: number) =>
-        ({ size: end - start }) as Blob,
+      slice: (start: number, end: number) => ({ size: end - start }) as Blob,
     } as File;
 
     const result = await uploadMultipartFile(
