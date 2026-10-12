@@ -9,7 +9,7 @@ const config = {
 };
 
 describe("R2 SigV4 presigner", () => {
-  it("signs a single object GET with short expiration and safe overrides", async () => {
+  it("signs short-lived GET URLs safely", async () => {
     const url = new URL(
       await presignR2Object(
         config,
