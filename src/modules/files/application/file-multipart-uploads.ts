@@ -23,7 +23,10 @@ import type {
   FilesTransferEventRepository,
   FilesUploadRepository,
 } from "./ports/files-repositories.js";
-import { activeParentExists, nameIsAvailable } from "./catalog-service-utils.js";
+import {
+  activeParentExists,
+  nameIsAvailable,
+} from "./catalog-service-utils.js";
 import {
   hasValidActor,
   isValidCatalogId,
