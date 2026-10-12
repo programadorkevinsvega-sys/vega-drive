@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilesApiError } from "./files-service";
-import { uploadFile } from "./files-transfer-service";
+import { uploadFile, UploadCancelledError, UploadController } from "./files-transfer-service";
 
 class FakeXMLHttpRequest extends EventTarget {
   static instances: FakeXMLHttpRequest[] = [];
@@ -58,6 +58,31 @@ function emitProgress(
 afterEach(() => {
   FakeXMLHttpRequest.instances = [];
   vi.unstubAllGlobals();
+});
+
+
+describe("control de transferencias", () => {
+  it("pausa el trabajo y lo deja continuar al reanudar", async () => {
+    const control = new UploadController();
+    control.pause();
+    let resumed = false;
+    const waiting = control.waitUntilReady().then(() => {
+      resumed = true;
+    });
+    await Promise.resolve();
+    expect(resumed).toBe(false);
+    control.resume();
+    await waiting;
+    expect(resumed).toBe(true);
+  });
+
+  it("despierta y cancela una transferencia que estaba pausada", async () => {
+    const control = new UploadController();
+    control.pause();
+    const waiting = control.waitUntilReady();
+    control.cancel();
+    await expect(waiting).rejects.toBeInstanceOf(UploadCancelledError);
+  });
 });
 
 describe("subida binaria con progreso", () => {
