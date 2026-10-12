@@ -5,6 +5,8 @@ import { createFolderMutations } from "./application/folder-mutations.js";
 import { createItemCatalog } from "./application/item-catalog.js";
 import { createItemMutations } from "./application/item-mutations.js";
 import { createFileTransfers } from "./application/file-transfers.js";
+import { createFileMultipartUploads, type MultipartStarted } from "./application/file-multipart-uploads.js";
+import type { FilesMultipartUploadRepository } from "./application/ports/files-multipart-repository.js";
 import { createTrashMutations } from "./application/trash-mutations.js";
 import type { FilesDownloadResult } from "./application/file-download.js";
 import type { IFileStoragePort } from "./application/ports/file-storage.js";
