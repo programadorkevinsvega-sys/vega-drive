@@ -34,3 +34,15 @@ export interface FilesTrashListing {
   nodes: FilesCatalogNode[];
   nextCursor: string | null;
 }
+
+
+export interface FilesRecentItem {
+  file: FilesFileView;
+  activityType: "open" | "download";
+  lastActivityAt: string;
+}
+
+export interface FilesRecentListing {
+  items: FilesRecentItem[];
+  nextCursor: string | null;
+}
