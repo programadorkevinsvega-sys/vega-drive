@@ -245,9 +245,7 @@ export function createFileDirectUploads(
           actor.userId,
         );
         await deps.multipartUploads.delete(sessionId, actor.userId);
-        return failure(
-          sizeMismatch ? "size-mismatch" : "integrity-mismatch",
-        );
+        return failure(sizeMismatch ? "size-mismatch" : "integrity-mismatch");
       }
 
       const timestamp = now().toISOString();
