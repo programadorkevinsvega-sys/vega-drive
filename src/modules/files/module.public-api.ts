@@ -1,5 +1,6 @@
 import type { ModuleStatus } from "../../worker/env.js";
 import { createCatalogListing } from "./application/catalog-listing.js";
+import { createRecentActivity, type FilesRecentListing } from "./application/recent-activity.js";
 import { createFolderCatalog } from "./application/folder-catalog.js";
 import { createFolderMutations } from "./application/folder-mutations.js";
 import { createItemCatalog } from "./application/item-catalog.js";
@@ -29,6 +30,8 @@ import type {
   FilesItemRepository,
   FilesTransferEventRepository,
   FilesUploadRepository,
+  FilesRecentActivityRepository,
+  FilesRecentActivityKind,
 } from "./application/ports/files-repositories.js";
 import type {
   CatalogResult,
@@ -147,6 +150,15 @@ export interface FilesPublicApi {
     actor: FilesActor,
     input: unknown,
   ): Promise<CatalogResult<FilesTrashListing>>;
+  recordRecentActivity(
+    actor: FilesActor,
+    itemId: unknown,
+    activityType: unknown,
+  ): Promise<CatalogResult<{ recorded: true }>>;
+  listRecent(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesRecentListing>>;
 }
 
 export interface FilesModuleDependencies {
@@ -155,6 +167,7 @@ export interface FilesModuleDependencies {
   names: FilesCatalogNameRepository;
   uploads?: FilesUploadRepository;
   transferEvents?: FilesTransferEventRepository;
+  recentActivity?: FilesRecentActivityRepository;
   multipartUploads?: FilesMultipartUploadRepository;
   storage?: IFileStoragePort;
   ready?: boolean;
@@ -170,6 +183,14 @@ export function createFilesModule(
   const itemCatalog = createItemCatalog(deps);
   const itemMutations = createItemMutations(deps);
   const listing = createCatalogListing(deps);
+  const recent = deps.recentActivity
+    ? createRecentActivity({
+        folders: deps.folders,
+        items: deps.items,
+        recentActivity: deps.recentActivity,
+        ...(deps.now ? { now: deps.now } : {}),
+      })
+    : null;
   const trash = deps.storage
     ? createTrashMutations({
         folders: deps.folders,
@@ -256,6 +277,12 @@ export function createFilesModule(
     ...itemCatalog,
     ...itemMutations,
     ...listing,
+    recordRecentActivity: (...args) => recent
+      ? recent.recordRecentActivity(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    listRecent: (...args) => recent
+      ? recent.listRecent(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
     uploadFile: (...args) =>
       transfers
         ? transfers.uploadFile(...args)
