@@ -208,34 +208,46 @@ async function uploadMultipartFile(
         Math.min(start + started.partSizeBytes, file.size),
       );
       const partNumber = index + 1;
-      try {
-        await requestJson<{ partNumber: number }>(
-          "PUT",
-          "/api/files/multipart/" +
-            encodeURIComponent(started.uploadId) +
-            "/parts/" +
-            partNumber,
-          chunk,
-          {
-            "Content-Type": "application/octet-stream",
-            "X-Part-Size": String(chunk.size),
-          },
-          (loaded) =>
-            onProgress?.(
-              Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
-            ),
-          chunk.size,
-          control,
-        );
-        index += 1;
-      } catch (error) {
-        if (control.cancelled) throw new UploadCancelledError();
-        if (control.paused || error instanceof UploadPausedError) {
+      let attempts = 0;
+      while (true) {
+        try {
+          await requestJson<{ partNumber: number }>(
+            "PUT",
+            "/api/files/multipart/" +
+              encodeURIComponent(started.uploadId) +
+              "/parts/" +
+              partNumber,
+            chunk,
+            {
+              "Content-Type": "application/octet-stream",
+              "X-Part-Size": String(chunk.size),
+            },
+            (loaded) =>
+              onProgress?.(
+                Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
+              ),
+            chunk.size,
+            control,
+          );
+          index += 1;
+          break;
+        } catch (error) {
+          if (control.cancelled) throw new UploadCancelledError();
+          if (control.paused || error instanceof UploadPausedError) {
+            await control.waitUntilReady();
+            // El fragmento interrumpido se reenvía con el mismo número de parte.
+            break;
+          }
+          const retryable =
+            error instanceof FilesApiError &&
+            (error.status === 0 || error.status >= 500);
+          if (!retryable || attempts >= 3) throw error;
+          attempts += 1;
+          await new Promise<void>((resolve) =>
+            setTimeout(resolve, 400 * 2 ** (attempts - 1)),
+          );
           await control.waitUntilReady();
-          // El fragmento interrumpido se reenvía con el mismo número de parte.
-          continue;
         }
-        throw error;
       }
     }
     await control.waitUntilReady();
