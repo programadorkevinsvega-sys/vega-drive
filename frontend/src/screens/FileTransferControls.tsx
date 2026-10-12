@@ -111,7 +111,7 @@ export function FileTransferControls({
           controlsRef.current.delete(item.id);
           cancelled += 1;
           continue;
-        
+        }
 
         updateItem(item.id, { state: "uploading", progress: 0, error: "" });
         const fileLabel = includeFolderStructure
