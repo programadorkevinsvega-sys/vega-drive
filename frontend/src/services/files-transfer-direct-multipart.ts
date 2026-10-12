@@ -51,7 +51,9 @@ export async function tryDirectMultipartPart(
   }
 
   await control.waitUntilReady();
-  const etag = await new Promise<string>((resolve, reject) => {
+  let etag: string;
+  try {
+    etag = await new Promise<string>((resolve, reject) => {
     const request = new XMLHttpRequest();
     let settled = false;
     const finish = (callback: () => void) => {
@@ -90,8 +92,17 @@ export async function tryDirectMultipartPart(
         resolve(responseEtag);
       }),
     );
-    request.send(chunk);
-  });
+      request.send(chunk);
+    });
+  } catch (error) {
+    if (
+      error instanceof FilesApiError &&
+      (error.status === 0 || error.status === 403)
+    ) {
+      return false;
+    }
+    throw error;
+  }
 
   await requestJson(
     "POST",
