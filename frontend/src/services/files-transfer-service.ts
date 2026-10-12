@@ -12,10 +12,6 @@ const MULTIPART_PART_BYTES = 16 * 1024 * 1024;
 
 
 
-export function createRequest() {
-  return new XMLHttpRequest();
-}
-
 function uploadSingleFile(
   file: File,
   folderId: string | null,
