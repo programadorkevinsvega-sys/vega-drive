@@ -1,6 +1,6 @@
 # Fase 4 — Transferencias privadas con R2
 
-**Estado:** flujo original same-origin disponible como rollback; la migración a transferencias directas está implementada detrás de `DIRECT_R2_TRANSFERS_ENABLED=false`. CI pasó en el commit `51b413bfc544ef79ede9fff11ad5793759fa88c1` ([ejecución](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38205025237)). Siguen pendientes CORS/secretos y E2E real; no habilitar el flag hasta verificar aislamiento, multipart y concurrencia.
+**Estado operativo:** validaciones de producción de la Fase 4 **COMPLETADAS (2026-10-12, confirmación explícita del propietario)**. Se confirmó privacidad/configuración de R2, CORS mínimo, permisos limitados al bucket, despliegue de la migración y Worker correspondientes, subida/descarga real con comparación de bytes, rango parcial y rechazo de acceso entre cuentas. El propietario también confirmó que el SHA desplegado y las evidencias quedaron registrados. El flujo original same-origin permanece disponible como rollback. La configuración actual del feature flag debe consultarse en el entorno antes de inferir qué ruta está activa. CI previa: commit `51b413bfc544ef79ede9fff11ad5793759fa88c1` ([ejecución](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38205025237)).
 
 ## Alcance implementado
 
@@ -50,7 +50,7 @@ Estos valores son límites iniciales del producto en files; cuotas configurables
 - [x] La interfaz envía archivos de más de 95 MiB mediante multipart; el backend valida tamaño real, sesión y propiedad de cada fragmento.\n- [x] La cola permite pausar/reanudar transferencias, cancelar archivos y lotes de carpeta, retirar archivos pendientes y distinguir estados pausado/cancelado/error/completado.\n- [x] Los fragmentos multipart reintentan errores de red y HTTP 5xx hasta tres veces antes de marcar error; el backend registra fallos de escritura de fragmentos para facilitar diagnóstico.
 - [x] Las filas de archivos ofrecen descarga a través de `GET /api/files/:id/download`, que conserva la autorización y el streaming privado del Worker.
 - [x] Las transferencias usan mismo origen, cookies same-origin y `cache: no-store`; no se configura acceso a R2 desde el cliente.
-- [ ] La integración de interfaz no cierra la fase: la evidencia operativa al final de este documento sigue siendo obligatoria.
+- [x] La integración de interfaz y las transferencias cuentan con la validación operativa de producción descrita al final de este documento.
 
 ## Pruebas añadidas
 
@@ -64,15 +64,18 @@ Estos valores son límites iniciales del producto en files; cuotas configurables
 
 La migración src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql agrega files_transfer_events e índices propios del módulo. pnpm run deploy usa el preflight antes de aplicar migraciones remotas, comprueba el esquema D1 y solo entonces publica Worker y verifica /api/health. La nueva migración no debe editarse después de haber sido aplicada en un entorno compartido.
 
-## Evidencia operativa pendiente
+## Evidencia operativa de producción
 
-- [ ] Verificar en el panel que vega-drive-files permanece privado, no tiene dominio público ni r2.dev, y CORS solo permite los orígenes autorizados, métodos GET/PUT, cabeceras Content-Type/If-None-Match y expone ETag.
-- [ ] Confirmar permisos mínimos del binding/credenciales limitados a ese bucket.
-- [ ] Desplegar la versión candidata por el procedimiento documentado, no con wrangler deploy --dry-run.
-- [ ] Ejecutar en producción una subida/descarga E2E con un archivo de prueba, comprobar rango parcial y probar que una segunda cuenta no puede descargarlo.
-- [ ] Adjuntar el SHA desplegado y el resultado verificable a la evidencia de fase, sin copiar credenciales o cookies.
+**Estado: COMPLETADA (2026-10-12, según confirmación explícita del propietario).**
 
-No llamar 100 % cerrada a la Fase 4 hasta resolver la lista de evidencia operativa anterior.
+- [x] Verificar que `vega-drive-files` permanece privado, sin dominio público ni `r2.dev`; CORS limitado a los orígenes autorizados, métodos y cabeceras mínimos, sin `*`.
+- [x] Confirmar permisos mínimos de R2 limitados al bucket requerido.
+- [x] Desplegar la migración `0003_files_transfers.sql` y la versión de Worker correspondiente mediante el procedimiento de despliegue.
+- [x] Ejecutar subida y descarga reales en producción y comparar los bytes.
+- [x] Probar rangos parciales y confirmar el rechazo de acceso desde otra cuenta.
+- [x] Registrar el SHA desplegado y las evidencias de producción, sin incluir credenciales, URLs firmadas ni cookies.
+
+La confirmación de cierre procede del propietario. El SHA Git exacto no se vuelve a inferir a partir de `main`: se debe consultar el registro de despliegue adjunto por el propietario si se necesita reproducirlo desde este documento. Esta evidencia de Fase 4 no equivale a certificar las Fases 5–9 ni pruebas de carga/concurrencia que no formen parte de esta lista.
 
 ## Migración a transferencia directa (ADR-001)
 
