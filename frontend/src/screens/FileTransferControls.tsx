@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { FilesApiError } from "../services/files-service";
 import { createFolderResolver } from "../services/files-folder-upload";
 import {
@@ -37,9 +37,12 @@ export function FileTransferControls({
     );
   }
 
-  const pauseItem = (id: string) => pauseUpload(controlsRef.current, updateItem, id);
-  const resumeItem = (id: string) => resumeUpload(controlsRef.current, updateItem, id);
-  const cancelItem = (id: string) => cancelUpload(controlsRef.current, updateItem, id);
+  const pauseItem = (id: string) =>
+    pauseUpload(controlsRef.current, updateItem, id);
+  const resumeItem = (id: string) =>
+    resumeUpload(controlsRef.current, updateItem, id);
+  const cancelItem = (id: string) =>
+    cancelUpload(controlsRef.current, updateItem, id);
   const removePendingItem = (id: string) =>
     removePendingUpload(controlsRef.current, setItems, id);
   const cancelGroup = (groupId: string) =>
