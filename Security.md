@@ -1,6 +1,6 @@
 # Reglas de seguridad de Vega Drive
 
-Estas reglas son **obligatorias** para cada implementación. Cada regla tiene un ID (`SEC-XXX-NN`) que el [roadmap](./roadmap.md) referencia en cada fase. La separación de módulos se rige además por [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md). Si una tarea no puede cumplir una regla, se documenta la excepción en el PR y se aprueba explícitamente.
+Estas reglas son **obligatorias** para cada implementación. Las excepciones de transferencia directa autorizadas por el propietario se definen en [ADR-001](./ADR-001-direct-r2-transfers.md); no relajan el aislamiento entre usuarios ni la privacidad del bucket. Cada regla tiene un ID (`SEC-XXX-NN`) que el [roadmap](./roadmap.md) referencia en cada fase. La separación de módulos se rige además por [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md). Si una tarea no puede cumplir una regla, se documenta la excepción en el PR y se aprueba explícitamente.
 
 Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; el atacante principal es **otro cliente autenticado** (que intenta acceder a datos ajenos), seguido de bots anónimos (fuerza bruta, abuso del registro) y de errores propios (secretos filtrados, configuraciones laxas).
 
@@ -45,17 +45,17 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 
 - **SEC-R2-01** Bucket **privado**: sin acceso público ni dominio público ni `r2.dev` habilitado.
 - **SEC-R2-02** El binding o token S3 de R2 tiene permisos mínimos (Object Read & Write) limitados a **este bucket**, y solo infrastructure/storage/r2 del módulo files puede usarlo. Rotación periódica.
-- **SEC-R2-03** Está prohibido emitir URLs prefirmadas, endpoints, credenciales o tokens de R2 al navegador. Toda transferencia pasa por una ruta autenticada del Worker/backend.
-- **SEC-R2-04** El módulo files valida el tamaño total y transmite a R2 solo después de autorizar la operación. Cualquier multipart interno queda encapsulado en el backend y no expone partes ni identificadores al navegador.
+- **SEC-R2-03** Las credenciales, endpoints de control, claves de objeto y configuración de R2 nunca se entregan al navegador. Se permite emitir exclusivamente URLs prefirmadas de vida corta y alcance mínimo para una única operación/objeto/parte, tras autorización del Worker y conforme a [ADR-001](./ADR-001-direct-r2-transfers.md). Una URL firmada es una credencial portadora hasta su expiración; no prometer revocación instantánea.
+- **SEC-R2-04** El módulo files valida el tamaño total, permisos, cuota y frecuencia antes de autorizar una transferencia. Las cargas multipart pueden enviar bytes directamente a R2 con URLs prefirmadas por parte; los IDs de sesión internos, upload IDs S3, claves de objeto y listas de partes autoritativas permanecen en el servidor. El Worker valida y completa la sesión.
 - **SEC-R2-05** Al completar, verificar con `HEAD` el **tamaño real** del objeto frente a la cuota y al tamaño declarado; si excede, borrar el objeto y rechazar.
 - **SEC-R2-06** El Worker transmite las descargas con `Content-Disposition: attachment` y `X-Content-Type-Options: nosniff` para evitar XSS almacenado por archivos HTML/SVG subidos.
 - **SEC-R2-07** Regla de ciclo de vida para abortar subidas multipart incompletas y cron de limpieza de subidas huérfanas.
-- **SEC-R2-08** El bucket no acepta CORS ni peticiones del navegador: sin `AllowedOrigins`, sin dominio público, sin `r2.dev` y sin `ExposeHeaders` para clientes. Solo el Worker/backend puede acceder a R2.
+- **SEC-R2-08** El bucket permanece privado, sin dominio público ni `r2.dev`. Para transferencias directas, CORS de R2 permite solo orígenes explícitos de producción/desarrollo, métodos estrictamente necesarios y cabeceras mínimas; nunca `*` con credenciales. CORS no es autorización: cada operación requiere una URL prefirmada de alcance mínimo. No exponer cabeceras que no sean necesarias.
 
 ## 6. Frontend sin lógica de negocio (FE)
 
 - **SEC-FE-01** El frontend solo presenta interfaz y envía solicitudes al mismo origen `/api`. No toma decisiones de autorización, cuotas, propiedad, claves de almacenamiento ni reglas de negocio; el servidor siempre es la fuente de verdad.
-- **SEC-FE-02** Los assets del frontend no importan SDKs de R2/S3 ni contienen endpoint, bucket, configuración, URL prefirmada, token o credencial de R2.
+- **SEC-FE-02** Los assets del frontend no importan SDKs de R2/S3 ni contienen credenciales, configuración de cuenta/bucket ni URLs prefirmadas persistentes. El frontend puede usar una URL prefirmada temporal devuelta por una API same-origin para una transferencia concreta; no la almacena ni registra, y no puede elegir claves, permisos, expiración ni parámetros firmados.
 
 ## 7. Fronteras modulares y D1 única (MOD)
 
