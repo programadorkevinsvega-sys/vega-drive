@@ -366,7 +366,8 @@ export async function uploadFile(
   // desde cero. Para archivos grandes, multipart conserva las partes
   // aceptadas.
   while (true) {
-    await control.waitUntilReady();
+    if (control.paused) await control.waitUntilReady();
+    if (control.cancelled) throw new UploadCancelledError();
     try {
       return await uploadSingleFile(file, folderId, onProgress, control);
     } catch (error) {
