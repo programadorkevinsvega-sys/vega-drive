@@ -28,7 +28,7 @@ export function messageForStatus(status: number): string {
     return "Ya existe un elemento con ese nombre o el movimiento no es válido.";
   }
   if (status === 413) {
-    return "El archivo supera el tamaño máximo permitido de 95 MiB.";
+    return "La solicitud supera el tamaño máximo permitido por el servidor.";
   }
   if (status === 429) {
     return "Se alcanzó el límite temporal de transferencias. Inténtalo más tarde.";
