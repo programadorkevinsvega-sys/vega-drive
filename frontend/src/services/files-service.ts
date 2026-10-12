@@ -3,6 +3,7 @@ import type {
   FilesFolderListing,
   FilesFolderView,
   FilesTrashListing,
+  FilesRecentListing,
 } from "./files-contract";
 export type {
   FilesCatalogNode,
@@ -10,6 +11,7 @@ export type {
   FilesFolderListing,
   FilesFolderView,
   FilesTrashListing,
+  FilesRecentListing,
 } from "./files-contract";
 
 import { FilesApiError, messageForStatus } from "./files-api-error";
@@ -84,6 +86,19 @@ export function listFolder(
 export function listTrash(cursor?: string): Promise<FilesTrashListing> {
   return requestJson<FilesTrashListing>(
     "/api/files/trash" + queryString({ limit: "50", cursor }),
+  );
+}
+
+export function listRecent(cursor?: string): Promise<FilesRecentListing> {
+  return requestJson<FilesRecentListing>(
+    "/api/files/recent" + queryString({ limit: "50", cursor }),
+  );
+}
+
+export function recordFileOpen(id: string): Promise<{ recorded: true }> {
+  return sendNoBody<{ recorded: true }>(
+    "/api/files/items/" + encodeURIComponent(id) + "/open",
+    "POST",
   );
 }
 
