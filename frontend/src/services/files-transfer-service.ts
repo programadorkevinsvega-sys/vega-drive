@@ -245,7 +245,8 @@ async function uploadMultipartFile(
           if (control.cancelled) throw new UploadCancelledError();
           if (control.paused || error instanceof UploadPausedError) {
             await control.waitUntilReady();
-            // El fragmento interrumpido se reenvía con el mismo número de parte.
+            // El fragmento interrumpido se reenvía con el mismo número de
+            // parte.
             break;
           }
           const retryable =
