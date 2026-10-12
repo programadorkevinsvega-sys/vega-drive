@@ -1,7 +1,7 @@
 import type { FileStorageRange } from "./ports/file-storage.js";
 
 export const MAX_FILE_SIZE_BYTES = 95 * 1024 * 1024;
-export const MAX_USER_STORAGE_BYTES = 1024 * 1024 * 1024;
+export const MAX_USER_STORAGE_BYTES = 10 * 1024 * 1024 * 1024;
 export const UPLOAD_RESERVATION_TTL_MS = 60 * 60 * 1000;
 export const UPLOADS_PER_HOUR = 20;
 export const DOWNLOADS_PER_HOUR = 120;
