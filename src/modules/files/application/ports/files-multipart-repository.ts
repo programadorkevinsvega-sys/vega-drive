@@ -29,8 +29,5 @@ export interface FilesMultipartUploadRepository {
   savePart(part: FilesMultipartPart): Promise<void>;
   listParts(sessionId: string): Promise<FilesMultipartPart[]>;
   delete(id: string, ownerId: string): Promise<boolean>;
-  listExpired(
-    now: string,
-    limit: number,
-  ): Promise<FilesMultipartSession[]>;
+  listExpired(now: string, limit: number): Promise<FilesMultipartSession[]>;
 }
