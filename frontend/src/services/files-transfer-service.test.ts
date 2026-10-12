@@ -171,10 +171,13 @@ describe("subida binaria con progreso", () => {
 
   it("omite autorizaciones directas cuando están deshabilitadas", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
-    void uploadFile(file({
-      size: 96 * 1024 * 1024,
-      slice: (start, end) => ({ size: end - start }) as Blob,
-    }), null);
+    void uploadFile(
+      file({
+        size: 96 * 1024 * 1024,
+        slice: (start, end) => ({ size: end - start }) as Blob,
+      }),
+      null,
+    );
     const start = FakeXMLHttpRequest.instances[0];
     if (!start) throw new Error("No se creó la sesión multipart.");
     start.status = 201;
