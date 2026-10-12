@@ -1,13 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  createFileTransferCleanup,
-} from "../src/modules/files/application/file-transfer-cleanup.js";
-import type {
-  FileTransferDependencies,
-} from "../src/modules/files/application/file-transfer-dependencies.js";
-import type {
-  FilesMultipartSession,
-} from "../src/modules/files/application/ports/files-multipart-repository.js";
+import { createFileTransferCleanup } from "../src/modules/files/application/file-transfer-cleanup.js";
+import type { FileTransferDependencies } from "../src/modules/files/application/file-transfer-dependencies.js";
+import type { FilesMultipartSession } from "../src/modules/files/application/ports/files-multipart-repository.js";
 
 const expiredSession: FilesMultipartSession = {
   id: "session-a",

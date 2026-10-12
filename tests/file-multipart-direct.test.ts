@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  createMultipartPartAuthorizations,
-} from "../src/modules/files/application/file-multipart-direct.js";
-import type {
-  FilesMultipartSession,
-} from "../src/modules/files/application/ports/files-multipart-repository.js";
+import { createMultipartPartAuthorizations } from "../src/modules/files/application/file-multipart-direct.js";
+import type { FilesMultipartSession } from "../src/modules/files/application/ports/files-multipart-repository.js";
 
 const session: FilesMultipartSession = {
   id: "session-a",
