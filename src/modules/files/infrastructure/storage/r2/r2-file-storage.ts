@@ -136,7 +136,8 @@ export class R2FileStorage implements IFileStoragePort {
         key,
         expiresInSeconds,
         query: {
-          "response-content-disposition": 'attachment; filename="' + safeName + '"',
+          "response-content-disposition":
+            'attachment; filename="' + safeName + '"',
           "response-content-type": "application/octet-stream",
         },
       },
