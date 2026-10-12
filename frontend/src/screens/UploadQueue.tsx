@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Button } from "../ui/Button";
 
 export type UploadState = "pending" | "uploading" | "completed" | "error";
 
@@ -26,7 +27,17 @@ function stateLabel(item: UploadItem): string {
   return item.state === "completed" ? "Completado" : "No se pudo subir";
 }
 
-export function UploadQueue({ items }: { items: UploadItem[] }): ReactNode {
+interface UploadQueueProps {
+  items: UploadItem[];
+  uploading: boolean;
+  onClear: () => void;
+}
+
+export function UploadQueue({
+  items,
+  uploading,
+  onClear,
+}: UploadQueueProps): ReactNode {
   if (items.length === 0) return null;
 
   return (
@@ -34,7 +45,14 @@ export function UploadQueue({ items }: { items: UploadItem[] }): ReactNode {
       className="vd-transfer__queue"
       aria-label="Progreso de las subidas"
     >
-      <h2 className="vd-transfer__title">Subidas</h2>
+      <div className="vd-transfer__queue-heading">
+        <h2 className="vd-transfer__title">Subidas</h2>
+        {!uploading ? (
+          <Button size="sm" variant="ghost" onClick={onClear}>
+            Limpiar
+          </Button>
+        ) : null}
+      </div>
       <ul className="vd-transfer__list">
         {items.map((item) => (
           <li
