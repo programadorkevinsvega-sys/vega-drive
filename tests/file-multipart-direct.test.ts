@@ -22,7 +22,7 @@ const session: FilesMultipartSession = {
 describe("autorizaciones multipart directas a R2", () => {
   it(
     "recupera una reserva de nombre de una sesión abandonada sin partes",
-      async () => {
+    async () => {
       const fixture = await createFilesCatalogFixture();
       try {
         const createMultipartUpload = vi
