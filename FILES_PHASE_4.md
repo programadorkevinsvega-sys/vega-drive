@@ -73,7 +73,7 @@ La migración src/modules/files/infrastructure/persistence/d1/migrations/0003_fi
 - [ ] Adjuntar el SHA desplegado y el resultado verificable a la evidencia de fase, sin copiar credenciales o cookies.
 
 No llamar 100 % cerrada a la Fase 4 hasta resolver la lista de evidencia operativa anterior.
- 
+
 ## Migración a transferencia directa (ADR-001)
 
 - Las subidas de hasta 95 MiB pueden crear una sesión de PUT firmado, subir el
