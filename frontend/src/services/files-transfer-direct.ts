@@ -33,7 +33,9 @@ export async function tryDirectSingleUpload(
       { "Content-Type": "application/json" },
     );
   } catch (error) {
-    if (error instanceof FilesApiError && [404, 503].includes(error.status)) return null;
+    if (error instanceof FilesApiError && [404, 503].includes(error.status)) {
+      return null;
+    }
     throw error;
   }
   if (
@@ -43,14 +45,19 @@ export async function tryDirectSingleUpload(
     !Number.isSafeInteger(started.expiresInSeconds) ||
     started.expiresInSeconds < 1
   ) {
-    throw new FilesApiError("El servidor devolvió una autorización de subida inválida.", 500);
+    throw new FilesApiError(
+      "El servidor devolvió una autorización de subida inválida.",
+      500,
+    );
   }
 
   const abortSession = async () => {
     try {
       await requestJson(
         "POST",
-        "/api/files/direct/" + encodeURIComponent(started.uploadId) + "/abort",
+        "/api/files/direct/" +
+          encodeURIComponent(started.uploadId) +
+          "/abort",
         null,
       );
     } catch {
@@ -70,15 +77,24 @@ export async function tryDirectSingleUpload(
         callback();
       };
       request.open("PUT", started.url, true);
-      request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      request.setRequestHeader(
+        "Content-Type",
+        file.type || "application/octet-stream",
+      );
       control.attach(request);
       request.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable && file.size > 0) {
-          onProgress?.(Math.min(95, Math.floor((event.loaded / event.total) * 95)));
+          onProgress?.(
+            Math.min(95, Math.floor((event.loaded / event.total) * 95)),
+          );
         }
       });
       request.addEventListener("error", () =>
-        finish(() => reject(new FilesApiError("La conexión con el almacenamiento falló.", 0))),
+        finish(() =>
+          reject(
+            new FilesApiError("La conexión con el almacenamiento falló.", 0),
+          ),
+        ),
       );
       request.addEventListener("abort", () =>
         finish(() => {
@@ -90,8 +106,15 @@ export async function tryDirectSingleUpload(
       request.addEventListener("load", () =>
         finish(() => {
           if (request.status < 200 || request.status >= 300) {
-            reject(new FilesApiError("El almacenamiento rechazó la subida directa.", request.status));
-          } else resolve();
+            reject(
+              new FilesApiError(
+                "El almacenamiento rechazó la subida directa.",
+                request.status,
+              ),
+            );
+          } else {
+            resolve();
+          }
         }),
       );
       request.send(file);
@@ -99,7 +122,9 @@ export async function tryDirectSingleUpload(
     await control.waitUntilReady();
     const result = await requestJson<unknown>(
       "POST",
-      "/api/files/direct/" + encodeURIComponent(started.uploadId) + "/complete",
+      "/api/files/direct/" +
+        encodeURIComponent(started.uploadId) +
+        "/complete",
       null,
     );
     const uploaded = parseFileResponse(result, 201);
@@ -108,6 +133,10 @@ export async function tryDirectSingleUpload(
   } catch (error) {
     await abortSession();
     if (control.cancelled) throw new UploadCancelledError();
+    if (error instanceof FilesApiError && error.status === 403) {
+      // A long pause can outlive the signed URL; retry through the safe API path.
+      return null;
+    }
     throw error;
   }
 }
@@ -130,11 +159,17 @@ export async function tryDirectMultipartPart(
   try {
     authorization = await requestJson<DirectPartAuthorization>(
       "POST",
-      "/api/files/multipart/" + encodeURIComponent(uploadId) + "/parts/" + partNumber + "/url",
+      "/api/files/multipart/" +
+        encodeURIComponent(uploadId) +
+        "/parts/" +
+        partNumber +
+        "/url",
       null,
     );
   } catch (error) {
-    if (error instanceof FilesApiError && [404, 503].includes(error.status)) return false;
+    if (error instanceof FilesApiError && [404, 503].includes(error.status)) {
+      return false;
+    }
     throw error;
   }
   if (
@@ -144,7 +179,10 @@ export async function tryDirectMultipartPart(
     authorization.expectedSizeBytes !== chunk.size ||
     authorization.expiresInSeconds < 1
   ) {
-    throw new FilesApiError("El servidor devolvió una autorización de fragmento inválida.", 500);
+    throw new FilesApiError(
+      "El servidor devolvió una autorización de fragmento inválida.",
+      500,
+    );
   }
 
   await control.waitUntilReady();
@@ -192,7 +230,11 @@ export async function tryDirectMultipartPart(
 
   await requestJson(
     "POST",
-    "/api/files/multipart/" + encodeURIComponent(uploadId) + "/parts/" + partNumber + "/confirm",
+    "/api/files/multipart/" +
+      encodeURIComponent(uploadId) +
+      "/parts/" +
+      partNumber +
+      "/confirm",
     JSON.stringify({ etag, sizeBytes: chunk.size }),
     { "Content-Type": "application/json" },
   );
