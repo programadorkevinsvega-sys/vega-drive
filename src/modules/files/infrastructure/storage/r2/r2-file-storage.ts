@@ -1,4 +1,5 @@
 import type { Env } from "../../../../../worker/env.js";
+import { presignR2Object } from "./r2-sigv4-presigner.js";
 import type {
   FileStorageBody,
   FileStorageHead,
@@ -9,7 +10,10 @@ import type {
 
 /** The only adapter allowed to access the private Cloudflare R2 bucket binding. */
 export class R2FileStorage implements IFileStoragePort {
-  constructor(private readonly bucket: Env["FILES_BUCKET"]) {}
+  constructor(
+    private readonly bucket: Env["FILES_BUCKET"],
+    private readonly env: Env,
+  ) {}
 
   async put(
     key: string,
@@ -53,6 +57,25 @@ export class R2FileStorage implements IFileStoragePort {
 
   async delete(key: string): Promise<void> {
     await this.bucket.delete(key);
+  }
+
+  async presignGetUrl(
+    key: string,
+    expiresInSeconds: number,
+  ): Promise<string | null> {
+    const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+      return null;
+    }
+    return presignR2Object(
+      {
+        accountId: R2_ACCOUNT_ID,
+        bucketName: "vega-drive-files",
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+      { method: "GET", key, expiresInSeconds },
+    );
   }
 
   async createMultipartUpload(
@@ -103,5 +126,5 @@ export class R2FileStorage implements IFileStoragePort {
 
 export function createR2FileStorage(env: Env): IFileStoragePort | null {
   if (!env.FILES_BUCKET) return null;
-  return new R2FileStorage(env.FILES_BUCKET);
+  return new R2FileStorage(env.FILES_BUCKET, env);
 }
