@@ -194,6 +194,32 @@ async function listTrash(c: Context<AuthenticatedEnv>) {
 filesRoutes.get("/", listFolder);
 filesRoutes.get("", listFolder);
 filesRoutes.get("/trash", listTrash);
+filesRoutes.get("/recent", async (c) => {
+  const query = queryRecord(c.req.raw, ["limit", "cursor"]);
+  if (!query) return c.json(REQUEST_ERROR, 400);
+  const input: Record<string, unknown> = {};
+  if (Object.hasOwn(query, "limit")) input.limit = query.limit;
+  if (Object.hasOwn(query, "cursor")) input.cursor = query.cursor;
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.listRecent(actorFor(c), input),
+  );
+});
+
+filesRoutes.post("/items/:id/open", async (c) => {
+  const rejected = mutationRejection(c);
+  if (rejected) return rejected;
+  if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.recordRecentActivity(
+      actorFor(c),
+      c.req.param("id"),
+      "open",
+    ),
+  );
+});
+
 
 filesRoutes.post("/trash/empty", async (c) => {
   const rejected = mutationRejection(c);
