@@ -75,6 +75,7 @@ export function createMultipartPartAuthorizations(deps: Dependencies) {
         session.storageKey,
         session.r2UploadId,
         partNumber,
+        expectedSizeBytes,
         120,
       );
       if (!url) return failure("unavailable");
