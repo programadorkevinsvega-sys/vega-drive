@@ -86,8 +86,15 @@ export class R2FileStorage implements IFileStoragePort {
     expiresInSeconds: number,
   ): Promise<string | null> {
     const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
-    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) return null;
-    if (!uploadId || !Number.isSafeInteger(partNumber) || partNumber < 1 || partNumber > 10000) {
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+      return null;
+    }
+    if (
+      !uploadId ||
+      !Number.isSafeInteger(partNumber) ||
+      partNumber < 1 ||
+      partNumber > 10_000
+    ) {
       throw new Error("Invalid multipart part authorization");
     }
     return presignR2Object(
@@ -115,6 +122,8 @@ export class R2FileStorage implements IFileStoragePort {
     if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
       return null;
     }
+    const safeName =
+      downloadName.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download";
     return presignR2Object(
       {
         accountId: R2_ACCOUNT_ID,
@@ -127,8 +136,7 @@ export class R2FileStorage implements IFileStoragePort {
         key,
         expiresInSeconds,
         query: {
-          "response-content-disposition":
-            `attachment; filename="${downloadName.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download"}"`,
+          "response-content-disposition": 'attachment; filename="' + safeName + '"',
           "response-content-type": "application/octet-stream",
         },
       },
