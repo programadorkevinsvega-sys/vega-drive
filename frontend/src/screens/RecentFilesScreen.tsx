@@ -85,7 +85,6 @@ export function RecentFilesScreen() {
           </p>
         </div>
         <Button
-          icon="refresh-cw"
           variant="secondary"
           onClick={() => setRefreshKey((value) => value + 1)}
           disabled={loading}
@@ -160,7 +159,6 @@ export function RecentFilesScreen() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    icon="download"
                     onClick={() =>
                       window.location.assign(downloadFileUrl(item.file.id))
                     }
