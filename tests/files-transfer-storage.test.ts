@@ -68,6 +68,60 @@ describe("file transfer reservations and rate limits", () => {
     }
   });
 
+  it("prevents failed reservations from being completed and completed ones from being failed", async () => {
+    const db = await fixture();
+    try {
+      const uploads = new D1FilesUploadRepository(db.db);
+      const completionTime = "2026-10-11T12:30:00.000Z";
+
+      await uploads.insert(pendingUpload("transition-failed", 10));
+      expect(
+        await uploads.updateStatus(
+          "transition-failed",
+          "owner-a",
+          "failed",
+          null,
+        ),
+      ).toBe(true);
+      expect(
+        await uploads.updateStatus(
+          "transition-failed",
+          "owner-a",
+          "completed",
+          completionTime,
+        ),
+      ).toBe(false);
+      expect(
+        (await uploads.findByIdForOwner("transition-failed", "owner-a"))
+          ?.status,
+      ).toBe("failed");
+
+      await uploads.insert(pendingUpload("transition-completed", 10));
+      expect(
+        await uploads.updateStatus(
+          "transition-completed",
+          "owner-a",
+          "completed",
+          completionTime,
+        ),
+      ).toBe(true);
+      expect(
+        await uploads.updateStatus(
+          "transition-completed",
+          "owner-a",
+          "failed",
+          null,
+        ),
+      ).toBe(false);
+      expect(
+        (await uploads.findByIdForOwner("transition-completed", "owner-a"))
+          ?.status,
+      ).toBe("completed");
+    } finally {
+      db.close();
+    }
+  });
+
   it("limits transfer attempts per authenticated owner without sharing counters across users", async () => {
     const db = await fixture();
     try {

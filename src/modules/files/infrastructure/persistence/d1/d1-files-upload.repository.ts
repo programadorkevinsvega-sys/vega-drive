@@ -114,9 +114,11 @@ export class D1FilesUploadRepository implements FilesUploadRepository {
     const result = await this.db
       .prepare(
         "UPDATE files_uploads SET status = ?, completed_at = ? " +
-          "WHERE id = ? AND owner_id = ?",
+          "WHERE id = ? AND owner_id = ? AND " +
+          "(status = 'pending' OR " +
+          "(? = 'failed' AND status IN ('failed', 'expired')))",
       )
-      .bind(status, completedAt, id, ownerId)
+      .bind(status, completedAt, id, ownerId, status)
       .run();
     return result.meta.changes > 0;
   }

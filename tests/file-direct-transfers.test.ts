@@ -146,6 +146,88 @@ describe("transferencias directas a R2", () => {
     }
   });
 
+  it("retiene la sesión cancelada para limpiar un PUT tardío tras expirar su URL", async () => {
+    const fixture = await createFilesCatalogFixture();
+    try {
+      fixture.storage.presignPutUrl = vi
+        .fn()
+        .mockResolvedValue("https://r2.test/object");
+      const started = await fixture.api.beginDirectUpload(
+        { userId: "owner-a" },
+        {
+          name: "cancelled-late-put.txt",
+          folderId: null,
+          sizeBytes: 4,
+          contentType: "text/plain",
+        },
+      );
+      expect(started.ok).toBe(true);
+      if (!started.ok) {
+        throw new Error("No se pudo iniciar la subida de prueba.");
+      }
+
+      const storageKey = "u/owner-a/" + started.value.uploadId;
+      fixture.objects.set(storageKey, {
+        bytes: new Uint8Array(4),
+        contentType: "text/plain",
+      });
+      await expect(
+        fixture.api.abortMultipartUpload(
+          { userId: "owner-a" },
+          started.value.uploadId,
+        ),
+      ).resolves.toEqual({ ok: true, value: undefined });
+      expect(fixture.objects.has(storageKey)).toBe(false);
+
+      const reservation = await fixture.db
+        .prepare("SELECT status FROM files_uploads WHERE item_id = ?")
+        .bind(started.value.uploadId)
+        .first<{ status: string }>();
+      expect(reservation?.status).toBe("failed");
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_multipart_uploads WHERE id = ?")
+          .bind(started.value.uploadId)
+          .first(),
+      ).not.toBeNull();
+      await expect(
+        fixture.api.completeDirectUpload(
+          { userId: "owner-a" },
+          started.value.uploadId,
+        ),
+      ).resolves.toEqual({ ok: false, reason: "not-found" });
+
+      // Model a PUT that finishes/replays while its already-issued URL is valid.
+      fixture.objects.set(storageKey, {
+        bytes: new Uint8Array(4),
+        contentType: "text/plain",
+      });
+      const cleanupTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+      expect(await fixture.api.cleanupExpiredUploads(cleanupTime, 100)).toBe(1);
+      expect(fixture.objects.has(storageKey)).toBe(false);
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_uploads WHERE item_id = ?")
+          .bind(started.value.uploadId)
+          .first(),
+      ).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_multipart_uploads WHERE id = ?")
+          .bind(started.value.uploadId)
+          .first(),
+      ).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_items WHERE id = ?")
+          .bind(started.value.uploadId)
+          .first(),
+      ).toBeNull();
+    } finally {
+      fixture.close();
+    }
+  });
+
   it("solo firma descargas de archivos activos del propietario", async () => {
     const fixture = await createFilesCatalogFixture();
     try {

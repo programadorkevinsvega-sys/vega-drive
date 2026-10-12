@@ -307,7 +307,23 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
       sessionId,
       actor.userId,
     );
-    if (!session || session.expiresAt <= now().toISOString()) {
+    if (!session) return failure("not-found");
+    const reservation = await deps.uploads.findByIdForOwner(
+      session.reservationId,
+      actor.userId,
+    );
+    if (!reservation) return failure("not-found");
+    if (reservation.status === "completed") {
+      const existing = await deps.items.findByIdForOwner(
+        session.itemId,
+        actor.userId,
+      );
+      return existing && existing.deletedAt === null
+        ? success(toFileView(existing))
+        : failure("not-found");
+    }
+    if (reservation.status !== "pending") return failure("not-found");
+    if (session.expiresAt <= now().toISOString()) {
       return failure("not-found");
     }
     const parts = await deps.multipart.listParts(sessionId);
@@ -412,12 +428,42 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
     );
     if (!session) return failure("not-found");
     try {
-      if (storage.abortMultipartUpload && session.r2UploadId !== "direct-put") {
-        await storage.abortMultipartUpload(
-          session.storageKey,
-          session.r2UploadId,
-        );
+      const reservation = await deps.uploads.findByIdForOwner(
+        session.reservationId,
+        actor.userId,
+      );
+      if (reservation?.status === "completed") {
+        await deps.multipart.delete(sessionId, actor.userId);
+        return success(undefined);
       }
+      if (reservation) {
+        const markedFailed = await deps.uploads.updateStatus(
+          session.reservationId,
+          actor.userId,
+          "failed",
+          null,
+        );
+        if (!markedFailed) {
+          const latest = await deps.uploads.findByIdForOwner(
+            session.reservationId,
+            actor.userId,
+          );
+          if (latest?.status === "completed") {
+            await deps.multipart.delete(sessionId, actor.userId);
+            return success(undefined);
+          }
+          return failure("unavailable");
+        }
+      }
+      if (session.r2UploadId === "direct-put") {
+        // Keep the durable session/reservation until expiry: an issued PUT URL
+        // remains usable until its short signature TTL elapses.
+        await storage.delete(session.storageKey);
+        await deps.names.release(actor.userId, "file", session.itemId);
+        return success(undefined);
+      }
+      if (!storage.abortMultipartUpload) return failure("unavailable");
+      await storage.abortMultipartUpload(session.storageKey, session.r2UploadId);
       await storage.delete(session.storageKey);
       await deps.names.release(actor.userId, "file", session.itemId);
       await deps.uploads.deleteByIdForOwner(

@@ -67,6 +67,7 @@ La activación futura debe hacerse explícitamente mediante la configuración de
 - [ ] Un usuario no puede iniciar, completar, cancelar ni descargar recursos de otro usuario.
 - [ ] Subida directa pequeña: verificar que tamaño real y Content-Type de HEAD coincidan con la sesión antes de publicar metadatos; comprobar cuota y limpieza ante discrepancias.
 - [ ] Subida multipart grande: verificar todas las partes, reintentos, reanudación, pausa, cancelación, Content-Type de HEAD y limpieza/reintento de sesiones incompletas.
+- [ ] Cancelación de PUT directo: como la URL previamente emitida no puede revocarse al instante, confirmar que `complete` se rechaza, que una escritura tardía no queda huérfana después de la limpieza diferida y que la sesión fallida se conserva para reintento.
 - [ ] Descarga directa: permisos, papelera, nombre seguro, URL temporal y ausencia de secretos en logs.
 - [ ] CORS rechaza un origen no permitido y expone `ETag` a la aplicación autorizada.
 - [ ] Prueba E2E real y concurrencia controlada; documentar resultados y ruta de rollback al flujo por Worker.

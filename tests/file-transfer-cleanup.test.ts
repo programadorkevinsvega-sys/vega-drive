@@ -38,6 +38,7 @@ describe("limpieza de transferencias expiradas", () => {
       },
       names: { release: releaseName },
       uploads: {
+        findByIdForOwner: vi.fn().mockResolvedValue({ status: "pending" }),
         listNeedingCleanup: vi.fn().mockResolvedValue([]),
         deleteByIdForOwner: deleteReservation,
       },
@@ -61,6 +62,60 @@ describe("limpieza de transferencias expiradas", () => {
     expect(deleteSession).not.toHaveBeenCalled();
   });
 
+  it("no elimina un objeto cuyo registro de subida ya está completado", async () => {
+    const completedSession = {
+      ...expiredSession,
+      reservationId: "completed-reservation",
+    };
+    const findReservation = vi.fn().mockResolvedValue({
+      id: "completed-reservation",
+      ownerId: "owner-a",
+      status: "completed",
+    });
+    const abortMultipartUpload = vi.fn().mockResolvedValue(undefined);
+    const deleteObject = vi.fn().mockResolvedValue(undefined);
+    const deleteSession = vi.fn().mockResolvedValue(true);
+    const releaseName = vi.fn().mockResolvedValue(true);
+    const deleteReservation = vi.fn().mockResolvedValue(true);
+    const deps = {
+      multipartUploads: {
+        listExpired: vi.fn().mockResolvedValue([completedSession]),
+        delete: deleteSession,
+      },
+      storage: {
+        abortMultipartUpload,
+        delete: deleteObject,
+      },
+      names: { release: releaseName },
+      uploads: {
+        findByIdForOwner: findReservation,
+        listNeedingCleanup: vi.fn().mockResolvedValue([]),
+        deleteByIdForOwner: deleteReservation,
+      },
+      items: { deletePermanently: vi.fn().mockResolvedValue(true) },
+      transferEvents: { cleanupBefore: vi.fn().mockResolvedValue(undefined) },
+    } as unknown as FileTransferDependencies;
+
+    const cleaned = await createFileTransferCleanup(deps)(
+      "2026-10-12T12:00:00.000Z",
+      100,
+    );
+
+    expect(cleaned).toBe(1);
+    expect(findReservation).toHaveBeenCalledWith(
+      "completed-reservation",
+      "owner-a",
+    );
+    expect(deleteSession).toHaveBeenCalledWith(
+      completedSession.id,
+      completedSession.ownerId,
+    );
+    expect(abortMultipartUpload).not.toHaveBeenCalled();
+    expect(deleteObject).not.toHaveBeenCalled();
+    expect(releaseName).not.toHaveBeenCalled();
+    expect(deleteReservation).not.toHaveBeenCalled();
+  });
+
   it("no intenta abortar una sesión de subida directa simple", async () => {
     const directSession = { ...expiredSession, r2UploadId: "direct-put" };
     const abortMultipartUpload = vi.fn().mockResolvedValue(undefined);
@@ -79,6 +134,7 @@ describe("limpieza de transferencias expiradas", () => {
       },
       names: { release: releaseName },
       uploads: {
+        findByIdForOwner: vi.fn().mockResolvedValue({ status: "pending" }),
         listNeedingCleanup: vi.fn().mockResolvedValue([]),
         deleteByIdForOwner: deleteReservation,
       },

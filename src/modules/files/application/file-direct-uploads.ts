@@ -218,6 +218,21 @@ export function createFileDirectUploads(
       if (session.r2UploadId !== DIRECT_UPLOAD_SENTINEL) {
         return failure("invalid-input");
       }
+      const reservation = await deps.uploads.findByIdForOwner(
+        session.reservationId,
+        actor.userId,
+      );
+      if (!reservation) return failure("not-found");
+      if (reservation.status === "completed") {
+        const existing = await deps.items.findByIdForOwner(
+          session.itemId,
+          actor.userId,
+        );
+        return existing && existing.deletedAt === null
+          ? success(toFileView(existing))
+          : failure("not-found");
+      }
+      if (reservation.status !== "pending") return failure("not-found");
       if (session.expiresAt <= now().toISOString()) {
         return failure("not-found");
       }
