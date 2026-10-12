@@ -99,7 +99,7 @@ export async function presignR2Object(
     path,
     canonicalQuery,
     (input.contentType ? "content-type:" + input.contentType + "\n" : "") +
-      "host:" + host + "\n",
+      "host:" + host,
     input.contentType ? "content-type;host" : "host",
     "UNSIGNED-PAYLOAD",
   ].join("\n");
