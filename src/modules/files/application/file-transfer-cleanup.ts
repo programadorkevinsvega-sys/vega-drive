@@ -8,13 +8,21 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
     let cleaned = 0;
     const boundedLimit = Math.min(100, Math.max(1, Math.trunc(limit)));
     if (deps.multipartUploads && deps.storage.abortMultipartUpload) {
-      const expiredSessions = await deps.multipartUploads.listExpired(nowIso, boundedLimit);
+      const expiredSessions = await deps.multipartUploads.listExpired(
+        nowIso,
+        boundedLimit,
+      );
       for (const session of expiredSessions) {
         try {
-          await deps.storage.abortMultipartUpload(session.storageKey, session.r2UploadId).catch(() => undefined);
+          await deps.storage
+            .abortMultipartUpload(session.storageKey, session.r2UploadId)
+            .catch(() => undefined);
           await deps.storage.delete(session.storageKey).catch(() => undefined);
           await deps.names.release(session.ownerId, "file", session.itemId);
-          await deps.uploads.deleteByIdForOwner(session.reservationId, session.ownerId);
+          await deps.uploads.deleteByIdForOwner(
+            session.reservationId,
+            session.ownerId,
+          );
           await deps.multipartUploads.delete(session.id, session.ownerId);
           cleaned += 1;
         } catch {
