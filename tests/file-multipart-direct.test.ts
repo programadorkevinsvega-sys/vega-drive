@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { createMultipartPartAuthorizations } from "../src/modules/files/application/file-multipart-direct.js";
+import {
+  createMultipartPartAuthorizations,
+} from "../src/modules/files/application/file-multipart-direct.js";
 import type { FilesMultipartSession } from "../src/modules/files/application/ports/files-multipart-repository.js";
 
 const session: FilesMultipartSession = {
@@ -20,7 +22,9 @@ const session: FilesMultipartSession = {
 describe("autorizaciones multipart directas a R2", () => {
   it("firma solo la parte y el tamaño esperados para el propietario", async () => {
     const findByIdForOwner = vi.fn().mockResolvedValue(session);
-    const presignMultipartPartUrl = vi.fn().mockResolvedValue("https://r2.test/part");
+    const presignMultipartPartUrl = vi
+      .fn()
+      .mockResolvedValue("https://r2.test/part");
     const multipart = {
       findByIdForOwner,
       savePart: vi.fn().mockResolvedValue(undefined),
@@ -66,7 +70,11 @@ describe("autorizaciones multipart directas a R2", () => {
       now: () => new Date("2026-10-11T14:00:00.000Z"),
     });
 
-    const result = await service.authorizeMultipartPart({ userId: "owner-b" }, session.id, 1);
+    const result = await service.authorizeMultipartPart(
+      { userId: "owner-b" },
+      session.id,
+      1,
+    );
 
     expect(result).toEqual({ ok: false, reason: "not-found" });
     expect(findByIdForOwner).toHaveBeenCalledWith(session.id, "owner-b");
@@ -85,7 +93,9 @@ describe("autorizaciones multipart directas a R2", () => {
       now: () => new Date("2026-10-11T14:00:00.000Z"),
     });
 
-    await expect(service.authorizeMultipartPart({ userId: "owner-a" }, session.id, 1)).resolves.toEqual({
+    await expect(
+      service.authorizeMultipartPart({ userId: "owner-a" }, session.id, 1),
+    ).resolves.toEqual({
       ok: false,
       reason: "not-found",
     });
