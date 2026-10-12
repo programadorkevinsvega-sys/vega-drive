@@ -216,7 +216,7 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 ## Fase 4 — Módulo files: transferencias privadas con R2
 
-**Estado al 2026-10-11: código implementado; cierre operativo pendiente.** El adaptador, las rutas autenticadas de transferencia, los límites de tamaño/cuota, las descargas por streaming y la limpieza programada están implementados en el código. No se marca la fase como cerrada hasta verificar la configuración de R2 en el panel y ejecutar una prueba real de subida/descarga en el Worker desplegado. La UI de selección/subida de archivos pertenece a la Fase 5.
+**Estado al 2026-10-12: código implementado; cierre operativo pendiente.** El adaptador R2, el flujo de respaldo por Worker y las transferencias directas mediante URLs prefirmadas están implementados. La subida directa simple usa PUT de vida corta; los archivos mayores usan multipart y sesiones persistidas en D1; las descargas directas usan GET prefirmado. La finalización verifica tamaño y `Content-Type` reales con HEAD antes de publicar metadatos. La cancelación de PUT conserva una reserva/sesión fallida para limpiar posibles escrituras tardías después de expirar la URL. La fase no se cierra hasta verificar la configuración de R2/CORS/credenciales y ejecutar E2E real en Cloudflare. No se desplegó ni se habilitó el flujo en esta intervención. La UI de selección/subida pertenece a la Fase 5.
 
 ### 4.1 Adaptador de almacenamiento
 
@@ -228,25 +228,29 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 - **Aceptación de código:** solo el adaptador de infraestructura accede al binding y los casos de uso dependen de IFileStoragePort.
 - 🔒 SEC-ISO-04, SEC-R2-01…03, SEC-MOD-04.
 
-### 4.2 Subida autenticada por API
+### 4.2 Subida autenticada por API y transferencia directa
 
-- [x] Implementar POST /api/files a través de FilesGateway, con bytes transmitidos por streaming del Worker.
-- [x] Exigir una sesión válida, comprobar origen, nombre, carpeta del propietario, tipo y tamaño declarado.
-- [x] Aplicar límites de 95 MiB por archivo, 1 GiB de almacenamiento por propietario, 20 subidas y 120 descargas por hora y propietario. La reserva de capacidad se hace en D1 antes de almacenar.
-- [x] Verificar el tamaño transmitido y el tamaño real del objeto con HEAD; escribir los metadatos solo después de almacenar un objeto del tamaño esperado.
-- [x] Compensar errores retirando el objeto, metadatos y reserva cuando sea posible; los fallos de limpieza quedan registrados para el cron de reconciliación.
+- [x] Mantener POST /api/files a través de FilesGateway con bytes transmitidos por streaming del Worker como flujo de respaldo; no retirarlo antes de aceptar el modo directo.
+- [x] Exigir una sesión válida y comprobar el origen, nombre, carpeta/propietario, tipo y tamaño antes de iniciar o autorizar una transferencia.
+- [x] Aplicar los límites vigentes: 95 MiB para subida simple, 10 GiB de almacenamiento por propietario, 20 subidas y 120 descargas por hora y propietario. La reserva se persiste en D1 antes de emitir una autorización de transferencia.
+- [x] Implementar POST /api/files/direct para emitir un PUT prefirmado, limitado a una clave generada por el servidor, con expiración breve, encabezados firmados y condición de no sobrescritura.
+- [x] Para archivos mayores de 95 MiB, mantener multipart con partes de 16 MiB, sesión y reserva en D1, URLs de parte vinculadas a la sesión y lista de partes autoritativa del backend.
+- [x] Verificar con HEAD el tamaño real y el Content-Type del objeto antes de publicar metadatos, tanto en subida directa simple como al completar multipart. Rechazar discrepancias y no publicar archivos que no superen la verificación.
+- [x] Compensar errores eliminando objetos/reservas cuando sea seguro; conservar las sesiones fallidas cuando haga falta para permitir una limpieza diferida y reintentable.
 - [x] Rechazar la antigua ruta de creación de metadatos sin bytes; el catálogo no puede crear un archivo descargable ficticio.
-- **Aceptación de código:** el navegador solo envía al mismo origen /api; no recibe claves, URLs ni referencias privadas de R2.
+- **Aceptación de código:** el Worker conserva autenticación, autorización, cuota y catálogo como plano de control. El navegador envía los bytes directamente a R2 solo cuando `DIRECT_R2_TRANSFERS_ENABLED` está activado; el flujo por Worker sigue como respaldo. El frontend no recibe credenciales generales de R2 ni puede elegir arbitrariamente claves, métodos o expiraciones.
 - 🔒 SEC-R2-03…05, SEC-ISO-05, SEC-RATE-01.
 
 ### 4.3 Descarga y limpieza
 
 - [x] Implementar GET /api/files/:id/download a través de FilesGateway.
-- [x] Autorizar la pertenencia y la carpeta activa antes de leer el objeto; los archivos ajenos responden 404.
-- [x] Transmitir el contenido con Content-Disposition: attachment, X-Content-Type-Options: nosniff, Cache-Control: no-store y soporte de un rango de bytes.
-- [x] Rechazar rangos inválidos con 416 y Content-Range; no se generan URLs prefirmadas.
-- [x] Ejecutar una limpieza programada de reservas pendientes vencidas, subidas fallidas y eventos de limitación antiguos, con reintento en ejecuciones posteriores.
-- **Aceptación de código:** las pruebas cubren subida/descarga, rango parcial, tamaño incorrecto, autenticación y aislamiento entre propietarios.
+- [x] Autorizar propietario y carpeta activa antes de acceder al objeto; los recursos ajenos, en papelera o eliminados no deben obtener una URL de descarga válida.
+- [x] Mantener en el modo de respaldo la descarga por streaming del Worker con `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, `Cache-Control: no-store` y soporte de rango de bytes.
+- [x] En el modo directo, comprobar propietario, estado activo, límite de descargas y tamaño real con HEAD antes de redirigir a una URL GET prefirmada de 120 segundos; la respuesta firmada fuerza `Content-Disposition: attachment` y `Content-Type: application/octet-stream`. No depende de un dominio público de R2.
+- [x] Rechazar rangos inválidos con 416 y `Content-Range` en el flujo de respaldo.
+- [x] Limpiar de forma programada reservas y sesiones vencidas, subidas fallidas y eventos de limitación antiguos; conservar la información si una limpieza falla, para que otra ejecución pueda reintentarlo.
+- [x] Evitar que una sesión antigua elimine un objeto ya publicado. La cancelación de un PUT directo deja la reserva fallida y la sesión D1 hasta la limpieza posterior a la expiración de la URL ya emitida; esa reserva puede seguir computando para cuota hasta que el objeto tardío se haya reconciliado.
+- **Aceptación de código:** las pruebas locales cubren subida/descarga, rangos del flujo de respaldo, discrepancias de integridad, estado de cancelación y aislamiento por propietario. Las pruebas reales de Cloudflare siguen pendientes.
 - 🔒 SEC-R2-03, SEC-R2-06, SEC-R2-07.
 
 ### 4.4 Validación operativa obligatoria antes de cerrar
