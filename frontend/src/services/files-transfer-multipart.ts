@@ -15,6 +15,8 @@ interface MultipartStart {
   uploadId: string;
   partSizeBytes: number;
   totalParts: number;
+  /** Optional for compatibility with a Worker not yet exposing capability state. */
+  directTransfersEnabled?: boolean;
 }
 
 export async function uploadMultipartFile(
@@ -41,7 +43,9 @@ export async function uploadMultipartFile(
     typeof started.uploadId !== "string" ||
     started.partSizeBytes !== MULTIPART_PART_BYTES ||
     !Number.isSafeInteger(started.totalParts) ||
-    started.totalParts < 2
+    started.totalParts < 2 ||
+    (started.directTransfersEnabled !== undefined &&
+      typeof started.directTransfersEnabled !== "boolean")
   ) {
     throw new FilesApiError(
       "El servidor devolvió una sesión de subida inválida.",
@@ -76,16 +80,22 @@ export async function uploadMultipartFile(
       let attempts = 0;
       while (true) {
         try {
-          const direct = await tryDirectMultipartPart(
-            started.uploadId,
-            partNumber,
-            chunk,
-            (loaded) =>
-              onProgress?.(
-                Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
-              ),
-            control,
-          );
+          const direct =
+            started.directTransfersEnabled === true
+              ? await tryDirectMultipartPart(
+                  started.uploadId,
+                  partNumber,
+                  chunk,
+                  (loaded) =>
+                    onProgress?.(
+                      Math.min(
+                        99,
+                        Math.floor(((start + loaded) / file.size) * 100),
+                      ),
+                    ),
+                  control,
+                )
+              : false;
           if (!direct) {
             await requestJson<{ partNumber: number }>(
               "PUT",

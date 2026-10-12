@@ -197,7 +197,13 @@ filesTransferRoutes.post("/multipart", async (c) => {
     input,
   );
   if (!result.ok) return transferError(result.reason);
-  return c.json(result.value, 201);
+  return c.json(
+    {
+      ...result.value,
+      directTransfersEnabled: c.env.DIRECT_R2_TRANSFERS_ENABLED === "true",
+    },
+    201,
+  );
 });
 
 filesTransferRoutes.post("/multipart/:id/parts/:partNumber/url", async (c) => {
