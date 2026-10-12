@@ -168,16 +168,14 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
         ? session.expectedSizeBytes - MULTIPART_PART_SIZE_BYTES * (totalParts - 1)
         : MULTIPART_PART_SIZE_BYTES))) return failure("size-mismatch");
 
+    let itemInserted = false;
     try {
       const storageParts: FileStorageMultipartPart[] = parts.map(({ partNumber, etag, sizeBytes }) => ({
         partNumber, etag, sizeBytes,
       }));
       await storage.completeMultipartUpload(session.storageKey, session.r2UploadId, storageParts);
       const stored = await storage.head(session.storageKey);
-      if (!stored || stored.sizeBytes !== session.expectedSizeBytes) {
-        await storage.delete(session.storageKey).catch(() => undefined);
-        return failure("size-mismatch");
-      }
+      if (!stored || stored.sizeBytes !== session.expectedSizeBytes) throw new Error("Stored object size mismatch");
       const timestamp = now().toISOString();
       const item: FilesItemRecord = {
         id: session.itemId, ownerId: session.ownerId, folderId: session.folderId,
@@ -185,10 +183,20 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
         sizeBytes: stored.sizeBytes, createdAt: session.createdAt, updatedAt: timestamp, deletedAt: null,
       };
       await deps.items.insert(item);
-      await deps.uploads.updateStatus(session.reservationId, actor.userId, "completed", timestamp);
-      await deps.multipart.delete(sessionId, actor.userId);
+      itemInserted = true;
+      if (!(await deps.uploads.updateStatus(session.reservationId, actor.userId, "completed", timestamp))) {
+        throw new Error("Upload reservation could not be completed");
+      }
+      if (!(await deps.multipart.delete(sessionId, actor.userId))) {
+        throw new Error("Multipart session could not be removed");
+      }
       return success(toFileView(item));
     } catch {
+      if (itemInserted) await deps.items.deletePermanently(session.itemId, actor.userId).catch(() => false);
+      await storage.delete(session.storageKey).catch(() => undefined);
+      await deps.names.release(actor.userId, "file", session.itemId).catch(() => undefined);
+      await deps.uploads.deleteByIdForOwner(session.reservationId, actor.userId).catch(() => false);
+      await deps.multipart.delete(sessionId, actor.userId).catch(() => false);
       return failure("unavailable");
     }
   }
