@@ -32,6 +32,10 @@ jobs:
         run: pnpm run db:migrate:local
       - name: Verify local D1 schema
         run: pnpm run db:verify:schema:local
+      - name: Temporary formatter preview
+        run: |
+          pnpm exec prettier --write .
+          git diff -- tests/file-multipart-direct.test.ts tests/file-transfer-cleanup.test.ts tests/file-direct-transfers.test.ts
       - run: pnpm run cloudflare:build
   secrets:
     runs-on: ubuntu-latest
