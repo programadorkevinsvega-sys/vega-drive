@@ -171,43 +171,43 @@ describe("subida binaria con progreso", () => {
 
   it(
     "aborta una sesión creada si la respuesta multipart es incompatible",
-    async () => {
-    vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
-    const task = uploadFile(
-      file({
-        size: 100 * 1024 * 1024,
-        slice: (start = 0, end = 0) => ({ size: end - start }) as Blob,
-      }),
-      null,
-    );
-    const start = FakeXMLHttpRequest.instances[0];
-    if (!start) throw new Error("No se creó la sesión multipart.");
-
-    start.status = 201;
-    start.responseText = JSON.stringify({
-      uploadId: "session-stale",
-      partSizeBytes: 16 * 1024 * 1024,
-      totalParts: 7,
-      directTransfersEnabled: false,
-    });
-    start.dispatchEvent(new Event("load"));
-
-    await vi.waitFor(() => {
-      expect(FakeXMLHttpRequest.instances[1]?.url).toBe(
-        "/api/files/multipart/session-stale/abort",
+      async () => {
+      vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
+      const task = uploadFile(
+        file({
+          size: 100 * 1024 * 1024,
+          slice: (start = 0, end = 0) => ({ size: end - start }) as Blob,
+        }),
+        null,
       );
-    });
-    const abort = FakeXMLHttpRequest.instances[1];
-    if (!abort) throw new Error("No se intentó limpiar la sesión inválida.");
-    abort.status = 200;
-    abort.responseText = JSON.stringify({ ok: true });
-    abort.dispatchEvent(new Event("load"));
+      const start = FakeXMLHttpRequest.instances[0];
+      if (!start) throw new Error("No se creó la sesión multipart.");
 
-    await expect(task).rejects.toMatchObject({
-      name: "FilesApiError",
-      status: 500,
-      message: "El servidor devolvió una sesión de subida inválida.",
-    });
+      start.status = 201;
+      start.responseText = JSON.stringify({
+        uploadId: "session-stale",
+        partSizeBytes: 16 * 1024 * 1024,
+        totalParts: 7,
+        directTransfersEnabled: false,
+      });
+      start.dispatchEvent(new Event("load"));
+
+      await vi.waitFor(() => {
+        expect(FakeXMLHttpRequest.instances[1]?.url).toBe(
+          "/api/files/multipart/session-stale/abort",
+        );
+      });
+      const abort = FakeXMLHttpRequest.instances[1];
+      if (!abort) throw new Error("No se intentó limpiar la sesión inválida.");
+      abort.status = 200;
+      abort.responseText = JSON.stringify({ ok: true });
+      abort.dispatchEvent(new Event("load"));
+
+      await expect(task).rejects.toMatchObject({
+        name: "FilesApiError",
+        status: 500,
+        message: "El servidor devolvió una sesión de subida inválida.",
+      });
     },
   );
 
