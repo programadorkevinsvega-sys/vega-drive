@@ -94,7 +94,11 @@ export function createRecentActivity(deps: RecentActivityDependencies) {
         !item ||
         item.deletedAt !== null ||
         (item.folderId !== null &&
-          !(await activeFolderPath(deps.folders, actor.userId, item.folderId)))
+          !(await activeFolderPath(
+              deps.folders,
+              actor.userId,
+              item.folderId,
+            )))
       ) {
         return failure("not-found");
       }
