@@ -14,9 +14,15 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
       );
       for (const session of expiredSessions) {
         try {
-          await deps.storage
-            .abortMultipartUpload(session.storageKey, session.r2UploadId)
-            .catch(() => undefined);
+          if (
+            session.r2UploadId !== "direct-put" &&
+            deps.storage.abortMultipartUpload
+          ) {
+            await deps.storage.abortMultipartUpload(
+              session.storageKey,
+              session.r2UploadId,
+            );
+          }
           await deps.storage.delete(session.storageKey);
           await deps.names.release(session.ownerId, "file", session.itemId);
           await deps.uploads.deleteByIdForOwner(
