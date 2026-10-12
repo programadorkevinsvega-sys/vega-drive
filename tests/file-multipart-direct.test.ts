@@ -111,7 +111,16 @@ describe("autorizaciones multipart directas a R2", () => {
   });
 
   it("firma solo la parte y el tamaño esperados para el propietario", async () => {
-    const findByIdForOwner = vi.fn().mockResolvedValue(session);
+    const expectedFinalPartSize = 4 * 1024 * 1024;
+    const testSession = {
+      ...session,
+      expectedSizeBytes:
+        2 * MULTIPART_PART_SIZE_BYTES + expectedFinalPartSize,
+    };
+    const finalPartNumber = Math.ceil(
+      testSession.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES,
+    );
+    const findByIdForOwner = vi.fn().mockResolvedValue(testSession);
     const presignMultipartPartUrl = vi
       .fn()
       .mockResolvedValue("https://r2.test/part");
@@ -128,25 +137,28 @@ describe("autorizaciones multipart directas a R2", () => {
 
     const result = await service.authorizeMultipartPart(
       { userId: "owner-a" },
-      session.id,
-      7,
+      testSession.id,
+      finalPartNumber,
     );
 
     expect(result).toEqual({
       ok: true,
       value: {
         url: "https://r2.test/part",
-        partNumber: 7,
-        expectedSizeBytes: 4 * 1024 * 1024,
+        partNumber: finalPartNumber,
+        expectedSizeBytes: expectedFinalPartSize,
         expiresInSeconds: 120,
       },
     });
-    expect(findByIdForOwner).toHaveBeenCalledWith(session.id, "owner-a");
+    expect(findByIdForOwner).toHaveBeenCalledWith(
+      testSession.id,
+      "owner-a",
+    );
     expect(presignMultipartPartUrl).toHaveBeenCalledWith(
-      session.storageKey,
-      session.r2UploadId,
-      7,
-      4 * 1024 * 1024,
+      testSession.storageKey,
+      testSession.r2UploadId,
+      finalPartNumber,
+      expectedFinalPartSize,
       120,
     );
   });
