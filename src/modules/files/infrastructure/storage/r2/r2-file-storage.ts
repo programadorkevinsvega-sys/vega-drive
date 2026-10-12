@@ -8,6 +8,31 @@ import type {
   IFileStoragePort,
 } from "../../../application/ports/file-storage.js";
 
+function isMissingMultipartUpload(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as {
+    status?: unknown;
+    statusCode?: unknown;
+    code?: unknown;
+    name?: unknown;
+    message?: unknown;
+  };
+  if (
+    value.status === 404 ||
+    value.statusCode === 404 ||
+    value.code === "NoSuchUpload" ||
+    value.name === "NoSuchUpload"
+  ) {
+    return true;
+  }
+  return (
+    typeof value.message === "string" &&
+    /NoSuchUpload|no such upload|upload(?: id)? .*?(?:not found|does not exist)/i.test(
+      value.message,
+    )
+  );
+}
+
 /** The only adapter allowed to access the private Cloudflare R2 bucket binding. */
 export class R2FileStorage implements IFileStoragePort {
   constructor(
@@ -196,7 +221,14 @@ export class R2FileStorage implements IFileStoragePort {
   }
 
   async abortMultipartUpload(key: string, uploadId: string): Promise<void> {
-    await this.bucket.resumeMultipartUpload(key, uploadId).abort();
+    try {
+      await this.bucket.resumeMultipartUpload(key, uploadId).abort();
+    } catch (error) {
+      // Cleanup can be retried after R2 already aborted the upload but a later
+      // D1/object cleanup step failed. Treat that missing upload as success.
+      if (isMissingMultipartUpload(error)) return;
+      throw error;
+    }
   }
 }
 
