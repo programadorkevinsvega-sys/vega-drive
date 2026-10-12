@@ -164,6 +164,18 @@ export function createFilesModule(
       transfers
         ? transfers.cleanupExpiredUploads(nowIso, limit)
         : Promise.resolve(0),
+    beginMultipartUpload: (...args) => multipartTransfers
+      ? multipartTransfers.beginMultipartUpload(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    uploadMultipartPart: (...args) => multipartTransfers
+      ? multipartTransfers.uploadMultipartPart(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    completeMultipartUpload: (...args) => multipartTransfers
+      ? multipartTransfers.completeMultipartUpload(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    abortMultipartUpload: (...args) => multipartTransfers
+      ? multipartTransfers.abortMultipartUpload(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
     permanentlyDeleteFile: (...args) =>
       trash
         ? trash.permanentlyDeleteFile(...args)
