@@ -11,38 +11,66 @@ import type {
 export class R2FileStorage implements IFileStoragePort {
   constructor(private readonly bucket: Env["FILES_BUCKET"]) {}
 
-  async put(key: string, body: ReadableStream<Uint8Array>, contentType: string, sizeBytes: number): Promise<void> {
+  async put(
+    key: string,
+    body: ReadableStream<Uint8Array>,
+    contentType: string,
+    sizeBytes: number,
+  ): Promise<void> {
     const fixedLength = new FixedLengthStream(sizeBytes);
     await Promise.all([
       body.pipeTo(fixedLength.writable),
-      this.bucket.put(key, fixedLength.readable, { httpMetadata: { contentType } }),
+      this.bucket.put(key, fixedLength.readable, {
+        httpMetadata: { contentType },
+      }),
     ]);
   }
 
   async head(key: string): Promise<FileStorageHead | null> {
     const object = await this.bucket.head(key);
     if (!object) return null;
-    return { sizeBytes: object.size, contentType: object.httpMetadata?.contentType ?? null };
+    return {
+      sizeBytes: object.size,
+      contentType: object.httpMetadata?.contentType ?? null,
+    };
   }
 
-  async get(key: string, range?: FileStorageRange): Promise<FileStorageBody | null> {
-    const object = await this.bucket.get(key, range ? { range: { offset: range.offset, length: range.length } } : {});
+  async get(
+    key: string,
+    range?: FileStorageRange,
+  ): Promise<FileStorageBody | null> {
+    const object = await this.bucket.get(
+      key,
+      range ? { range: { offset: range.offset, length: range.length } } : {},
+    );
     if (!object || !("body" in object) || !object.body) return null;
-    return { body: object.body, sizeBytes: object.size, contentType: object.httpMetadata?.contentType ?? null };
+    return {
+      body: object.body,
+      sizeBytes: object.size,
+      contentType: object.httpMetadata?.contentType ?? null,
+    };
   }
 
   async delete(key: string): Promise<void> {
     await this.bucket.delete(key);
   }
 
-  async createMultipartUpload(key: string, contentType: string): Promise<string> {
-    const upload = await this.bucket.createMultipartUpload(key, { httpMetadata: { contentType } });
+  async createMultipartUpload(
+    key: string,
+    contentType: string,
+  ): Promise<string> {
+    const upload = await this.bucket.createMultipartUpload(key, {
+      httpMetadata: { contentType },
+    });
     return upload.uploadId;
   }
 
   async uploadMultipartPart(
-    key: string, uploadId: string, partNumber: number,
-    body: ReadableStream<Uint8Array>, expectedSizeBytes: number,
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    body: ReadableStream<Uint8Array>,
+    expectedSizeBytes: number,
   ): Promise<FileStorageMultipartPart> {
     const fixedLength = new FixedLengthStream(expectedSizeBytes);
     const upload = this.bucket.resumeMultipartUpload(key, uploadId);
@@ -50,10 +78,18 @@ export class R2FileStorage implements IFileStoragePort {
       upload.uploadPart(partNumber, fixedLength.readable),
       body.pipeTo(fixedLength.writable),
     ]);
-    return { partNumber: part.partNumber, etag: part.etag, sizeBytes: expectedSizeBytes };
+    return {
+      partNumber: part.partNumber,
+      etag: part.etag,
+      sizeBytes: expectedSizeBytes,
+    };
   }
 
-  async completeMultipartUpload(key: string, uploadId: string, parts: FileStorageMultipartPart[]): Promise<void> {
+  async completeMultipartUpload(
+    key: string,
+    uploadId: string,
+    parts: FileStorageMultipartPart[],
+  ): Promise<void> {
     const upload = this.bucket.resumeMultipartUpload(key, uploadId);
     await upload.complete(parts.map(({ partNumber, etag }) => ({ partNumber, etag })));
   }
