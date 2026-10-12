@@ -168,6 +168,7 @@ export function createFileDirectUploads(
       const url = await deps.storage.presignPutUrl(
         storageKey,
         contentType,
+        sizeBytes,
         120,
       );
       if (!url) throw new Error("Direct R2 signing is not configured");
