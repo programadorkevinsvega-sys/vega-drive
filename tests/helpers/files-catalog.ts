@@ -16,6 +16,7 @@ export async function createFilesCatalogFixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
+    "src/modules/files/infrastructure/persistence/d1/migrations/0004_files_multipart_uploads.sql",
   ]) {
     fixture.exec(await readFile(resolve(path), "utf8"));
   }
