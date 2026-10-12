@@ -48,15 +48,21 @@ await runGuard("Frontera del frontend", async (failures, notes) => {
       }
     }
     if (!rel.endsWith(".test.ts") && /\bXMLHttpRequest\b/.test(source)) {
-      // XHR is permitted only for upload progress, and only with a literal same-origin /api target.
+      // XHR normally uses same-origin /api targets. A narrow exception permits PUT to a short-lived URL issued by the authenticated direct-transfer API.
       const xhrTargets = [
         ...source.matchAll(
           /\b\w+\.open\(\s*["'](?:GET|POST|PUT|PATCH|DELETE|HEAD)["']\s*,\s*["']([^"']+)["']/g,
         ),
       ].map((match) => match[1] ?? "");
+      const signedTransferException =
+        rel.endsWith("/files-transfer-direct.ts") &&
+        source.includes('"/api/files/direct"') &&
+        source.includes('"/parts/url"') &&
+        /request\.open\("PUT", (?:started|authorization)\.url/.test(source);
       if (
-        xhrTargets.length === 0 ||
-        xhrTargets.some((target) => !target.startsWith("/api/"))
+        !signedTransferException &&
+        (xhrTargets.length === 0 ||
+          xhrTargets.some((target) => !target.startsWith("/api/")))
       ) {
         failures.push(
           rel +
