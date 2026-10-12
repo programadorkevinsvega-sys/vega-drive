@@ -50,9 +50,11 @@ export class D1FilesUploadRepository implements FilesUploadRepository {
       .prepare(
         "SELECT " +
           UPLOAD_COLUMNS +
-          " FROM files_uploads WHERE status = 'failed' OR " +
-          "(status = 'pending' AND expires_at <= ?) " +
-          "ORDER BY created_at ASC LIMIT ?",
+          " FROM files_uploads AS u WHERE (u.status = 'failed' OR " +
+          "(u.status = 'pending' AND u.expires_at <= ?)) " +
+          "AND NOT EXISTS (SELECT 1 FROM files_multipart_uploads AS m " +
+          "WHERE m.reservation_id = u.id) " +
+          "ORDER BY u.created_at ASC LIMIT ?",
       )
       .bind(now, Math.min(100, Math.max(1, Math.trunc(limit))))
       .all<FilesUploadRecord>()
