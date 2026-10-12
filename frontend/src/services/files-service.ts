@@ -4,6 +4,7 @@ import type {
   FilesFolderView,
   FilesTrashListing,
   FilesRecentListing,
+  FilesRecentItem,
 } from "./files-contract";
 export type {
   FilesCatalogNode,
