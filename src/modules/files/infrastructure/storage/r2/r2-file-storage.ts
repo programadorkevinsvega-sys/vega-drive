@@ -59,6 +59,26 @@ export class R2FileStorage implements IFileStoragePort {
     await this.bucket.delete(key);
   }
 
+  async presignPutUrl(
+    key: string,
+    contentType: string,
+    expiresInSeconds: number,
+  ): Promise<string | null> {
+    const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+      return null;
+    }
+    return presignR2Object(
+      {
+        accountId: R2_ACCOUNT_ID,
+        bucketName: "vega-drive-files",
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+      { method: "PUT", key, contentType, expiresInSeconds },
+    );
+  }
+
   async presignGetUrl(
     key: string,
     expiresInSeconds: number,
