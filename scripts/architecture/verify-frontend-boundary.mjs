@@ -54,12 +54,17 @@ await runGuard("Frontera del frontend", async (failures, notes) => {
           /\b\w+\.open\(\s*["'](?:GET|POST|PUT|PATCH|DELETE|HEAD)["']\s*,\s*["']([^"']+)["']/g,
         ),
       ].map((match) => match[1] ?? "");
-      const signedTransferException =
-        rel.endsWith("/files-transfer-direct.ts") &&
+      const signedSingleTransfer =
+        rel.endsWith("/files-transfer-direct-single.ts") &&
         source.includes('"/api/files/direct"') &&
+        /request\.open\("PUT", started\.url/.test(source);
+      const signedMultipartTransfer =
+        rel.endsWith("/files-transfer-direct-multipart.ts") &&
         source.includes('"/parts') &&
         source.includes("/url") &&
-        /request\.open\("PUT", (?:started|authorization)\.url/.test(source);
+        /request\.open\("PUT", authorization\.url/.test(source);
+      const signedTransferException =
+        signedSingleTransfer || signedMultipartTransfer;
       if (
         !signedTransferException &&
         (xhrTargets.length === 0 ||
