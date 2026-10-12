@@ -134,6 +134,45 @@ filesTransferRoutes.post("/", async (c) => {
   return c.json(result.value, 201);
 });
 
+filesTransferRoutes.post("/multipart", async (c) => {
+  if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
+  const input = await c.req.json().catch(() => null);
+  const result = await createCompositionRoot(c.env).files.beginMultipartUpload(actorFor(c), input);
+  if (!result.ok) return transferError(result.reason);
+  return c.json(result.value, 201);
+});
+
+filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
+  const request = c.req.raw;
+  if (!originAllowed(request)) return c.json(ORIGIN_ERROR, 403);
+  const partNumber = Number(c.req.param("partNumber"));
+  const contentLength = request.headers.get("Content-Length");
+  if (!contentLength || !/^\d+$/.test(contentLength)) return c.json(REQUEST_ERROR, 400);
+  const sizeBytes = Number(contentLength);
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > 16 * 1024 * 1024) {
+    return c.json(REQUEST_ERROR, 413);
+  }
+  const result = await createCompositionRoot(c.env).files.uploadMultipartPart(
+    actorFor(c), c.req.param("id"), partNumber, request.body, sizeBytes,
+  );
+  if (!result.ok) return transferError(result.reason);
+  return c.json(result.value, 200);
+});
+
+filesTransferRoutes.post("/multipart/:id/complete", async (c) => {
+  if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
+  const result = await createCompositionRoot(c.env).files.completeMultipartUpload(actorFor(c), c.req.param("id"));
+  if (!result.ok) return transferError(result.reason);
+  return c.json(result.value, 201);
+});
+
+filesTransferRoutes.post("/multipart/:id/abort", async (c) => {
+  if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
+  const result = await createCompositionRoot(c.env).files.abortMultipartUpload(actorFor(c), c.req.param("id"));
+  if (!result.ok) return transferError(result.reason);
+  return c.json({ ok: true }, 200);
+});
+
 filesTransferRoutes.get("/:id/download", async (c) => {
   if (new URL(c.req.raw.url).searchParams.size > 0) {
     return c.json(REQUEST_ERROR, 400);
