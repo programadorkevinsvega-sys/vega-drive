@@ -131,7 +131,6 @@ export async function uploadFile(
           error.status === 408 ||
           error.status === 412 ||
           error.status === 425 ||
-          error.status === 429 ||
           error.status >= 500);
       if (!retryable || attempts >= 5) throw error;
       attempts += 1;
