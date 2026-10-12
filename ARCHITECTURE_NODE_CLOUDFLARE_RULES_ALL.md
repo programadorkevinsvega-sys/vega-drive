@@ -41,7 +41,7 @@ El Worker atiende los assets estáticos y las rutas /api. El enrutador HTTP dele
 
 El frontend es una aplicación de presentación dentro del mismo despliegue, no un backend alterno.
 
-- Solo llama a rutas del mismo origen bajo /api.
+- Solo llama a rutas del mismo origen bajo `/api`; `fetch` es el cliente general. Se permite `XMLHttpRequest` exclusivamente cuando una operación necesita eventos de progreso de subida, y solo con una ruta literal del mismo origen bajo `/api` (actualmente `POST /api/files`).
 - Puede manejar estado visual, accesibilidad, navegación y validaciones de experiencia de usuario.
 - No decide autorización, propiedad, cuota, claves de almacenamiento, precios, flujos de negocio ni políticas de seguridad.
 - No contiene ni recibe endpoint, bucket, credenciales, token, SDK, URL prefirmada ni configuración de R2/S3.
