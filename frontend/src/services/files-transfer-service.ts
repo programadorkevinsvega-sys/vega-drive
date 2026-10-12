@@ -90,7 +90,7 @@ async function uploadMultipartFile(
         "PUT",
         "/api/files/multipart/" + encodeURIComponent(started.uploadId) + "/parts/" + partNumber,
         chunk,
-        { "Content-Type": "application/octet-stream" },
+        { "Content-Type": "application/octet-stream", "X-Part-Size": String(chunk.size) },
         (loaded) => {
           const percentage = Math.min(99, Math.floor(((start + loaded) / file.size) * 100));
           onProgress?.(percentage);
