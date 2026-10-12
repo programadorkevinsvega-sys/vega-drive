@@ -202,8 +202,12 @@ describe("transferencias directas a R2", () => {
         bytes: new Uint8Array(4),
         contentType: "text/plain",
       });
-      const cleanupTime = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-      expect(await fixture.api.cleanupExpiredUploads(cleanupTime, 100)).toBe(1);
+      const cleanupTime = new Date(
+        Date.now() + 2 * 60 * 60 * 1000,
+      ).toISOString();
+      expect(
+        await fixture.api.cleanupExpiredUploads(cleanupTime, 100),
+      ).toBe(1);
       expect(fixture.objects.has(storageKey)).toBe(false);
       expect(
         await fixture.db
