@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { createFolder } = vi.hoisted(() => ({ createFolder: vi.fn() }));
 vi.mock("./files-service", () => ({ createFolder }));
 
-import { createFolderResolver, getRelativeDirectories } from "./files-folder-upload";
+import {
+  createFolderResolver,
+  getRelativeDirectories,
+} from "./files-folder-upload";
 
 function directoryFile(name: string, path: string): File {
   const file = new File(["data"], name);
@@ -44,9 +47,9 @@ describe("subida de carpetas", () => {
 
   it("sube archivos normales a la carpeta actual sin crear subcarpetas", async () => {
     const resolveFolder = createFolderResolver("current-folder");
-    await expect(resolveFolder(new File(["x"], "archivo.txt"), true)).resolves.toBe(
-      "current-folder",
-    );
+    await expect(
+      resolveFolder(new File(["x"], "archivo.txt"), true),
+    ).resolves.toBe("current-folder");
     expect(createFolder).not.toHaveBeenCalled();
   });
 });
