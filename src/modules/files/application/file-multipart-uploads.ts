@@ -62,6 +62,7 @@ export interface MultipartStarted {
   totalParts: number;
 }
 
+// prettier-ignore
 export function createFileMultipartUploads(deps: FileMultipartDependencies) {
   const now = deps.now ?? (() => new Date());
   const createId = deps.createId ?? (() => crypto.randomUUID());
