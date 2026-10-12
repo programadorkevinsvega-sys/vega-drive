@@ -171,32 +171,16 @@ describe("subida binaria con progreso", () => {
 
   it("omite autorizaciones directas cuando están deshabilitadas", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
-    const oversized = file({
+    void uploadFile(file({
       size: 96 * 1024 * 1024,
-      slice: (start: number, end: number) => ({ size: end - start }) as Blob,
-    });
-    void uploadFile(oversized, null);
+      slice: (start, end) => ({ size: end - start }) as Blob,
+    }), null);
     const start = FakeXMLHttpRequest.instances[0];
     if (!start) throw new Error("No se creó la sesión multipart.");
-
     start.status = 201;
-    start.responseText = JSON.stringify({
-      uploadId: "session-a",
-      partSizeBytes: 16 * 1024 * 1024,
-      totalParts: 6,
-      directTransfersEnabled: false,
-    });
+    start.responseText = JSON.stringify({ uploadId: "session-a", partSizeBytes: 16 * 1024 * 1024, totalParts: 6, directTransfersEnabled: false });
     start.dispatchEvent(new Event("load"));
-
-    await vi.waitFor(() => {
-      expect(FakeXMLHttpRequest.instances[1]?.url).toBe(
-        "/api/files/multipart/session-a/parts/1",
-      );
-    });
-    expect(
-      FakeXMLHttpRequest.instances.some((request) =>
-        request.url.endsWith("/url"),
-      ),
-    ).toBe(false);
+    await vi.waitFor(() => expect(FakeXMLHttpRequest.instances[1]?.url).toBe("/api/files/multipart/session-a/parts/1"));
+    expect(FakeXMLHttpRequest.instances.some(({ url }) => url.endsWith("/url"))).toBe(false);
   });
 });
