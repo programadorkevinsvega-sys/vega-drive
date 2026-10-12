@@ -91,7 +91,9 @@ export class R2FileStorage implements IFileStoragePort {
     parts: FileStorageMultipartPart[],
   ): Promise<void> {
     const upload = this.bucket.resumeMultipartUpload(key, uploadId);
-    await upload.complete(parts.map(({ partNumber, etag }) => ({ partNumber, etag })));
+    await upload.complete(
+      parts.map(({ partNumber, etag }) => ({ partNumber, etag })),
+    );
   }
 
   async abortMultipartUpload(key: string, uploadId: string): Promise<void> {
