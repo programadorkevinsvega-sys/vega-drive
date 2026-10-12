@@ -53,7 +53,11 @@ describe("politica del frontend", () => {
       .filter(NOT_TESTS)
       .filter((file) => new RegExp(XHR).test(file.text))
       .map((file) => file.path);
-    expect(offenders).toEqual(["services/files-transfer-service.ts"]);
+    expect(offenders.sort()).toEqual([
+      "services/files-transfer-direct-multipart.ts",
+      "services/files-transfer-direct-single.ts",
+      "services/files-transfer-service.ts",
+    ]);
 
     const transfer = readFileSync(
       join(SRC, "services/files-transfer-service.ts"),
@@ -62,6 +66,21 @@ describe("politica del frontend", () => {
     expect(transfer.match(new RegExp(XHR, "g"))).toHaveLength(1);
     expect(transfer).toContain('request.open("POST", "/api/files", true)');
     expect(transfer).not.toMatch(/https?:\/\//);
+
+    const directSingle = readFileSync(
+      join(SRC, "services/files-transfer-direct-single.ts"),
+      "utf8",
+    );
+    const directMultipart = readFileSync(
+      join(SRC, "services/files-transfer-direct-multipart.ts"),
+      "utf8",
+    );
+    expect(directSingle).toContain('request.open("PUT", started.url, true)');
+    expect(directSingle).toContain('request.setRequestHeader("If-None-Match", "*")');
+    expect(directMultipart).toContain(
+      'request.open("PUT", authorization.url, true)',
+    );
+    expect(directSingle + directMultipart).not.toMatch(/https?:\/\//);
   });
 
   it.each(FORBIDDEN)("el codigo no usa %s", (_name, pattern) => {
