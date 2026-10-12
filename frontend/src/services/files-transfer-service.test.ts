@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilesApiError } from "./files-service";
-import { uploadFile, UploadCancelledError, UploadController } from "./files-transfer-service";
+import {
+  uploadFile,
+  UploadCancelledError,
+  UploadController,
+} from "./files-transfer-service";
 
 class FakeXMLHttpRequest extends EventTarget {
   static instances: FakeXMLHttpRequest[] = [];
