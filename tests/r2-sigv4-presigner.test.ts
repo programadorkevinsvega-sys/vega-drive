@@ -48,6 +48,7 @@ describe("R2 SigV4 presigner", () => {
           method: "PUT",
           key: "u/user-id/file-id",
           contentType: "application/octet-stream",
+          ifNoneMatch: "*",
           expiresInSeconds: 120,
         },
         new Date("2026-10-11T12:34:56.000Z"),
@@ -55,7 +56,7 @@ describe("R2 SigV4 presigner", () => {
     );
 
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe(
-      "content-type;host",
+      "content-type;if-none-match;host",
     );
     expect(url.searchParams.get("X-Amz-Signature")).toMatch(
       /^[a-f0-9]{64}$/,
