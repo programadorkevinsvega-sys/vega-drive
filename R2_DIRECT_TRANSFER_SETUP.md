@@ -27,11 +27,15 @@ No usar `*`. No incluir localhost en la política de producción. Para desarroll
 
 CORS no autoriza usuarios ni objetos: las URLs firmadas y las comprobaciones del Worker siguen siendo obligatorias.
 
-## 2. Crear credenciales S3 de alcance mínimo
+## 2. Credenciales S3 de alcance mínimo
 
-El bucket no crea credenciales automáticamente. En Cloudflare, abrir R2 y crear un token/API credential compatible con S3 que tenga únicamente lectura y escritura de objetos para el bucket `vega-drive-files`. No conceder permisos de administración de cuenta o de otros buckets.
+La política que se ha compartido incluye los grupos **Workers R2 Storage Bucket Item Read** y **Workers R2 Storage Bucket Item Write** sobre el recurso específico `vega-drive-files`. Es el alcance de permisos adecuado para leer/escribir objetos sin conceder administración de la cuenta ni acceso a otros buckets.
 
-Cloudflare muestra dos valores S3: **Access Key ID** y **Secret Access Key**. El Account ID se obtiene de la cuenta/endpoint S3. No publicar estos valores en issues, commits, logs, capturas ni conversaciones.
+Importante: el JSON de la política muestra permisos y alcance; **no contiene por sí solo las credenciales S3**. Confirma que el token se creó desde **R2 → Overview → Manage API Tokens**, no desde el creador genérico de tokens de Cloudflare. En el resultado de creación de un token R2 deben aparecer **Access Key ID** y **Secret Access Key**. Si ya cerraste esa pantalla y no guardaste la clave secreta, crea otro token R2 equivalente y revoca el anterior cuando hayas confirmado que no se utiliza.
+
+El endpoint S3 que usa el firmador es `https://03f46bf3839f506fe22124be5f1cda25.r2.cloudflarestorage.com`; el firmador añade el bucket y la clave de objeto. No uses el dominio personalizado público como endpoint de firma.
+
+No publiques el Access Key ID ni, especialmente, el Secret Access Key en issues, commits, logs, capturas ni conversaciones. El Account ID no es una clave secreta, pero también debe configurarse en el entorno correcto.
 
 Configurar los valores como secretos del Worker desde una terminal autenticada con Wrangler:
 
