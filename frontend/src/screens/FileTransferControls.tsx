@@ -78,7 +78,7 @@ export function FileTransferControls({
     event.currentTarget.value = "";
     if (files.length === 0) return;
 
-    const groupId = "batch-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+    const groupId = "batch-" + crypto.randomUUID();
     const uploads = files.map<UploadItem>((file, index) => {
       const id =
         String(index) + "-" + file.name + "-" + file.lastModified + "-" + groupId;
