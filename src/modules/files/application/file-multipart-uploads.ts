@@ -421,9 +421,10 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
     if (!session) return failure("not-found");
     try {
       if (storage.abortMultipartUpload) {
-        await storage
-          .abortMultipartUpload(session.storageKey, session.r2UploadId)
-          .catch(() => undefined);
+        await storage.abortMultipartUpload(
+          session.storageKey,
+          session.r2UploadId,
+        );
       }
       await storage.delete(session.storageKey).catch(() => undefined);
       await deps.names.release(actor.userId, "file", session.itemId);
