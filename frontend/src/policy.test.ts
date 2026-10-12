@@ -53,13 +53,21 @@ describe("politica del frontend", () => {
       .filter(NOT_TESTS)
       .filter((file) => new RegExp(XHR).test(file.text))
       .map((file) => file.path);
-    expect(offenders).toEqual(["services/files-transfer-service.ts"]);
+    expect(offenders).toEqual([
+      "services/files-transfer-controller.ts",
+      "services/files-transfer-http.ts",
+      "services/files-transfer-service.ts",
+    ]);
 
     const transfer = readFileSync(
       join(SRC, "services/files-transfer-service.ts"),
       "utf8",
     );
-    expect(transfer.match(new RegExp(XHR, "g"))).toHaveLength(1);
+    const transport = readFileSync(
+      join(SRC, "services/files-transfer-http.ts"),
+      "utf8",
+    );
+    expect(transport.match(new RegExp(XHR, "g"))).toHaveLength(1);
     expect(transfer).toContain('request.open("POST", "/api/files", true)');
     expect(transfer).not.toMatch(/https?:\/\//);
   });
