@@ -79,6 +79,33 @@ export class R2FileStorage implements IFileStoragePort {
     );
   }
 
+  async presignMultipartPartUrl(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    expiresInSeconds: number,
+  ): Promise<string | null> {
+    const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) return null;
+    if (!uploadId || !Number.isSafeInteger(partNumber) || partNumber < 1 || partNumber > 10000) {
+      throw new Error("Invalid multipart part authorization");
+    }
+    return presignR2Object(
+      {
+        accountId: R2_ACCOUNT_ID,
+        bucketName: "vega-drive-files",
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      },
+      {
+        method: "PUT",
+        key,
+        expiresInSeconds,
+        query: { partNumber: String(partNumber), uploadId },
+      },
+    );
+  }
+
   async presignGetUrl(
     key: string,
     expiresInSeconds: number,
