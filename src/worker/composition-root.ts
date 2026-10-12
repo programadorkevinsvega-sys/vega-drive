@@ -134,19 +134,27 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.cleanupExpiredUploads(...args);
   }
 
-  beginMultipartUpload(...args: Parameters<FilesPublicApi["beginMultipartUpload"]>) {
+  beginMultipartUpload(
+    ...args: Parameters<FilesPublicApi["beginMultipartUpload"]>
+  ) {
     return this.api.beginMultipartUpload(...args);
   }
 
-  uploadMultipartPart(...args: Parameters<FilesPublicApi["uploadMultipartPart"]>) {
+  uploadMultipartPart(
+    ...args: Parameters<FilesPublicApi["uploadMultipartPart"]>
+  ) {
     return this.api.uploadMultipartPart(...args);
   }
 
-  completeMultipartUpload(...args: Parameters<FilesPublicApi["completeMultipartUpload"]>) {
+  completeMultipartUpload(
+    ...args: Parameters<FilesPublicApi["completeMultipartUpload"]>
+  ) {
     return this.api.completeMultipartUpload(...args);
   }
 
-  abortMultipartUpload(...args: Parameters<FilesPublicApi["abortMultipartUpload"]>) {
+  abortMultipartUpload(
+    ...args: Parameters<FilesPublicApi["abortMultipartUpload"]>
+  ) {
     return this.api.abortMultipartUpload(...args);
   }
 
