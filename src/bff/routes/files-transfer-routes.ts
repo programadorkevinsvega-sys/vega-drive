@@ -157,7 +157,7 @@ filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
   const partNumber = Number(c.req.param("partNumber"));
   const declaredPartSize =
     request.headers.get("X-Part-Size") ?? request.headers.get("Content-Length");
-  if (!declaredPartSize || !/^\\d+$/.test(declaredPartSize)) {
+  if (!declaredPartSize || !/^\d+$/.test(declaredPartSize)) {
     return c.json(REQUEST_ERROR, 400);
   }
   const sizeBytes = Number(declaredPartSize);
