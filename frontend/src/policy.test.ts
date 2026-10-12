@@ -61,7 +61,7 @@ describe("politica del frontend", () => {
     );
     expect(transfer.match(new RegExp(XHR, "g"))).toHaveLength(1);
     expect(transfer).toContain('request.open("POST", "/api/files", true)');
-    expect(transfer).not.toMatch(/https?:\\/\\//);
+    expect(transfer).not.toMatch(/https?:\/\//);
   });
 
   it.each(FORBIDDEN)("el codigo no usa %s", (_name, pattern) => {
