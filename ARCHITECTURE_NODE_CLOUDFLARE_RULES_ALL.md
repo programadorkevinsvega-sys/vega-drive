@@ -44,11 +44,12 @@ El frontend es una aplicación de presentación dentro del mismo despliegue, no 
 - Solo llama a rutas del mismo origen bajo `/api`; `fetch` es el cliente general. Se permite `XMLHttpRequest` exclusivamente cuando una operación necesita eventos de progreso de subida, y solo con una ruta literal del mismo origen bajo `/api` (actualmente `POST /api/files`).
 - Puede manejar estado visual, accesibilidad, navegación y validaciones de experiencia de usuario.
 - No decide autorización, propiedad, cuota, claves de almacenamiento, precios, flujos de negocio ni políticas de seguridad.
-- No contiene ni recibe endpoint, bucket, credenciales, token, SDK, URL prefirmada ni configuración de R2/S3.
-- No contacta R2. Las subidas y descargas atraviesan /api y el Worker.
-- Toda validación de seguridad y toda decisión de negocio se repite y se resuelve de forma autoritativa en el backend.
+- No contiene credenciales, secretos, configuración de cuenta/bucket ni SDK de R2/S3.
+- Puede usar una URL prefirmada temporal recibida de una API same-origin para una única transferencia autorizada. No puede elegir la clave, permisos o expiración ni guardar o registrar la URL.
+- Las subidas y descargas de bytes van directamente entre navegador y endpoint S3 de R2; el Worker permanece en el plano de control y autoriza todas las operaciones.
+- Toda validación de seguridad y toda decisión de negocio se resuelve autoritativamente en el backend.
 
-Una subida normal sigue este flujo: navegador → POST /api/files → caso de uso de files → adaptador R2. Una descarga sigue: navegador → GET /api/files/:id/download → autorización → streaming del Worker desde R2. Nunca se devuelve una URL de R2 al navegador.
+Una subida inicia en /api, reserva cuota y crea una sesión en el Worker; el navegador transfiere el objeto o las partes directamente a R2 con URLs prefirmadas limitadas. El Worker valida y completa la sesión, hace HEAD y registra metadatos. Una descarga solicita autorización por ID lógico; el Worker comprueba propietario/estado y emite una URL GET de corta duración. No se aceptan claves de almacenamiento proporcionadas por el cliente. Véase [ADR-001](./ADR-001-direct-r2-transfers.md).
 
 ## 4. Módulos y propiedad
 
@@ -154,8 +155,8 @@ R2 pertenece funcionalmente a files.
 - Solo infrastructure/storage/r2 de files recibe o usa el binding o las credenciales de R2.
 - La aplicación usa un puerto IFileStoragePort; el dominio nunca importa R2Bucket ni APIs S3.
 - El adaptador HTTP, los demás módulos y el frontend no acceden a R2.
-- El bucket no es público, no usa r2.dev, no tiene dominio público ni CORS para el navegador.
-- Está prohibido generar URLs prefirmadas o entregar cualquier referencia de R2 al cliente.
+- El bucket permanece privado, sin r2.dev ni dominio público. CORS se limita a orígenes explícitos y métodos/cabeceras mínimos para las transferencias firmadas; CORS no sustituye la autorización.
+- Las URLs prefirmadas se permiten únicamente según ADR-001: una acción/objeto/parte, expiración corta, credenciales S3 limitadas al bucket, sin claves de objeto ni secretos en el frontend. Se prohíbe entregar credenciales o URLs persistentes. referencia de R2 al cliente.
 - Las claves se generan en el backend con el formato u/{userId}/{uuid}; nunca provienen del cliente.
 - Antes de guardar, leer, descargar o borrar se valida sesión, propiedad, cuota y reglas del recurso.
 - Las descargas se transmiten por el Worker con Content-Disposition: attachment y X-Content-Type-Options: nosniff.
