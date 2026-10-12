@@ -16,6 +16,7 @@ export interface R2PresignInput {
   query?: Record<string, string>;
   contentType?: string;
   ifNoneMatch?: string;
+  contentLength?: number;
 }
 
 const encoder = new TextEncoder();
@@ -79,6 +80,8 @@ export async function presignR2Object(
     !config.secretAccessKey ||
     input.key.startsWith("/") ||
     input.key.includes("..") ||
+    (input.contentLength !== undefined &&
+      (!Number.isSafeInteger(input.contentLength) || input.contentLength < 0)) ||
     !Number.isSafeInteger(input.expiresInSeconds) ||
     input.expiresInSeconds < 1 ||
     input.expiresInSeconds > 900
@@ -95,6 +98,7 @@ export async function presignR2Object(
     input.key.split("/").map(encode).join("/");
   const scope = day + "/" + AWS_REGION + "/" + AWS_SERVICE + "/aws4_request";
   const signedHeaders = [
+    ...(input.contentLength !== undefined ? ["content-length"] : []),
     ...(input.contentType ? ["content-type"] : []),
     ...(input.ifNoneMatch ? ["if-none-match"] : []),
     "host",
@@ -112,6 +116,9 @@ export async function presignR2Object(
     .map(([key, value]) => encode(key) + "=" + encode(value))
     .join("&");
   const canonicalHeaders = [
+    ...(input.contentLength !== undefined
+      ? ["content-length:" + String(input.contentLength)]
+      : []),
     ...(input.contentType ? ["content-type:" + input.contentType] : []),
     ...(input.ifNoneMatch ? ["if-none-match:" + input.ifNoneMatch] : []),
     "host:" + host,
