@@ -171,7 +171,7 @@ describe("subida binaria con progreso", () => {
 
   it(
     "aborta una sesión creada si la respuesta multipart es incompatible",
-      async () => {
+    async () => {
       vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
       const task = uploadFile(
         file({
