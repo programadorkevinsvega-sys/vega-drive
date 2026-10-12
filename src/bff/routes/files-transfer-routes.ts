@@ -199,27 +199,21 @@ filesTransferRoutes.post("/multipart", async (c) => {
   return c.json(result.value, 201);
 });
 
-filesTransferRoutes.post(
-  "/multipart/:id/parts/:partNumber/url",
-  async (c) => {
-    if (c.env.DIRECT_R2_TRANSFERS_ENABLED !== "true") {
-      return c.json({ error: "Direct transfers unavailable" }, 404);
-    }
-    if (new URL(c.req.raw.url).searchParams.size > 0) {
-      return c.json(REQUEST_ERROR, 400);
-    }
-    if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
-    const partNumber = Number(c.req.param("partNumber"));
-    const result = await createCompositionRoot(c.env).files
-      .authorizeMultipartPart(
-      actorFor(c),
-      c.req.param("id"),
-      partNumber,
-    );
-    if (!result.ok) return transferError(result.reason);
-    return c.json(result.value, 200, { "Cache-Control": "no-store" });
-  },
-);
+filesTransferRoutes.post("/multipart/:id/parts/:partNumber/url", async (c) => {
+  if (c.env.DIRECT_R2_TRANSFERS_ENABLED !== "true") {
+    return c.json({ error: "Direct transfers unavailable" }, 404);
+  }
+  if (new URL(c.req.raw.url).searchParams.size > 0) {
+    return c.json(REQUEST_ERROR, 400);
+  }
+  if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
+  const partNumber = Number(c.req.param("partNumber"));
+  const result = await createCompositionRoot(
+    c.env,
+  ).files.authorizeMultipartPart(actorFor(c), c.req.param("id"), partNumber);
+  if (!result.ok) return transferError(result.reason);
+  return c.json(result.value, 200, { "Cache-Control": "no-store" });
+});
 
 filesTransferRoutes.post(
   "/multipart/:id/parts/:partNumber/confirm",

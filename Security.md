@@ -45,17 +45,17 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 
 - **SEC-R2-01** Bucket **privado**: sin acceso público ni dominio público ni `r2.dev` habilitado.
 - **SEC-R2-02** El binding o token S3 de R2 tiene permisos mínimos (Object Read & Write) limitados a **este bucket**, y solo infrastructure/storage/r2 del módulo files puede usarlo. Rotación periódica.
-- **SEC-R2-03** Las credenciales, endpoints de control, claves de objeto y configuración de R2 nunca se entregan al navegador. Se permite emitir exclusivamente URLs prefirmadas de vida corta y alcance mínimo para una única operación/objeto/parte, tras autorización del Worker y conforme a [ADR-001](./ADR-001-direct-r2-transfers.md). Una URL firmada es una credencial portadora hasta su expiración; no prometer revocación instantánea.
-- **SEC-R2-04** El módulo files valida el tamaño total, permisos, cuota y frecuencia antes de autorizar una transferencia. Las cargas multipart pueden enviar bytes directamente a R2 con URLs prefirmadas por parte; los IDs de sesión internos, upload IDs S3, claves de objeto y listas de partes autoritativas permanecen en el servidor. El Worker valida y completa la sesión.
+- **SEC-R2-03** Las credenciales y la configuración de R2 nunca se entregan al navegador. La URL prefirmada temporal incluye el endpoint y la ruta exacta del objeto como parte de la firma; no concede acceso general. Se permite emitir exclusivamente URLs prefirmadas de vida corta y alcance mínimo para una única operación/objeto/parte, tras autorización del Worker y conforme a [ADR-001](./ADR-001-direct-r2-transfers.md). Una URL firmada es una credencial portadora hasta su expiración; no prometer revocación instantánea.
+- **SEC-R2-04** El módulo files valida el tamaño total, permisos, cuota y frecuencia antes de autorizar una transferencia. Las cargas multipart pueden enviar bytes directamente a R2 con URLs prefirmadas por parte; los IDs de sesión internos, claves de objeto y listas de partes autoritativas permanecen en el servidor. La URL firmada contiene solo el upload ID y número de parte necesarios para esa operación. El Worker valida y completa la sesión.
 - **SEC-R2-05** Al completar, verificar con `HEAD` el **tamaño real** del objeto frente a la cuota y al tamaño declarado; si excede, borrar el objeto y rechazar.
-- **SEC-R2-06** El Worker transmite las descargas con `Content-Disposition: attachment` y `X-Content-Type-Options: nosniff` para evitar XSS almacenado por archivos HTML/SVG subidos.
+- **SEC-R2-06** Las descargas directas firman `Content-Disposition: attachment` y `Content-Type: application/octet-stream`; el flujo alternativo del Worker añade `X-Content-Type-Options: nosniff`.
 - **SEC-R2-07** Regla de ciclo de vida para abortar subidas multipart incompletas y cron de limpieza de subidas huérfanas.
 - **SEC-R2-08** El bucket permanece privado, sin dominio público ni `r2.dev`. Para transferencias directas, CORS de R2 permite solo orígenes explícitos de producción/desarrollo, métodos estrictamente necesarios y cabeceras mínimas; nunca `*` con credenciales. CORS no es autorización: cada operación requiere una URL prefirmada de alcance mínimo. No exponer cabeceras que no sean necesarias.
 
 ## 6. Frontend sin lógica de negocio (FE)
 
 - **SEC-FE-01** El frontend solo presenta interfaz y envía solicitudes al mismo origen `/api`. No toma decisiones de autorización, cuotas, propiedad, claves de almacenamiento ni reglas de negocio; el servidor siempre es la fuente de verdad.
-- **SEC-FE-02** Los assets del frontend no importan SDKs de R2/S3 ni contienen credenciales, configuración de cuenta/bucket ni URLs prefirmadas persistentes. El frontend puede usar una URL prefirmada temporal devuelta por una API same-origin para una transferencia concreta; no la almacena ni registra, y no puede elegir claves, permisos, expiración ni parámetros firmados.
+- **SEC-FE-02** Los assets del frontend no importan SDKs de R2/S3 ni contienen credenciales, configuración de cuenta/bucket ni URLs prefirmadas persistentes. Pueden usar una URL temporal devuelta por la API same-origin, que contiene una ruta firmada fija; no la almacenan ni registran y no pueden elegir claves, permisos, expiración ni parámetros firmados.
 
 ## 7. Fronteras modulares y D1 única (MOD)
 
@@ -115,8 +115,8 @@ Marca cada punto en el PR (si no aplica, indica "N/A" y por qué):
 - [ ] El frontend no incorpora lógica de negocio y solo llama al mismo origen `/api` (SEC-FE-01).
 - [ ] El BFF usa gateways y APIs públicas; no importa internals de módulos, SQL, D1 ni R2 (SEC-MOD-01, SEC-MOD-04).
 - [ ] El cambio usa solo tablas del prefijo dueño, sin JOIN, FK ni batch cruzado, y pasa el lint/test de fronteras (SEC-MOD-02, SEC-MOD-03).
-- [ ] Ninguna clave, endpoint, SDK, URL, token, configuración ni ruta de R2 llega al cliente; el Worker es el único acceso a R2 (SEC-FE-02, SEC-ISO-04, SEC-R2-03, SEC-R2-08).
-- [ ] Cada operación de R2 se autoriza en el Worker y no se emiten URLs prefirmadas (SEC-ISO-05, SEC-R2-03).
+- [ ] Ninguna credencial, SDK ni configuración de R2 llega al cliente; las únicas URLs externas son capacidades firmadas temporales autorizadas por el Worker (SEC-FE-02, SEC-ISO-04, SEC-R2-03, SEC-R2-08).
+- [ ] Cada URL prefirmada se emite solo tras autorización del Worker, con alcance mínimo y expiración corta (SEC-ISO-05, SEC-R2-03).
 - [ ] Los endpoints nuevos tienen rate limiting (SEC-RATE-01).
 - [ ] No hay secretos, tokens ni datos sensibles en código, logs ni respuestas (SEC-SEC-01, SEC-LOG-02).
 - [ ] Cabeceras de seguridad y CORS siguen cumpliéndose (SEC-WEB-01, SEC-WEB-02).

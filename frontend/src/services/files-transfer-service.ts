@@ -104,6 +104,7 @@ export async function uploadFile(
   // El endpoint simple no soporta offsets: al reanudar se reinicia
   // desde cero. Para archivos grandes, multipart conserva las partes
   // aceptadas.
+  let attempts = 0;
   while (true) {
     if (control.paused) await control.waitUntilReady();
     if (control.cancelled) throw new UploadCancelledError();
@@ -121,9 +122,23 @@ export async function uploadFile(
       if (control.paused || error instanceof UploadPausedError) {
         await control.waitUntilReady();
         onProgress?.(0);
+        attempts = 0;
         continue;
       }
-      throw error;
+      const retryable =
+        error instanceof FilesApiError &&
+        (error.status === 0 ||
+          error.status === 408 ||
+          error.status === 412 ||
+          error.status === 425 ||
+          error.status === 429 ||
+          error.status >= 500);
+      if (!retryable || attempts >= 5) throw error;
+      attempts += 1;
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, Math.min(8000, 500 * 2 ** (attempts - 1))),
+      );
+      await control.waitUntilReady();
     }
   }
 }

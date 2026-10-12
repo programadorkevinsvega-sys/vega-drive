@@ -128,6 +128,32 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.downloadFile(...args);
   }
 
+  createDownloadUrl(...args: Parameters<FilesPublicApi["createDownloadUrl"]>) {
+    return this.api.createDownloadUrl(...args);
+  }
+
+  beginDirectUpload(...args: Parameters<FilesPublicApi["beginDirectUpload"]>) {
+    return this.api.beginDirectUpload(...args);
+  }
+
+  completeDirectUpload(
+    ...args: Parameters<FilesPublicApi["completeDirectUpload"]>
+  ) {
+    return this.api.completeDirectUpload(...args);
+  }
+
+  authorizeMultipartPart(
+    ...args: Parameters<FilesPublicApi["authorizeMultipartPart"]>
+  ) {
+    return this.api.authorizeMultipartPart(...args);
+  }
+
+  recordMultipartPart(
+    ...args: Parameters<FilesPublicApi["recordMultipartPart"]>
+  ) {
+    return this.api.recordMultipartPart(...args);
+  }
+
   cleanupExpiredUploads(
     ...args: Parameters<FilesPublicApi["cleanupExpiredUploads"]>
   ) {

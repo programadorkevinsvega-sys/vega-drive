@@ -55,9 +55,7 @@ export async function tryDirectSingleUpload(
     try {
       await requestJson(
         "POST",
-        "/api/files/direct/" +
-          encodeURIComponent(started.uploadId) +
-          "/abort",
+        "/api/files/direct/" + encodeURIComponent(started.uploadId) + "/abort",
         null,
       );
     } catch {
@@ -125,9 +123,7 @@ export async function tryDirectSingleUpload(
     await control.waitUntilReady();
     const result = await requestJson<unknown>(
       "POST",
-      "/api/files/direct/" +
-        encodeURIComponent(started.uploadId) +
-        "/complete",
+      "/api/files/direct/" + encodeURIComponent(started.uploadId) + "/complete",
       null,
     );
     const uploaded = parseFileResponse(result, 201);

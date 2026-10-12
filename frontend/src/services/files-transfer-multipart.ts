@@ -82,10 +82,7 @@ export async function uploadMultipartFile(
             chunk,
             (loaded) =>
               onProgress?.(
-                Math.min(
-                  99,
-                  Math.floor(((start + loaded) / file.size) * 100),
-                ),
+                Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
               ),
             control,
           );
@@ -128,6 +125,7 @@ export async function uploadMultipartFile(
               error.status === 408 ||
               error.status === 425 ||
               error.status === 429 ||
+              error.status === 403 ||
               error.status >= 500);
           // Una parte puede fallar por una interrupción temporal del Worker,
           // R2 o D1. Reintentamos la misma parte antes de abortar la sesión.

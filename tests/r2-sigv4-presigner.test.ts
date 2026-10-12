@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  presignR2Object,
-} from "../src/modules/files/infrastructure/storage/r2/r2-sigv4-presigner.js";
+import { presignR2Object } from "../src/modules/files/infrastructure/storage/r2/r2-sigv4-presigner.js";
 
 const config = {
   accountId: "0123456789abcdef0123456789abcdef",
@@ -25,21 +23,15 @@ describe("R2 SigV4 presigner", () => {
       ),
     );
 
-    expect(url.hostname).toBe(
-      config.accountId + ".r2.cloudflarestorage.com",
-    );
+    expect(url.hostname).toBe(config.accountId + ".r2.cloudflarestorage.com");
     expect(url.pathname).toBe("/vega-drive-files/u/user-id/file-id");
-    expect(url.searchParams.get("X-Amz-Algorithm")).toBe(
-      "AWS4-HMAC-SHA256",
-    );
+    expect(url.searchParams.get("X-Amz-Algorithm")).toBe("AWS4-HMAC-SHA256");
     expect(url.searchParams.get("X-Amz-Expires")).toBe("120");
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("host");
     expect(url.searchParams.get("response-content-type")).toBe(
       "application/octet-stream",
     );
-    expect(url.searchParams.get("X-Amz-Signature")).toMatch(
-      /^[a-f0-9]{64}$/,
-    );
+    expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it("binds PUT content type into the signature", async () => {
@@ -60,9 +52,7 @@ describe("R2 SigV4 presigner", () => {
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe(
       "content-type;if-none-match;host",
     );
-    expect(url.searchParams.get("X-Amz-Signature")).toMatch(
-      /^[a-f0-9]{64}$/,
-    );
+    expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it("rejects long-lived signatures and unsafe object keys", async () => {

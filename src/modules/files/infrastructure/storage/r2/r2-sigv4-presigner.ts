@@ -30,8 +30,9 @@ function hex(bytes: ArrayBuffer): string {
 }
 
 function encode(value: string): string {
-  return encodeURIComponent(value).replace(/[!'()*]/g, (character) =>
-    "%" + character.charCodeAt(0).toString(16).toUpperCase(),
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (character) => "%" + character.charCodeAt(0).toString(16).toUpperCase(),
   );
 }
 
@@ -44,9 +45,13 @@ async function hmac(
   key: ArrayBuffer | Uint8Array,
   value: string,
 ): Promise<ArrayBuffer> {
+  const rawKey =
+    key instanceof Uint8Array
+      ? new Uint8Array(key)
+      : new Uint8Array(key as ArrayBuffer);
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    key instanceof Uint8Array ? key : new Uint8Array(key),
+    rawKey,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -122,7 +127,9 @@ export async function presignR2Object(
   const requestHash = hex(
     await crypto.subtle.digest("SHA-256", encoder.encode(canonicalRequest)),
   );
-  const stringToSign = [AWS_ALGORITHM, timestamp, scope, requestHash].join("\n");
+  const stringToSign = [AWS_ALGORITHM, timestamp, scope, requestHash].join(
+    "\n",
+  );
   const key = await signingKey(config.secretAccessKey, day);
   const signature = hex(await hmac(key, stringToSign));
   return (

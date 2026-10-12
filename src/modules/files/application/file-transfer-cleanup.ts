@@ -17,7 +17,7 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
           await deps.storage
             .abortMultipartUpload(session.storageKey, session.r2UploadId)
             .catch(() => undefined);
-          await deps.storage.delete(session.storageKey).catch(() => undefined);
+          await deps.storage.delete(session.storageKey);
           await deps.names.release(session.ownerId, "file", session.itemId);
           await deps.uploads.deleteByIdForOwner(
             session.reservationId,

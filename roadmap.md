@@ -51,7 +51,7 @@ Estado de cierre: **Fase 0 cerrada en alcance fundacional**. Los pendientes de c
 - [x] Configurar el binding `VEGA_DRIVE_DB` y verificar remotamente que las 17 tablas/índices coinciden con la migración versionada.
 - [x] Configurar el binding `FILES_BUCKET` al bucket `vega-drive-files`.
 - [x] Confirmar en el panel de Cloudflare que el bucket `vega-drive-files` es privado (confirmación del usuario, 2026-10-10).
-- [ ] **Antes de la Fase 4 (transferencias R2):** verificar en el panel que no haya dominio público ni `r2.dev` habilitado y que no exista CORS de navegador. El bucket está confirmado como privado; esta comprobación adicional no bloquea el cierre de Fase 0 porque todavía no existe flujo de archivos.
+- [ ] **Antes de la Fase 4 (transferencias R2):** verificar que no haya dominio público ni `r2.dev` habilitado; al habilitar transferencias directas, configurar CORS con una lista exacta de orígenes y métodos/cabeceras mínimos. El bucket está confirmado como privado; esta comprobación adicional no bloquea el cierre de Fase 0 porque todavía no existe flujo de archivos.
 - [ ] **Antes de la Fase 4:** confirmar permisos mínimos para el acceso de R2, limitado al bucket requerido, cuando se implemente el adaptador real. No hay todavía un adaptador de almacenamiento de archivos.
 - [x] Configurar Turnstile y su secreto en el Worker durante la Fase 2; la verificación de producción confirmó que la configuración pública y el secreto server-side están presentes y el propietario probó tokens válidos e inválidos.
 - [ ] Revisar los secretos operativos del Worker antes de habilitar funciones que los requieran; Gitleaks ya pasó en GitHub Actions y no se presenta como parte del build de Cloudflare.
@@ -251,7 +251,7 @@ Estos trabajos permanecen en sus respectivas fases y no representan pendientes d
 
 ### 4.4 Validación operativa obligatoria antes de cerrar
 
-- [ ] En el panel de Cloudflare, comprobar que el bucket vega-drive-files no tiene dominio público, r2.dev deshabilitado, CORS de navegador ni AllowedOrigins.
+- [ ] En el panel de Cloudflare, comprobar que el bucket vega-drive-files no tiene dominio público, r2.dev deshabilitado, CORS con AllowedOrigins exactos y métodos/cabeceras mínimos, sin `*`.
 - [ ] Confirmar que los permisos de acceso están limitados al bucket vega-drive-files y solo permiten lectura/escritura de los objetos necesarios.
 - [ ] Ejecutar el despliegue revisado mediante pnpm run deploy, que aplica la nueva migración files/.../0003_files_transfers.sql antes de publicar el Worker.
 - [ ] En producción, subir un archivo de prueba pequeño, descargarlo y comprobar los bytes; probar rango parcial y rechazo de acceso desde otra cuenta.

@@ -382,7 +382,7 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
           .deletePermanently(session.itemId, actor.userId)
           .catch(() => false);
       }
-      await storage.delete(session.storageKey).catch(() => undefined);
+      await storage.delete(session.storageKey);
       await deps.names
         .release(actor.userId, "file", session.itemId)
         .catch(() => undefined);

@@ -76,8 +76,7 @@ export function createFileDirectUploads(
       !isValidContentType(contentType)
     ) {
       return failure(
-        typeof sizeBytes === "number" &&
-          sizeBytes > DIRECT_UPLOAD_MAX_BYTES
+        typeof sizeBytes === "number" && sizeBytes > DIRECT_UPLOAD_MAX_BYTES
           ? "too-large"
           : "invalid-input",
       );
@@ -174,14 +173,15 @@ export function createFileDirectUploads(
       if (!url) throw new Error("Direct R2 signing is not configured");
       return success({ uploadId: itemId, url, expiresInSeconds: 120 });
     } catch {
-      if (sessionInserted && reservation) {
+      const reservedItemId = reservation?.itemId;
+      if (sessionInserted && reservedItemId) {
         await deps.multipartUploads
-          .delete(reservation.itemId, actor.userId)
+          .delete(reservedItemId, actor.userId)
           .catch(() => false);
       }
-      if (claimed && reservation) {
+      if (claimed && reservedItemId) {
         await deps.names
-          .release(actor.userId, "file", reservation.itemId)
+          .release(actor.userId, "file", reservedItemId)
           .catch(() => undefined);
       }
       if (reservation) {

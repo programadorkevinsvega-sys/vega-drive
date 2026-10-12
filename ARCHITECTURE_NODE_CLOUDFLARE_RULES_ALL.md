@@ -154,12 +154,12 @@ R2 pertenece funcionalmente a files.
 
 - Solo infrastructure/storage/r2 de files recibe o usa el binding o las credenciales de R2.
 - La aplicación usa un puerto IFileStoragePort; el dominio nunca importa R2Bucket ni APIs S3.
-- El adaptador HTTP, los demás módulos y el frontend no acceden a R2.
+- El adaptador HTTP y los demás módulos no acceden a R2. El navegador transfiere bytes solo con URLs prefirmadas temporales emitidas por files.
 - El bucket permanece privado, sin r2.dev ni dominio público. CORS se limita a orígenes explícitos y métodos/cabeceras mínimos para las transferencias firmadas; CORS no sustituye la autorización.
-- Las URLs prefirmadas se permiten únicamente según ADR-001: una acción/objeto/parte, expiración corta, credenciales S3 limitadas al bucket, sin claves de objeto ni secretos en el frontend. Se prohíbe entregar credenciales o URLs persistentes. referencia de R2 al cliente.
+- Las URLs prefirmadas se permiten únicamente según ADR-001: una acción/objeto/parte, expiración corta y credenciales S3 limitadas al bucket. La URL lleva la ruta exacta como parte de la firma; no se exponen credenciales ni claves como campos independientes.
 - Las claves se generan en el backend con el formato u/{userId}/{uuid}; nunca provienen del cliente.
 - Antes de guardar, leer, descargar o borrar se valida sesión, propiedad, cuota y reglas del recurso.
-- Las descargas se transmiten por el Worker con Content-Disposition: attachment y X-Content-Type-Options: nosniff.
+- Las descargas directas usan una URL GET firmada con Content-Disposition: attachment y Content-Type: application/octet-stream; el flujo alternativo del Worker añade X-Content-Type-Options: nosniff.
 - Se verifican tamaños reales y se limpian operaciones de almacenamiento internas fallidas.
 
 ## 9. Transporte HTTP y seguridad
