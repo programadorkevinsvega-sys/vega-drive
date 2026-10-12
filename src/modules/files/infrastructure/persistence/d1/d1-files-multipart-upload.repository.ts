@@ -54,6 +54,28 @@ export class D1FilesMultipartUploadRepository
       .first<FilesMultipartSession>();
   }
 
+  findAbandonedUnstartedForOwnerAndName(
+    ownerId: string,
+    folderId: string | null,
+    name: string,
+    createdBefore: string,
+  ): Promise<FilesMultipartSession | null> {
+    return this.db
+      .prepare(
+        "SELECT " +
+          SESSION_COLUMNS +
+          " FROM files_multipart_uploads " +
+          "WHERE owner_id = ? AND COALESCE(folder_id, '') = COALESCE(?, '') " +
+          "AND lower(name) = lower(?) AND created_at <= ? " +
+          "AND r2_upload_id != 'direct-put' " +
+          "AND NOT EXISTS (SELECT 1 FROM files_multipart_parts " +
+          "WHERE session_id = files_multipart_uploads.id) " +
+          "ORDER BY created_at ASC LIMIT 1",
+      )
+      .bind(ownerId, folderId, name, createdBefore)
+      .first<FilesMultipartSession>();
+  }
+
   async savePart(part: FilesMultipartPart): Promise<void> {
     await this.db
       .prepare(
