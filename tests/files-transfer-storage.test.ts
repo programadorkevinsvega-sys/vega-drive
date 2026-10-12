@@ -183,6 +183,49 @@ describe("file transfer reservations and rate limits", () => {
     }
   });
 
+  it("leaves multipart reservations to the session cleanup path", async () => {
+    const db = await fixture();
+    try {
+      const uploads = new D1FilesUploadRepository(db.db);
+      const stale = {
+        ...pendingUpload("multipart-reservation", 100 * 1024 * 1024),
+        expiresAt: "2026-10-11T10:00:00.000Z",
+      };
+      await uploads.insert(stale);
+      await db.db
+        .prepare(
+          "INSERT INTO files_multipart_uploads (id, owner_id, reservation_id, item_id, folder_id, name, storage_key, r2_upload_id, expected_size_bytes, content_type, created_at, expires_at) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(
+          "multipart-session",
+          stale.ownerId,
+          stale.id,
+          stale.itemId,
+          "large-video.mp4",
+          stale.storageKey,
+          "r2-upload",
+          stale.expectedSizeBytes,
+          stale.contentType,
+          stale.createdAt,
+          stale.expiresAt,
+        )
+        .run();
+
+      await expect(
+        uploads.listNeedingCleanup("2026-10-11T12:00:00.000Z", 20),
+      ).resolves.toEqual([]);
+      await db.db
+        .prepare("DELETE FROM files_multipart_uploads WHERE id = ?")
+        .bind("multipart-session")
+        .run();
+      await expect(
+        uploads.listNeedingCleanup("2026-10-11T12:00:00.000Z", 20),
+      ).resolves.toMatchObject([{ id: stale.id }]);
+    } finally {
+      db.close();
+    }
+  });
+
   it("finds expired and failed uploads for retryable scheduled cleanup", async () => {
     const db = await fixture();
     try {
