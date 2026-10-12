@@ -140,7 +140,11 @@ export function createRecentActivity(deps: RecentActivityDependencies) {
           !file ||
           file.deletedAt !== null ||
           (file.folderId !== null &&
-            !(await activeFolderPath(deps.folders, actor.userId, file.folderId)))
+            !(await activeFolderPath(
+              deps.folders,
+              actor.userId,
+              file.folderId,
+            )))
         ) {
           continue;
         }
