@@ -114,8 +114,7 @@ describe("autorizaciones multipart directas a R2", () => {
     const expectedFinalPartSize = 4 * 1024 * 1024;
     const testSession = {
       ...session,
-      expectedSizeBytes:
-        2 * MULTIPART_PART_SIZE_BYTES + expectedFinalPartSize,
+      expectedSizeBytes: 2 * MULTIPART_PART_SIZE_BYTES + expectedFinalPartSize,
     };
     const finalPartNumber = Math.ceil(
       testSession.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES,
