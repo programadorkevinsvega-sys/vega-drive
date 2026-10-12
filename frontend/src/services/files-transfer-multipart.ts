@@ -1,6 +1,11 @@
+import type { FilesFileView } from "./files-contract";
 import { FilesApiError } from "./files-api-error";
 import { parseFileResponse, requestJson } from "./files-transfer-http";
-import { UploadCancelledError, UploadController } from "./files-transfer-controller";
+import {
+  UploadCancelledError,
+  UploadPausedError,
+  UploadController,
+} from "./files-transfer-controller";
 
 const MULTIPART_PART_BYTES = 16 * 1024 * 1024;
 type UploadProgressListener = (percentage: number) => void;
