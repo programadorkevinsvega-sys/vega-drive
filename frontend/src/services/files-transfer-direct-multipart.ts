@@ -54,44 +54,46 @@ export async function tryDirectMultipartPart(
   let etag: string;
   try {
     etag = await new Promise<string>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    let settled = false;
-    const finish = (callback: () => void) => {
-      if (settled) return;
-      settled = true;
-      control.detach(request);
-      callback();
-    };
-    request.open("PUT", authorization.url, true);
-    request.setRequestHeader("Content-Type", "application/octet-stream");
-    control.attach(request);
-    request.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) onLoaded(Math.min(event.loaded, chunk.size));
-    });
-    request.addEventListener("error", () =>
-      finish(() => reject(new FilesApiError("La conexión con R2 falló.", 0))),
-    );
-    request.addEventListener("abort", () =>
-      finish(() => {
-        if (control.cancelled) reject(new UploadCancelledError());
-        else if (control.paused) reject(new UploadPausedError());
-        else reject(new FilesApiError("La parte se interrumpió.", 0));
-      }),
-    );
-    request.addEventListener("load", () =>
-      finish(() => {
-        if (request.status < 200 || request.status >= 300) {
-          reject(new FilesApiError("R2 rechazó la parte.", request.status));
-          return;
+      const request = new XMLHttpRequest();
+      let settled = false;
+      const finish = (callback: () => void) => {
+        if (settled) return;
+        settled = true;
+        control.detach(request);
+        callback();
+      };
+      request.open("PUT", authorization.url, true);
+      request.setRequestHeader("Content-Type", "application/octet-stream");
+      control.attach(request);
+      request.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          onLoaded(Math.min(event.loaded, chunk.size));
         }
-        const responseEtag = request.getResponseHeader("ETag");
-        if (!responseEtag) {
-          reject(new FilesApiError("R2 no expuso el ETag de la parte.", 0));
-          return;
-        }
-        resolve(responseEtag);
-      }),
-    );
+      });
+      request.addEventListener("error", () =>
+        finish(() => reject(new FilesApiError("La conexión con R2 falló.", 0))),
+      );
+      request.addEventListener("abort", () =>
+        finish(() => {
+          if (control.cancelled) reject(new UploadCancelledError());
+          else if (control.paused) reject(new UploadPausedError());
+          else reject(new FilesApiError("La parte se interrumpió.", 0));
+        }),
+      );
+      request.addEventListener("load", () =>
+        finish(() => {
+          if (request.status < 200 || request.status >= 300) {
+            reject(new FilesApiError("R2 rechazó la parte.", request.status));
+            return;
+          }
+          const responseEtag = request.getResponseHeader("ETag");
+          if (!responseEtag) {
+            reject(new FilesApiError("R2 no expuso el ETag de la parte.", 0));
+            return;
+          }
+          resolve(responseEtag);
+        }),
+      );
       request.send(chunk);
     });
   } catch (error) {
