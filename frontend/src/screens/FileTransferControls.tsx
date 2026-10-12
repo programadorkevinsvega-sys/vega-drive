@@ -43,13 +43,8 @@ export function FileTransferControls({
   }
 
   function cancelItem(id: string) {
-    const item = items.find((candidate) => candidate.id === id);
     controlsRef.current.get(id)?.cancel();
-    if (item?.state === "pending") {
-      updateItem(id, { state: "cancelled", error: "" });
-    } else {
-      updateItem(id, { state: "cancelled", error: "" });
-    }
+    updateItem(id, { state: "cancelled", error: "" });
   }
 
   function removePendingItem(id: string) {
@@ -81,7 +76,13 @@ export function FileTransferControls({
     const groupId = "batch-" + crypto.randomUUID();
     const uploads = files.map<UploadItem>((file, index) => {
       const id =
-        String(index) + "-" + file.name + "-" + file.lastModified + "-" + groupId;
+        String(index) +
+        "-" +
+        file.name +
+        "-" +
+        file.lastModified +
+        "-" +
+        groupId;
       controlsRef.current.set(id, new UploadController());
       return {
         id,
