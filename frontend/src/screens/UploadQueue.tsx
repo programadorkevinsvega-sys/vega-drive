@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
 import { Button } from "../ui/Button";
 
-export type UploadState = "pending" | "uploading" | "completed" | "error";
+export type UploadState =
+  | "pending"
+  | "uploading"
+  | "paused"
+  | "cancelled"
+  | "completed"
+  | "error";
 
 export interface UploadItem {
   id: string;
@@ -9,6 +15,8 @@ export interface UploadItem {
   state: UploadState;
   progress: number;
   error: string;
+  groupId: string;
+  folderBatch: boolean;
 }
 
 function formatFileSize(bytes: number): string {
@@ -24,21 +32,41 @@ function stateLabel(item: UploadItem): string {
       ? "Subiendo · " + item.progress + "%"
       : "Preparando subida…";
   }
-  return item.state === "completed" ? "Completado" : "No se pudo subir";
+  if (item.state === "paused") return "Pausado · " + item.progress + "%";
+  if (item.state === "cancelled") return "Cancelado";
+  if (item.state === "completed") return "Completado";
+  return "Error al subir";
 }
 
 interface UploadQueueProps {
   items: UploadItem[];
   uploading: boolean;
+  onPause: (id: string) => void;
+  onResume: (id: string) => void;
+  onCancel: (id: string) => void;
+  onRemove: (id: string) => void;
+  onCancelGroup: (groupId: string) => void;
   onClear: () => void;
 }
 
 export function UploadQueue({
   items,
   uploading,
+  onPause,
+  onResume,
+  onCancel,
+  onRemove,
+  onCancelGroup,
   onClear,
 }: UploadQueueProps): ReactNode {
   if (items.length === 0) return null;
+  const folderBatch = items.find((item) => item.folderBatch);
+  const hasClearable = items.some(
+    (item) =>
+      item.state === "completed" ||
+      item.state === "error" ||
+      item.state === "cancelled",
+  );
 
   return (
     <section
@@ -47,11 +75,22 @@ export function UploadQueue({
     >
       <div className="vd-transfer__queue-heading">
         <h2 className="vd-transfer__title">Subidas</h2>
-        {!uploading ? (
-          <Button size="sm" variant="ghost" onClick={onClear}>
-            Limpiar
-          </Button>
-        ) : null}
+        <div className="vd-transfer__queue-heading-actions">
+          {folderBatch && uploading ? (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => onCancelGroup(folderBatch.groupId)}
+            >
+              Cancelar carpeta
+            </Button>
+          ) : null}
+          {hasClearable ? (
+            <Button size="sm" variant="ghost" onClick={onClear}>
+              Limpiar terminadas
+            </Button>
+          ) : null}
+        </div>
       </div>
       <ul className="vd-transfer__list">
         {items.map((item) => (
@@ -76,13 +115,43 @@ export function UploadQueue({
             <progress
               className="vd-transfer__progress"
               max={100}
-              value={item.state === "pending" ? 0 : item.progress}
+              value={
+                item.state === "pending"
+                  ? 0
+                  : item.state === "cancelled"
+                    ? item.progress
+                    : item.progress
+              }
               aria-label={"Progreso de " + item.file.name}
               aria-valuetext={stateLabel(item)}
             />
             {item.error ? (
               <p className="vd-transfer__item-error">{item.error}</p>
             ) : null}
+            <div className="vd-transfer__item-actions">
+              {item.state === "uploading" ? (
+                <Button size="sm" variant="secondary" onClick={() => onPause(item.id)}>
+                  Pausar
+                </Button>
+              ) : null}
+              {item.state === "paused" ? (
+                <Button size="sm" variant="secondary" onClick={() => onResume(item.id)}>
+                  Reanudar
+                </Button>
+              ) : null}
+              {item.state === "pending" ||
+              item.state === "uploading" ||
+              item.state === "paused" ? (
+                <Button size="sm" variant="danger" onClick={() => onCancel(item.id)}>
+                  Cancelar
+                </Button>
+              ) : null}
+              {item.state === "pending" ? (
+                <Button size="sm" variant="ghost" onClick={() => onRemove(item.id)}>
+                  Quitar de la cola
+                </Button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>
