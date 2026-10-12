@@ -174,7 +174,7 @@ describe("subida binaria con progreso", () => {
     void uploadFile(
       file({
         size: 96 * 1024 * 1024,
-        slice: (start, end) => ({ size: end - start }) as Blob,
+        slice: (start = 0, end = 0) => ({ size: end - start }) as Blob,
       }),
       null,
     );
