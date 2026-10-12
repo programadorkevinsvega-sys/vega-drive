@@ -405,7 +405,7 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
     );
     if (!session) return failure("not-found");
     try {
-      if (storage.abortMultipartUpload) {
+      if (storage.abortMultipartUpload && session.r2UploadId !== "direct-put") {
         await storage.abortMultipartUpload(
           session.storageKey,
           session.r2UploadId,
