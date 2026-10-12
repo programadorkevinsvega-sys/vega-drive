@@ -328,7 +328,11 @@ filesTransferRoutes.get("/:id/download", async (c) => {
       c.req.param("id"),
     );
     if (!direct.ok) return transferError(direct.reason);
-    await files.recordRecentActivity(actorFor(c), c.req.param("id"), "download");
+    await files.recordRecentActivity(
+      actorFor(c),
+      c.req.param("id"),
+      "download",
+    );
     return new Response(null, {
       status: 302,
       headers: {
