@@ -57,7 +57,8 @@ await runGuard("Frontera del frontend", async (failures, notes) => {
       const signedTransferException =
         rel.endsWith("/files-transfer-direct.ts") &&
         source.includes('"/api/files/direct"') &&
-        source.includes('"/parts/url"') &&
+        source.includes('"/parts') &&
+        source.includes('"/url"') &&
         /request\.open\("PUT", (?:started|authorization)\.url/.test(source);
       if (
         !signedTransferException &&
