@@ -1,12 +1,9 @@
 import { FilesApiError } from "./files-api-error";
-import {
-  MULTIPART_PART_BYTES,
-  parseFileResponse,
-  requestJson,
-  UploadCancelledError,
-  UploadController,
-  type UploadProgressListener,
-} from "./files-transfer-service";
+import { parseFileResponse, requestJson } from "./files-transfer-http";
+import { UploadCancelledError, UploadController } from "./files-transfer-controller";
+
+const MULTIPART_PART_BYTES = 16 * 1024 * 1024;
+type UploadProgressListener = (percentage: number) => void;
 
 interface MultipartStart {
   uploadId: string;
