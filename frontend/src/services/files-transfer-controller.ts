@@ -59,3 +59,5 @@ export export class UploadController {
   }
 }
 
+
+export type UploadProgressListener = (percentage: number) => void;
