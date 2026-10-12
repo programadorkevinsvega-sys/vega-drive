@@ -35,6 +35,12 @@ export interface IFileStoragePort {
     contentType: string,
     expiresInSeconds: number,
   ): Promise<string | null>;
+  presignMultipartPartUrl?(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    expiresInSeconds: number,
+  ): Promise<string | null>;
   presignGetUrl?(
     key: string,
     expiresInSeconds: number,
