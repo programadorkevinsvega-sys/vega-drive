@@ -38,27 +38,20 @@ export async function uploadMultipartFile(
     }),
     { "Content-Type": "application/json" },
   );
-  if (
-    !started ||
-    typeof started.uploadId !== "string" ||
-    started.partSizeBytes !== MULTIPART_PART_BYTES ||
-    !Number.isSafeInteger(started.totalParts) ||
-    started.totalParts < 2 ||
-    (started.directTransfersEnabled !== undefined &&
-      typeof started.directTransfersEnabled !== "boolean")
-  ) {
-    throw new FilesApiError(
-      "El servidor devolvió una sesión de subida inválida.",
-      500,
-    );
-  }
+  const startedUploadId =
+    started &&
+    typeof started.uploadId === "string" &&
+    started.uploadId.length > 0
+      ? started.uploadId
+      : null;
 
   const abortSession = async () => {
+    if (!startedUploadId) return;
     try {
       await requestJson(
         "POST",
         "/api/files/multipart/" +
-          encodeURIComponent(started.uploadId) +
+          encodeURIComponent(startedUploadId) +
           "/abort",
         null,
       );
@@ -66,6 +59,25 @@ export async function uploadMultipartFile(
       // La limpieza de sesiones expiradas es la última defensa.
     }
   };
+
+  if (
+    !started ||
+    !startedUploadId ||
+    started.partSizeBytes !== MULTIPART_PART_BYTES ||
+    !Number.isSafeInteger(started.totalParts) ||
+    started.totalParts < 2 ||
+    started.totalParts !== Math.ceil(file.size / started.partSizeBytes) ||
+    (started.directTransfersEnabled !== undefined &&
+      typeof started.directTransfersEnabled !== "boolean")
+  ) {
+    // Si el servidor creó la sesión pero su contrato no coincide, libera
+    // la reserva del nombre antes de devolver el error.
+    await abortSession();
+    throw new FilesApiError(
+      "El servidor devolvió una sesión de subida inválida.",
+      500,
+    );
+  }
 
   try {
     if (control.cancelled) throw new UploadCancelledError();
