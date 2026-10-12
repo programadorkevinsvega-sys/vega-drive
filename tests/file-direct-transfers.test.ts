@@ -197,7 +197,7 @@ describe("transferencias directas a R2", () => {
         ),
       ).resolves.toEqual({ ok: false, reason: "not-found" });
 
-      // Model a PUT that finishes/replays while its already-issued URL is valid.
+      // Model a late PUT while its issued URL is still valid.
       fixture.objects.set(storageKey, {
         bytes: new Uint8Array(4),
         contentType: "text/plain",
