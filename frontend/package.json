@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend de Vega Drive con identidad conectada y catálogo real de carpetas/metadatos; las transferencias R2 siguen pendientes.",
+  "description": "Frontend de Vega Drive con identidad conectada, catálogo real y transferencias privadas same-origin.",
   "engines": {
     "node": ">=22.13.0"
   },
