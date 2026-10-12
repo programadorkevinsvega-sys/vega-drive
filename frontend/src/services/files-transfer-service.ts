@@ -8,7 +8,10 @@ import {
   UploadController,
   type UploadProgressListener,
 } from "./files-transfer-controller";
-export { UploadCancelledError, UploadController } from "./files-transfer-controller";
+export {
+  UploadCancelledError,
+  UploadController,
+} from "./files-transfer-controller";
 export type { UploadProgressListener } from "./files-transfer-controller";
 
 const MAX_SINGLE_UPLOAD_BYTES = 95 * 1024 * 1024;
