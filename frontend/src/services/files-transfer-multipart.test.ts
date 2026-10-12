@@ -48,9 +48,7 @@ class FakeXMLHttpRequest extends EventTarget {
     ) {
       response = { type: "file", id: "file-a" };
     } else {
-      throw new Error(
-        "Unexpected test request",
-      );
+      throw new Error("Unexpected test request");
     }
 
     this.status = 200;
