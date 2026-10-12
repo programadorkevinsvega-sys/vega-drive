@@ -6,7 +6,10 @@ interface FileTransferPanelProps {
   uploading: boolean;
   summary: string;
   items: UploadItem[];
-  onSelection: (event: ChangeEvent<HTMLInputElement>, includeFolderStructure?: boolean) => void;
+  onSelection: (
+    event: ChangeEvent<HTMLInputElement>,
+    includeFolderStructure?: boolean,
+  ) => void;
   onPause: (id: string) => void;
   onResume: (id: string) => void;
   onCancel: (id: string) => void;
