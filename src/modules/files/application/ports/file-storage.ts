@@ -27,10 +27,7 @@ export interface IFileStoragePort {
     sizeBytes: number,
   ): Promise<void>;
   head(key: string): Promise<FileStorageHead | null>;
-  get(
-    key: string,
-    range?: FileStorageRange,
-  ): Promise<FileStorageBody | null>;
+  get(key: string, range?: FileStorageRange): Promise<FileStorageBody | null>;
   delete(key: string): Promise<void>;
   createMultipartUpload?(key: string, contentType: string): Promise<string>;
   uploadMultipartPart?(
