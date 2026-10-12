@@ -49,7 +49,7 @@ class FakeXMLHttpRequest extends EventTarget {
       response = { type: "file", id: "file-a" };
     } else {
       throw new Error(
-        "Solicitud inesperada en la prueba: " + this.method + " " + this.url,
+        "Unexpected test request",
       );
     }
 
@@ -70,7 +70,7 @@ afterEach(() => {
 
 describe("transferencia multipart con direct R2 deshabilitado", () => {
   it(
-    "usa el respaldo por Worker sin solicitar URLs directas que devolverían 404",
+    "usa el respaldo por Worker sin solicitar URLs directas",
     async () => {
       vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
       const size = 96 * 1024 * 1024;
