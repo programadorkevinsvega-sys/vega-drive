@@ -1,6 +1,7 @@
 # ADR-001 — Transferencias directas y autorizadas a R2
 
 - **Estado:** Aprobado por solicitud explícita del propietario del proyecto el 2026-10-11.
+- **Runbook operativo:** [R2_DIRECT_TRANSFER_SETUP.md](./R2_DIRECT_TRANSFER_SETUP.md) explica CORS, credenciales y condiciones de activación; no habilita el flujo ni autoriza despliegues.
 - **Ámbito:** Vega Drive existente; no presupone ni implementa una API externa nueva.
 - **Despliegue:** Este ADR no autoriza un despliegue automático. La migración se habilita solo tras pruebas y configuración operativa verificadas.
 - **Decisión:** El Worker conserva el plano de control y autorización; los bytes de subida y descarga se transfieren directamente entre navegador y el endpoint S3 compatible de R2 mediante URLs prefirmadas de alcance mínimo y duración corta.
