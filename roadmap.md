@@ -282,7 +282,7 @@ Estas validaciones se registran como realizadas por confirmación explícita del
 - [x] Implementar rutas Hono delgadas para el catálogo de metadatos: validan transporte y llaman `FilesGateway` sin importar capas internas.
 - [x] Traducir resultados del catálogo a 400/404/409/503, rechazar sesiones ausentes con 401 y evitar exponer detalles internos.
 - [x] Conectar Mi unidad, carpetas y papelera del frontend al BFF: listado, breadcrumbs, paginación, creación/renombrado/movimiento, papelera y restauración.
-- [ ] Definir los contratos de producto y conectar recientes, favoritos y búsqueda al BFF; sus rutas de frontend todavía muestran placeholders.
+- [x] Definir e implementar Recientes por última apertura/descarga, con actividad aislada por propietario, paginación y pantalla conectada; la migración D1 `0004_files_recent_activity.sql` está versionada pero no aplicada/desplegada desde esta tarea.\n- [ ] Definir contratos e implementar Favoritos y Búsqueda; ambas vistas siguen mostrando placeholders.
 - [x] Integrar en la pantalla de Mi unidad los controles frontend de transferencia física y conectarlos a las rutas BFF de la Fase 4.
 - [ ] Verificar de extremo a extremo las transferencias desde la UI, incluidos progreso, errores, pausa/reanudación, cancelación, archivos grandes y descarga.
 - [ ] Completar la auditoría de presentación/accesibilidad y las evidencias de assets, cabeceras y operación en build/preview y producción.
