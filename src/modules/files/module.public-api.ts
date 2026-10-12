@@ -5,7 +5,10 @@ import { createFolderMutations } from "./application/folder-mutations.js";
 import { createItemCatalog } from "./application/item-catalog.js";
 import { createItemMutations } from "./application/item-mutations.js";
 import { createFileTransfers } from "./application/file-transfers.js";
-import { createFileMultipartUploads, type MultipartStarted } from "./application/file-multipart-uploads.js";
+import {
+  createFileMultipartUploads,
+  type MultipartStarted,
+} from "./application/file-multipart-uploads.js";
 import type { FilesMultipartUploadRepository } from "./application/ports/files-multipart-repository.js";
 import { createTrashMutations } from "./application/trash-mutations.js";
 import type { FilesDownloadResult } from "./application/file-download.js";
@@ -58,10 +61,25 @@ export interface FilesPublicApi {
     range: string | null,
   ): Promise<FilesDownloadResult>;
   cleanupExpiredUploads(nowIso: string, limit: number): Promise<number>;
-  beginMultipartUpload(actor: FilesActor, input: unknown): Promise<CatalogResult<MultipartStarted>>;
-  uploadMultipartPart(actor: FilesActor, sessionId: string, partNumber: number, body: ReadableStream<Uint8Array> | null, sizeBytes: number): Promise<CatalogResult<{ partNumber: number }>>;
-  completeMultipartUpload(actor: FilesActor, sessionId: string): Promise<CatalogResult<FilesFileView>>;
-  abortMultipartUpload(actor: FilesActor, sessionId: string): Promise<CatalogResult<void>>;
+  beginMultipartUpload(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<MultipartStarted>>;
+  uploadMultipartPart(
+    actor: FilesActor,
+    sessionId: string,
+    partNumber: number,
+    body: ReadableStream<Uint8Array> | null,
+    sizeBytes: number,
+  ): Promise<CatalogResult<{ partNumber: number }>>;
+  completeMultipartUpload(
+    actor: FilesActor,
+    sessionId: string,
+  ): Promise<CatalogResult<FilesFileView>>;
+  abortMultipartUpload(
+    actor: FilesActor,
+    sessionId: string,
+  ): Promise<CatalogResult<void>>;
   renameFile(
     actor: FilesActor,
     id: unknown,
@@ -127,7 +145,20 @@ export function createFilesModule(
         ...(deps.now ? { now: deps.now } : {}),
       })
     : null;
-  const multipartTransfers = deps.uploads && deps.transferEvents && deps.multipartUploads && deps.storage ? createFileMultipartUploads({ folders: deps.folders, items: deps.items, names: deps.names, uploads: deps.uploads, transferEvents: deps.transferEvents, multipart: deps.multipartUploads, storage: deps.storage, ...(deps.now ? { now: deps.now } : {}), ...(deps.createId ? { createId: deps.createId } : {}) }) : null;
+  const multipartTransfers =
+    deps.uploads && deps.transferEvents && deps.multipartUploads && deps.storage
+      ? createFileMultipartUploads({
+          folders: deps.folders,
+          items: deps.items,
+          names: deps.names,
+          uploads: deps.uploads,
+          transferEvents: deps.transferEvents,
+          multipart: deps.multipartUploads,
+          storage: deps.storage,
+          ...(deps.now ? { now: deps.now } : {}),
+          ...(deps.createId ? { createId: deps.createId } : {}),
+        })
+      : null;
   const transfers =
     deps.uploads && deps.transferEvents && deps.storage
       ? createFileTransfers({
