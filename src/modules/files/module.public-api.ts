@@ -9,7 +9,9 @@ import {
   createFileMultipartUploads,
   type MultipartStarted,
 } from "./application/file-multipart-uploads.js";
-import type { FilesMultipartUploadRepository } from "./application/ports/files-multipart-repository.js";
+import type {
+  FilesMultipartUploadRepository,
+} from "./application/ports/files-multipart-repository.js";
 import { createTrashMutations } from "./application/trash-mutations.js";
 import type { FilesDownloadResult } from "./application/file-download.js";
 import type { IFileStoragePort } from "./application/ports/file-storage.js";
@@ -168,7 +170,9 @@ export function createFilesModule(
           uploads: deps.uploads,
           transferEvents: deps.transferEvents,
           storage: deps.storage,
-          ...(deps.multipartUploads ? { multipartUploads: deps.multipartUploads } : {}),
+          ...(deps.multipartUploads
+            ? { multipartUploads: deps.multipartUploads }
+            : {}),
           ...(deps.now ? { now: deps.now } : {}),
           ...(deps.createId ? { createId: deps.createId } : {}),
         })
