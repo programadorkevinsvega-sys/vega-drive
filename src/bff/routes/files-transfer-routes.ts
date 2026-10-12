@@ -322,11 +322,13 @@ filesTransferRoutes.get("/:id/download", async (c) => {
     return c.json(REQUEST_ERROR, 400);
   }
   if (c.env.DIRECT_R2_TRANSFERS_ENABLED === "true") {
-    const direct = await createCompositionRoot(c.env).files.createDownloadUrl(
+    const files = createCompositionRoot(c.env).files;
+    const direct = await files.createDownloadUrl(
       actorFor(c),
       c.req.param("id"),
     );
     if (!direct.ok) return transferError(direct.reason);
+    await files.recordRecentActivity(actorFor(c), c.req.param("id"), "download");
     return new Response(null, {
       status: 302,
       headers: {
@@ -344,6 +346,11 @@ filesTransferRoutes.get("/:id/download", async (c) => {
   if (!result.ok) {
     return transferError(result.reason, result.totalSizeBytes);
   }
+  await createCompositionRoot(c.env).files.recordRecentActivity(
+    actorFor(c),
+    c.req.param("id"),
+    "download",
+  );
   const file = result.value;
   const headers = new Headers({
     "Accept-Ranges": "bytes",
