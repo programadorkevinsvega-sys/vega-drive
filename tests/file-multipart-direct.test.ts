@@ -150,10 +150,7 @@ describe("autorizaciones multipart directas a R2", () => {
         expiresInSeconds: 120,
       },
     });
-    expect(findByIdForOwner).toHaveBeenCalledWith(
-      testSession.id,
-      "owner-a",
-    );
+    expect(findByIdForOwner).toHaveBeenCalledWith(testSession.id, "owner-a");
     expect(presignMultipartPartUrl).toHaveBeenCalledWith(
       testSession.storageKey,
       testSession.r2UploadId,
