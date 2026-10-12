@@ -33,12 +33,14 @@ export interface IFileStoragePort {
   presignPutUrl?(
     key: string,
     contentType: string,
+    expectedSizeBytes: number,
     expiresInSeconds: number,
   ): Promise<string | null>;
   presignMultipartPartUrl?(
     key: string,
     uploadId: string,
     partNumber: number,
+    expectedSizeBytes: number,
     expiresInSeconds: number,
   ): Promise<string | null>;
   presignGetUrl?(
