@@ -60,7 +60,7 @@ describe("autorizaciones multipart directas a R2", () => {
   it("no emite una URL si la sesión pertenece a otro usuario", async () => {
     const findByIdForOwner = vi.fn().mockResolvedValue(null);
     const presignMultipartPartUrl = vi.fn();
-    const authorize = createMultipartPartAuthorizations({
+    const service = createMultipartPartAuthorizations({
       multipart: { findByIdForOwner } as never,
       storage: { presignMultipartPartUrl } as never,
       now: () => new Date("2026-10-11T14:00:00.000Z"),
@@ -79,7 +79,7 @@ describe("autorizaciones multipart directas a R2", () => {
       expiresAt: "2026-10-11T13:59:59.000Z",
     });
     const presignMultipartPartUrl = vi.fn();
-    const authorize = createMultipartPartAuthorizations({
+    const service = createMultipartPartAuthorizations({
       multipart: { findByIdForOwner } as never,
       storage: { presignMultipartPartUrl } as never,
       now: () => new Date("2026-10-11T14:00:00.000Z"),
@@ -95,14 +95,14 @@ describe("autorizaciones multipart directas a R2", () => {
   it("no registra ETags arbitrarios ni tamaños incorrectos", async () => {
     const findByIdForOwner = vi.fn().mockResolvedValue(session);
     const savePart = vi.fn().mockResolvedValue(undefined);
-    const authorize = createMultipartPartAuthorizations({
+    const service = createMultipartPartAuthorizations({
       multipart: { findByIdForOwner, savePart } as never,
       storage: { presignMultipartPartUrl: vi.fn() } as never,
       now: () => new Date("2026-10-11T14:00:00.000Z"),
     });
 
     await expect(
-      authorize.recordMultipartPart(
+      service.recordMultipartPart(
         { userId: "owner-a" },
         session.id,
         1,
@@ -111,7 +111,7 @@ describe("autorizaciones multipart directas a R2", () => {
       ),
     ).resolves.toEqual({ ok: false, reason: "invalid-input" });
     await expect(
-      authorize.recordMultipartPart(
+      service.recordMultipartPart(
         { userId: "owner-a" },
         session.id,
         1,
