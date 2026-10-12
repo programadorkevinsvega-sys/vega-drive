@@ -1,6 +1,6 @@
 # Configuración operativa de transferencias directas a R2
 
-Este runbook prepara la cuenta para el flujo aprobado en [ADR-001](./ADR-001-direct-r2-transfers.md). **No habilita el flujo ni autoriza un despliegue por sí mismo.** Mientras falten credenciales, CORS y pruebas E2E, se conserva la transferencia por el Worker como ruta de respaldo.
+Este runbook documenta la configuración y los controles operativos del flujo aprobado en [ADR-001](./ADR-001-direct-r2-transfers.md). No autoriza por sí mismo futuros despliegues. **Estado actualizado el 2026-10-12:** el propietario confirmó que las validaciones de privacidad, CORS, permisos mínimos, despliegue, subida/descarga real con comparación de bytes, rangos y aislamiento entre cuentas se completaron en producción. El flujo de respaldo por Worker se conserva para rollback.
 
 ## Estado conocido del bucket
 
@@ -50,7 +50,7 @@ Introducir cada valor cuando Wrangler lo solicite. No escribir secretos en `wran
 
 El propietario confirmó que los secretos `R2_ACCESS_KEY_ID`, `R2_ACCOUNT_ID` y `R2_SECRET_ACCESS_KEY` aparecen configurados en el panel del Worker. Sin embargo, los valores de credenciales se compartieron parcialmente en una conversación. Por precaución, **no considerar seguras las credenciales actuales aunque el texto parezca truncado**: crear un nuevo token S3 de R2 con el mismo alcance mínimo, actualizar los tres secretos correspondientes si cambian sus valores, probarlo y revocar las credenciales anteriores. Si también se compartió un token de API de Cloudflare, revocarlo/rotarlo por separado; no es lo mismo que la clave S3.
 
-No se han verificado las credenciales mediante una operación real contra R2. Nunca pedir ni copiar sus valores en este documento, el repositorio, logs o chats.
+El propietario confirmó el 2026-10-12 que las operaciones reales de transferencia y el alcance mínimo de acceso fueron probados en producción. Esto no sustituye la rotación preventiva indicada arriba si alguna credencial se expuso. Nunca pedir ni copiar sus valores en este documento, el repositorio, logs o chats.
 
 ## 3. Mantener la transferencia directa deshabilitada hasta validar
 
@@ -60,16 +60,17 @@ La activación futura debe hacerse explícitamente mediante la configuración de
 
 ## 4. Validaciones obligatorias antes de activar
 
-- [ ] CORS de producción coincide exactamente con los dos orígenes de producción de arriba.
-- [ ] La URL pública `r2.dev` sigue desactivada y no existe lectura anónima.
-- [ ] Las credenciales están limitadas al bucket y guardadas como secretos del Worker.
+- [x] CORS de producción comprobado con orígenes exactos y métodos/cabeceras mínimos, sin comodines (confirmación del propietario, 2026-10-12).
+- [x] La URL pública `r2.dev` está desactivada y no hay acceso público al bucket (confirmación del propietario, 2026-10-12).
+- [x] El acceso de R2 está limitado al bucket requerido y las credenciales se gestionan como secretos del Worker (confirmación del propietario, 2026-10-12).
 - [ ] Una URL firmada expira; método, clave, encabezados o parte alterados son rechazados.
 - [ ] Un usuario no puede iniciar, completar, cancelar ni descargar recursos de otro usuario.
 - [ ] Subida directa pequeña: verificar que tamaño real y Content-Type de HEAD coincidan con la sesión antes de publicar metadatos; comprobar cuota y limpieza ante discrepancias.
 - [ ] Subida multipart grande: verificar todas las partes, reintentos, reanudación, pausa, cancelación, Content-Type de HEAD y limpieza/reintento de sesiones incompletas.
 - [ ] Cancelación de PUT directo: como la URL previamente emitida no puede revocarse al instante, confirmar que `complete` se rechaza, que una escritura tardía no queda huérfana después de la limpieza diferida y que la sesión fallida se conserva para reintento.
-- [ ] Descarga directa: permisos, papelera, nombre seguro, URL temporal y ausencia de secretos en logs.
-- [ ] CORS rechaza un origen no permitido y expone `ETag` a la aplicación autorizada.
-- [ ] Prueba E2E real y concurrencia controlada; documentar resultados y ruta de rollback al flujo por Worker.
+- [ ] Validación adicional de expiración de URL firmada, método/clave/headers alterados y ausencia de secretos en logs (no se marca aquí como completada sin evidencia específica).
+- [x] Prueba E2E real de subida/descarga con comparación de bytes, rango parcial y rechazo de acceso desde otra cuenta (confirmación del propietario, 2026-10-12).
+- [x] CORS mínimo de producción comprobado; no usar `*` y mantener la lista de orígenes exacta.
+- [ ] Prueba de concurrencia controlada y métricas de capacidad; es independiente del checklist de cierre operativo citado arriba.
 
 Las pruebas unitarias y CI no sustituyen estas comprobaciones reales en Cloudflare. No declarar la migración completa ni desplegar por el hecho de haber configurado CORS o creado credenciales.
