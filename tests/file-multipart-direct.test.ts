@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createFilesCatalogFixture } from "./helpers/files-catalog.js";
 import { createMultipartPartAuthorizations } from "../src/modules/files/application/file-multipart-direct.js";
+import { MULTIPART_PART_SIZE_BYTES } from "../src/modules/files/application/file-multipart-constants.js";
 import type { FilesMultipartSession } from "../src/modules/files/application/ports/files-multipart-repository.js";
 
 const session: FilesMultipartSession = {
@@ -65,8 +66,8 @@ describe("autorizaciones multipart directas a R2", () => {
       ) {
         const partSize =
           partNumber === started.value.totalParts
-            ? sizeBytes - 16 * 1024 * 1024 * (started.value.totalParts - 1)
-            : 16 * 1024 * 1024;
+            ? sizeBytes - MULTIPART_PART_SIZE_BYTES * (started.value.totalParts - 1)
+            : MULTIPART_PART_SIZE_BYTES;
         const recorded = await fixture.api.recordMultipartPart(
           { userId: "owner-a" },
           started.value.uploadId,
@@ -220,7 +221,7 @@ describe("autorizaciones multipart directas a R2", () => {
         { userId: "owner-a" },
         session.id,
         1,
-        16 * 1024 * 1024,
+        MULTIPART_PART_SIZE_BYTES,
         "not-an-etag",
       ),
     ).resolves.toEqual({ ok: false, reason: "invalid-input" });

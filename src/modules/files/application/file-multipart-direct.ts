@@ -6,8 +6,8 @@ import {
   hasValidActor,
   isValidCatalogId,
 } from "../domain/catalog-validation.js";
+import { MULTIPART_PART_SIZE_BYTES } from "./file-multipart-constants.js";
 
-const PART_BYTES = 16 * 1024 * 1024;
 const MAX_PARTS = 10_000;
 
 interface Dependencies {
@@ -29,8 +29,8 @@ function expectedPartSize(
   totalParts: number,
 ): number {
   return partNumber === totalParts
-    ? totalBytes - PART_BYTES * (totalParts - 1)
-    : PART_BYTES;
+    ? totalBytes - MULTIPART_PART_SIZE_BYTES * (totalParts - 1)
+    : MULTIPART_PART_SIZE_BYTES;
 }
 
 export function createMultipartPartAuthorizations(deps: Dependencies) {
@@ -63,7 +63,7 @@ export function createMultipartPartAuthorizations(deps: Dependencies) {
     ) {
       return failure("not-found");
     }
-    const totalParts = Math.ceil(session.expectedSizeBytes / PART_BYTES);
+    const totalParts = Math.ceil(session.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES);
     if (partNumber > totalParts) return failure("invalid-input");
     const expectedSizeBytes = expectedPartSize(
       session.expectedSizeBytes,
@@ -122,7 +122,7 @@ export function createMultipartPartAuthorizations(deps: Dependencies) {
     ) {
       return failure("not-found");
     }
-    const totalParts = Math.ceil(session.expectedSizeBytes / PART_BYTES);
+    const totalParts = Math.ceil(session.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES);
     if (partNumber > totalParts) return failure("invalid-input");
     const expected = expectedPartSize(
       session.expectedSizeBytes,

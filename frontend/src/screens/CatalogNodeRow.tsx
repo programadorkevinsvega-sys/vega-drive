@@ -1,5 +1,6 @@
 import { MenuButton, type MenuItem } from "../ui/MenuButton";
 import { Icon } from "../ui/Icon";
+import { formatFileSize } from "../lib/format-file-size";
 import { downloadFileUrl } from "../services/files-service";
 import type { FilesCatalogNode } from "../services/files-contract";
 
@@ -15,12 +16,7 @@ interface CatalogNodeRowProps {
 }
 
 function formattedSize(size: number): string {
-  if (size < 1024) return size + " B";
-  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + " KB";
-  if (size < 1024 * 1024 * 1024) {
-    return (size / (1024 * 1024)).toFixed(1) + " MB";
-  }
-  return (size / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+  return formatFileSize(size);
 }
 
 function formattedDate(value: string | null): string {

@@ -7,7 +7,7 @@
 - IFileStoragePort mantiene los casos de uso desacoplados de R2.
 - R2FileStorage, dentro de src/modules/files/infrastructure/storage/r2, es el único adaptador que accede a FILES_BUCKET.
 - POST /api/files acepta el contenido binario en el cuerpo de la petición; el nombre, carpeta, tamaño declarado y tipo de contenido viajan en cabeceras same-origin. No se acepta una clave de almacenamiento desde el navegador.
-- Las subidas directas se transmiten como stream para archivos de hasta 95 MiB. Los archivos mayores usan multipart con fragmentos de 16 MiB, sesión persistida en D1 y verificación mediante HEAD antes de registrar metadatos. El backend genera claves con u/{userId}/{uuid}.
+- Las subidas directas se transmiten como stream para archivos de hasta 95 MiB. Los archivos mayores usan multipart con fragmentos de 50 MiB, sesión persistida en D1 y verificación mediante HEAD antes de registrar metadatos. El backend genera claves con u/{userId}/{uuid}.
 - Una reserva D1 impide superar la cuota inicial de 10 GiB por propietario. files_transfer_events aplica límites de 20 subidas y 120 descargas por hora por propietario.
 - GET /api/files/:id/download comprueba sesión, propiedad y carpeta activa antes de obtener el contenido. Soporta un único rango HTTP de bytes, responde con attachment, nosniff y no-store; no devuelve URLs de R2.
 - Un cron horario reconcilia reservas de subida vencidas/fallidas, poda eventos de limitación antiguos y purga elementos de la papelera con más de 30 días.
@@ -23,7 +23,7 @@
 | ------ | -------------------------------------------- | --------------------------------------------------------------------- |
 | POST   | `/api/files`                                 | Subida binaria autenticada para archivos de hasta 95 MiB.             |
 | POST   | `/api/files/multipart`                       | Inicia una sesión autenticada para un archivo grande.                 |
-| PUT    | `/api/files/multipart/:id/parts/:partNumber` | Sube un fragmento de hasta 16 MiB a una sesión propia.                |
+| PUT    | `/api/files/multipart/:id/parts/:partNumber` | Sube un fragmento de hasta 50 MiB a una sesión propia.                |
 | POST   | `/api/files/multipart/:id/complete`          | Completa y verifica el objeto R2 y registra los metadatos.            |
 | POST   | `/api/files/multipart/:id/abort`             | Cancela una sesión multipart propia.                                  |
 | GET    | `/api/files/:id/download`                    | Descarga autenticada con streaming; acepta un único encabezado Range. |
@@ -36,7 +36,7 @@ La papelera conserva archivos y carpetas durante 30 días desde `deleted_at`. El
 
 ## Límites iniciales
 
-- Tamaño máximo de subida directa: 95 MiB para permanecer por debajo del límite de cuerpo del proxy. Los archivos mayores se dividen en partes de 16 MiB; el máximo de objeto está limitado por R2 y por el límite de partes.
+- Tamaño máximo de subida directa: 95 MiB para permanecer por debajo del límite de cuerpo del proxy. Los archivos mayores se dividen en partes de 50 MiB; el máximo de objeto está limitado por R2 y por el límite de partes.
 - Capacidad inicial reservada por propietario: 10 GiB. Esta es una cuota de producto inicial, no un límite de R2; el módulo de cuotas de la Fase 6 deberá reemplazarla por una política configurable.
 - Frecuencia por propietario: máximo 20 intentos de subida y 120 descargas en una ventana móvil de una hora.
 - El MIME se valida como tipo declarativo, no se considera una prueba de la naturaleza real del archivo. Las descargas siempre son attachment con nosniff.
@@ -46,7 +46,7 @@ Estos valores son límites iniciales del producto en files; cuotas configurables
 ## Integración de interfaz
 
 - [x] El navegador sube archivos de hasta 95 MiB a `POST /api/files` usando `X-File-Name`, `X-File-Size`, el MIME declarativo y, cuando corresponde, `X-File-Folder-Id`.
-- [x] Los archivos mayores usan sesiones multipart autenticadas y fragmentos de 16 MiB a través del mismo origen; el Worker conserva el ID R2 y los ETags en estado privado del módulo files.
+- [x] Los archivos mayores usan sesiones multipart autenticadas y fragmentos de 50 MiB a través del mismo origen; el Worker conserva el ID R2 y los ETags en estado privado del módulo files.
 - [x] La interfaz envía archivos de más de 95 MiB mediante multipart; el backend valida tamaño real, sesión y propiedad de cada fragmento.\n- [x] La cola permite pausar/reanudar transferencias, cancelar archivos y lotes de carpeta, retirar archivos pendientes y distinguir estados pausado/cancelado/error/completado.\n- [x] Los fragmentos multipart reintentan errores de red y HTTP 5xx hasta tres veces antes de marcar error; el backend registra fallos de escritura de fragmentos para facilitar diagnóstico.
 - [x] Las filas de archivos ofrecen descarga a través de `GET /api/files/:id/download`, que conserva la autorización y el streaming privado del Worker.
 - [x] Las transferencias usan mismo origen, cookies same-origin y `cache: no-store`; no se configura acceso a R2 desde el cliente.

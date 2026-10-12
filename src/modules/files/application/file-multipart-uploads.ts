@@ -38,8 +38,10 @@ import {
   MAX_USER_STORAGE_BYTES,
   UPLOADS_PER_HOUR,
 } from "./transfer-contracts.js";
+import { MULTIPART_PART_SIZE_BYTES } from "./file-multipart-constants.js";
 
-export const MULTIPART_PART_SIZE_BYTES = 16 * 1024 * 1024;
+export { MULTIPART_PART_SIZE_BYTES };
+
 const MAX_MULTIPART_FILE_SIZE_BYTES = 5 * 1024 * 1024 * 1024 * 1024;
 const MAX_MULTIPART_PARTS = 10_000;
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;

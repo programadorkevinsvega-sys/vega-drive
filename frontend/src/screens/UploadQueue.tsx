@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../ui/Button";
+import { formatFileSize } from "../lib/format-file-size";
 
 export type UploadState =
   | "pending"
@@ -17,12 +18,6 @@ export interface UploadItem {
   error: string;
   groupId: string;
   folderBatch: boolean;
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
 function stateLabel(item: UploadItem): string {

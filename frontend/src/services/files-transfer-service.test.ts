@@ -183,8 +183,8 @@ describe("subida binaria con progreso", () => {
     start.status = 201;
     start.responseText = JSON.stringify({
       uploadId: "session-a",
-      partSizeBytes: 16 * 1024 * 1024,
-      totalParts: 6,
+      partSizeBytes: 50 * 1024 * 1024,
+      totalParts: 2,
       directTransfersEnabled: false,
     });
     start.dispatchEvent(new Event("load"));

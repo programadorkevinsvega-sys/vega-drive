@@ -8,7 +8,7 @@ import {
   UploadController,
 } from "./files-transfer-controller";
 
-const MULTIPART_PART_BYTES = 16 * 1024 * 1024;
+const MULTIPART_PART_BYTES = 50 * 1024 * 1024;
 type UploadProgressListener = (percentage: number) => void;
 
 interface MultipartStart {
