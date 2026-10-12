@@ -115,13 +115,7 @@ export function UploadQueue({
             <progress
               className="vd-transfer__progress"
               max={100}
-              value={
-                item.state === "pending"
-                  ? 0
-                  : item.state === "cancelled"
-                    ? item.progress
-                    : item.progress
-              }
+              value={item.state === "pending" ? 0 : item.progress}
               aria-label={"Progreso de " + item.file.name}
               aria-valuetext={stateLabel(item)}
             />
@@ -130,24 +124,40 @@ export function UploadQueue({
             ) : null}
             <div className="vd-transfer__item-actions">
               {item.state === "uploading" ? (
-                <Button size="sm" variant="secondary" onClick={() => onPause(item.id)}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => onPause(item.id)}
+                >
                   Pausar
                 </Button>
               ) : null}
               {item.state === "paused" ? (
-                <Button size="sm" variant="secondary" onClick={() => onResume(item.id)}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => onResume(item.id)}
+                >
                   Reanudar
                 </Button>
               ) : null}
               {item.state === "pending" ||
               item.state === "uploading" ||
               item.state === "paused" ? (
-                <Button size="sm" variant="danger" onClick={() => onCancel(item.id)}>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => onCancel(item.id)}
+                >
                   Cancelar
                 </Button>
               ) : null}
               {item.state === "pending" ? (
-                <Button size="sm" variant="ghost" onClick={() => onRemove(item.id)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onRemove(item.id)}
+                >
                   Quitar de la cola
                 </Button>
               ) : null}
