@@ -44,7 +44,9 @@
 - [ ] Auditoría visual responsive y de accesibilidad por teclado/lector de pantalla; corregir contraste, foco, nombres accesibles y estados de carga/error/éxito donde haga falta.
 - [ ] Añadir pruebas automatizadas de componentes/servicios para carga, vacío, error, reintento, paginación, transferencia fallida, cancelación y finalización.
 - [ ] Probar assets y cabeceras en build/preview y en la URL desplegada: CSP compatible con React y Turnstile, nosniff, Referrer-Policy, frame protection, HSTS y `Cache-Control: no-store` en API; registrar respuestas observadas.
-- [x] Definir e implementar el contrato inicial de Recientes, su persistencia por propietario y su pantalla conectada.\n- [ ] Diseñar e implementar contratos de Favoritos y Búsqueda antes de sustituir esos placeholders.\n- [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
+- [x] Definir e implementar el contrato inicial de Recientes, su persistencia por propietario y su pantalla conectada.
+- [ ] Diseñar e implementar contratos de Favoritos y Búsqueda antes de sustituir esos placeholders.
+- [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
 - [ ] Ejecutar la integración E2E de transferencia desde la UI hasta el resultado del catálogo, incluyendo archivos grandes, descarga, error, cancelación y acceso cruzado.
 - [ ] Añadir pruebas de composición/arquitectura para Identity, Files y los gateways futuros; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.
 - [ ] Ejecutar `pnpm run cloudflare:build` y el conjunto de pruebas del commit candidato. No declarar éxito sin resultados observados.
