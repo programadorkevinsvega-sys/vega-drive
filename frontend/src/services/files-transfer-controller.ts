@@ -13,10 +13,14 @@ export class UploadPausedError extends Error {
 }
 
 /** Control compartido por la cola y el transporte HTTP de cada archivo. */
+interface AbortableRequest {
+  abort(): void;
+}
+
 export class UploadController {
   paused = false;
   cancelled = false;
-  private request: XMLHttpRequest | null = null;
+  private request: AbortableRequest | null = null;
   private waiters: Array<() => void> = [];
 
   pause() {
@@ -46,11 +50,11 @@ export class UploadController {
     if (this.cancelled) throw new UploadCancelledError();
   }
 
-  attach(request: XMLHttpRequest) {
+  attach(request: AbortableRequest) {
     this.request = request;
   }
 
-  detach(request: XMLHttpRequest) {
+  detach(request: AbortableRequest) {
     if (this.request === request) this.request = null;
   }
 
