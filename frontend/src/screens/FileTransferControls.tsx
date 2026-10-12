@@ -6,8 +6,8 @@ import {
   UploadCancelledError,
   UploadController,
 } from "../services/files-transfer-service";
-import { Button } from "../ui/Button";
-import { UploadQueue, type UploadItem } from "./UploadQueue";
+import { type UploadItem } from "./UploadQueue";
+import { FileTransferPanel } from "./FileTransferPanel";
 
 interface FileTransferControlsProps {
   folderId: string | null;
@@ -184,73 +184,29 @@ export function FileTransferControls({
   }
 
   return (
-    <div className="vd-transfer">
-      <input
-        ref={inputRef}
-        className="vd-transfer__input"
-        type="file"
-        multiple
-        disabled={uploading}
-        onChange={(event) => void handleSelection(event)}
-        aria-label="Seleccionar uno o varios archivos para subir"
-      />
-      <input
-        ref={(element) => {
-          folderInputRef.current = element;
-          element?.setAttribute("webkitdirectory", "");
-          element?.setAttribute("directory", "");
-        }}
-        className="vd-transfer__input"
-        type="file"
-        multiple
-        disabled={uploading}
-        onChange={(event) => void handleSelection(event, true)}
-        aria-label="Seleccionar una carpeta completa para subir"
-      />
-      <div className="vd-transfer__actions">
-        <Button
-          icon="upload"
-          variant="secondary"
-          disabled={uploading}
-          loading={uploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? "Subiendo…" : "Subir archivos"}
-        </Button>
-        <Button
-          icon="folder"
-          variant="secondary"
-          disabled={uploading}
-          onClick={() => folderInputRef.current?.click()}
-        >
-          Subir carpeta
-        </Button>
-      </div>
-      {summary ? (
-        <span className="vd-transfer__status" role="status" aria-live="polite">
-          {summary}
-        </span>
-      ) : null}
-      <UploadQueue
-        items={items}
-        uploading={uploading}
-        onPause={pauseItem}
-        onResume={resumeItem}
-        onCancel={cancelItem}
-        onRemove={removePendingItem}
-        onCancelGroup={cancelGroup}
-        onClear={() => {
-          setItems((current) =>
-            current.filter(
-              (item) =>
-                item.state !== "completed" &&
-                item.state !== "error" &&
-                item.state !== "cancelled",
-            ),
-          );
-          setSummary("");
-        }}
-      />
-    </div>
+    <FileTransferPanel
+      uploading={uploading}
+      summary={summary}
+      items={items}
+      onSelection={(event, includeFolderStructure) => {
+        void handleSelection(event, includeFolderStructure);
+      }}
+      onPause={pauseItem}
+      onResume={resumeItem}
+      onCancel={cancelItem}
+      onRemove={removePendingItem}
+      onCancelGroup={cancelGroup}
+      onClear={() => {
+        setItems((current) =>
+          current.filter(
+            (item) =>
+              item.state !== "completed" &&
+              item.state !== "error" &&
+              item.state !== "cancelled",
+          ),
+        );
+        setSummary("");
+      }}
+    />
   );
 }
