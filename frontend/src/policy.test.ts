@@ -59,11 +59,7 @@ describe("politica del frontend", () => {
       join(SRC, "services/files-transfer-service.ts"),
       "utf8",
     );
-    const transport = readFileSync(
-      join(SRC, "services/files-transfer-http.ts"),
-      "utf8",
-    );
-    expect(transport.match(new RegExp(XHR, "g"))).toHaveLength(1);
+    expect(transfer.match(new RegExp(XHR, "g"))).toHaveLength(1);
     expect(transfer).toContain('request.open("POST", "/api/files", true)');
     expect(transfer).not.toMatch(/https?:\/\//);
   });
