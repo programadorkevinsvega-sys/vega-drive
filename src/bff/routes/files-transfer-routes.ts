@@ -134,6 +134,26 @@ filesTransferRoutes.post("/", async (c) => {
   return c.json(result.value, 201);
 });
 
+// Direct single-object transfer. Disabled until R2 S3 credentials and CORS are verified.
+filesTransferRoutes.post("/direct", async (c) => {
+  if (c.env.DIRECT_R2_TRANSFERS_ENABLED !== "true") return c.json({ error: "Direct transfers unavailable" }, 404);
+  if (new URL(c.req.raw.url).searchParams.size > 0) return c.json(REQUEST_ERROR, 400);
+  if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
+  const input = await c.req.json().catch(() => null);
+  const result = await createCompositionRoot(c.env).files.beginDirectUpload(actorFor(c), input);
+  if (!result.ok) return transferError(result.reason);
+  return c.json(result.value, 201, { "Cache-Control": "no-store" });
+});
+
+filesTransferRoutes.post("/direct/:id/complete", async (c) => {
+  if (c.env.DIRECT_R2_TRANSFERS_ENABLED !== "true") return c.json({ error: "Direct transfers unavailable" }, 404);
+  if (new URL(c.req.raw.url).searchParams.size > 0) return c.json(REQUEST_ERROR, 400);
+  if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
+  const result = await createCompositionRoot(c.env).files.completeDirectUpload(actorFor(c), c.req.param("id"));
+  if (!result.ok) return transferError(result.reason);
+  return c.json(result.value, 201, { "Cache-Control": "no-store" });
+});
+
 // prettier-ignore
 filesTransferRoutes.post("/multipart", async (c) => {
   if (new URL(c.req.raw.url).searchParams.size > 0) {
