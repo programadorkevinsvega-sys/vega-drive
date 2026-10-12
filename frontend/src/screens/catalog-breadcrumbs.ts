@@ -14,8 +14,8 @@ export function buildCatalogBreadcrumbs(
   if (view === "trash") return [{ label: "Mi unidad", href: "#/drive" }];
   if (folderId === null) return [];
 
-  return (breadcrumbs ?? []).slice(0, -1).map((crumb) => ({
-    label: crumb.name,
+  return (breadcrumbs ?? []).map((crumb) => ({
+    label: crumb.id === null ? "Mi unidad" : crumb.name,
     href: crumb.id === null ? "#/drive" : "#/drive/folder/" + crumb.id,
   }));
 }
