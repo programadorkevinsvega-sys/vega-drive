@@ -7,7 +7,10 @@ import {
   UploadController,
 } from "./files-transfer-controller";
 
-export function parseFileResponse(value: unknown, status: number): FilesFileView {
+export function parseFileResponse(
+  value: unknown,
+  status: number,
+): FilesFileView {
   if (
     !value ||
     typeof value !== "object" ||
