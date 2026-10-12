@@ -63,7 +63,9 @@ export function createMultipartPartAuthorizations(deps: Dependencies) {
     ) {
       return failure("not-found");
     }
-    const totalParts = Math.ceil(session.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES);
+    const totalParts = Math.ceil(
+      session.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES,
+    );
     if (partNumber > totalParts) return failure("invalid-input");
     const expectedSizeBytes = expectedPartSize(
       session.expectedSizeBytes,
@@ -122,7 +124,9 @@ export function createMultipartPartAuthorizations(deps: Dependencies) {
     ) {
       return failure("not-found");
     }
-    const totalParts = Math.ceil(session.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES);
+    const totalParts = Math.ceil(
+      session.expectedSizeBytes / MULTIPART_PART_SIZE_BYTES,
+    );
     if (partNumber > totalParts) return failure("invalid-input");
     const expected = expectedPartSize(
       session.expectedSizeBytes,

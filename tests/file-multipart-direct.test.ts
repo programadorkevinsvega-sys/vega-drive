@@ -66,7 +66,8 @@ describe("autorizaciones multipart directas a R2", () => {
       ) {
         const partSize =
           partNumber === started.value.totalParts
-            ? sizeBytes - MULTIPART_PART_SIZE_BYTES * (started.value.totalParts - 1)
+            ? sizeBytes -
+              MULTIPART_PART_SIZE_BYTES * (started.value.totalParts - 1)
             : MULTIPART_PART_SIZE_BYTES;
         const recorded = await fixture.api.recordMultipartPart(
           { userId: "owner-a" },
