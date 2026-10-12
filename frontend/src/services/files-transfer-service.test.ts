@@ -169,7 +169,9 @@ describe("subida binaria con progreso", () => {
     expect(FakeXMLHttpRequest.instances[0]?.method).toBe("POST");
   });
 
-  it("aborta una sesión creada si la respuesta multipart es incompatible", async () => {
+  it(
+    "aborta una sesión creada si la respuesta multipart es incompatible",
+    async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const task = uploadFile(
       file({
@@ -206,7 +208,8 @@ describe("subida binaria con progreso", () => {
       status: 500,
       message: "El servidor devolvió una sesión de subida inválida.",
     });
-  });
+    },
+  );
 
   it("omite autorizaciones directas cuando están deshabilitadas", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
