@@ -45,6 +45,20 @@ function file(overrides: Partial<File> = {}): File {
   } as File;
 }
 
+async function useLegacyUpload(): Promise<FakeXMLHttpRequest> {
+  const direct = FakeXMLHttpRequest.instances[0];
+  if (!direct) throw new Error("No se creó la solicitud directa.");
+  direct.status = 404;
+  direct.responseText = JSON.stringify({ error: "Direct transfers unavailable" });
+  direct.dispatchEvent(new Event("load"));
+  await vi.waitFor(() => {
+    expect(FakeXMLHttpRequest.instances[1]).toBeDefined();
+  });
+  const legacy = FakeXMLHttpRequest.instances[1];
+  if (!legacy) throw new Error("No se creó la solicitud de subida.");
+  return legacy;
+}
+
 function emitProgress(
   request: FakeXMLHttpRequest,
   loaded: number,
@@ -93,9 +107,7 @@ describe("subida binaria con progreso", () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const progress = vi.fn();
     const task = uploadFile(file(), "folder-1", progress);
-    const request = FakeXMLHttpRequest.instances[0];
-    expect(request).toBeDefined();
-    if (!request) throw new Error("No se creó la solicitud de subida.");
+    const request = await useLegacyUpload();
 
     expect(request.method).toBe("POST");
     expect(request.url).toBe("/api/files");
@@ -118,8 +130,7 @@ describe("subida binaria con progreso", () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const progress = vi.fn();
     const task = uploadFile(file(), null, progress);
-    const request = FakeXMLHttpRequest.instances[0];
-    if (!request) throw new Error("No se creó la solicitud de subida.");
+    const request = await useLegacyUpload();
 
     emitProgress(request, 100, 100);
     expect(progress).toHaveBeenCalledWith(99);
