@@ -1,6 +1,9 @@
 import type { ModuleStatus } from "../../worker/env.js";
 import { createCatalogListing } from "./application/catalog-listing.js";
-import { createRecentActivity, type FilesRecentListing } from "./application/recent-activity.js";
+import {
+  createRecentActivity,
+  type FilesRecentListing,
+} from "./application/recent-activity.js";
 import { createFolderCatalog } from "./application/folder-catalog.js";
 import { createFolderMutations } from "./application/folder-mutations.js";
 import { createItemCatalog } from "./application/item-catalog.js";
