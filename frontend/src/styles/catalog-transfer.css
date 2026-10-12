@@ -35,6 +35,13 @@
   text-align: start;
 }
 
+.vd-transfer__queue-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vd-space-3);
+}
+
 .vd-transfer__title {
   margin: 0;
   color: var(--vd-text);
