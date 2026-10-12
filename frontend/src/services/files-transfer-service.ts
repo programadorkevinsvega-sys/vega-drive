@@ -248,11 +248,17 @@ async function uploadMultipartFile(
           }
           const retryable =
             error instanceof FilesApiError &&
-            (error.status === 0 || error.status >= 500);
-          if (!retryable || attempts >= 3) throw error;
+            (error.status === 0 ||
+              error.status === 408 ||
+              error.status === 425 ||
+              error.status === 429 ||
+              error.status >= 500);
+          // Una parte puede fallar por una interrupción temporal del Worker,
+          // R2 o D1. Reintentamos la misma parte antes de abortar la sesión.
+          if (!retryable || attempts >= 5) throw error;
           attempts += 1;
           await new Promise<void>((resolve) =>
-            setTimeout(resolve, 400 * 2 ** (attempts - 1)),
+            setTimeout(resolve, Math.min(8000, 500 * 2 ** (attempts - 1))),
           );
           await control.waitUntilReady();
         }
