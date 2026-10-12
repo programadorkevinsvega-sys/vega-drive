@@ -34,7 +34,7 @@ describe("R2 SigV4 presigner", () => {
     expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("binds PUT content type into the signature", async () => {
+  it("binds PUT size and headers into the signature", async () => {
     const url = new URL(
       await presignR2Object(
         config,
@@ -42,6 +42,7 @@ describe("R2 SigV4 presigner", () => {
           method: "PUT",
           key: "u/user-id/file-id",
           contentType: "application/octet-stream",
+          contentLength: 1024,
           ifNoneMatch: "*",
           expiresInSeconds: 120,
         },
@@ -50,7 +51,7 @@ describe("R2 SigV4 presigner", () => {
     );
 
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe(
-      "content-type;if-none-match;host",
+      "content-length;content-type;if-none-match;host",
     );
     expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
   });
