@@ -2,7 +2,7 @@
 
 Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
 
-> **Estado real (2026-10-11):** las Fases 0, 1 y 2 están cerradas; el catálogo de metadatos y sus rutas HTTP privadas están implementados y probados. Mi unidad, carpetas y papelera ya se conectan desde el frontend al BFF autenticado, con aislamiento por propietario, paginación, breadcrumbs y acciones sobre metadatos. Vega Drive todavía no transfiere bytes a/desde R2 (Fase 4); recientes, favoritos, búsqueda y la integración completa de presentación/operación siguen pendientes. También están pendientes cuotas (Fase 6), compartición (Fase 7), certificación global (Fase 8) y rollback/operación (Fase 9).
+> **Estado real (2026-10-12):** las Fases 0, 1 y 2 están cerradas; la Fase 3 del catálogo está implementada y validada, y la Fase 4 de transferencias privadas con R2 tiene registradas como completadas sus validaciones operativas. Mi unidad, carpetas y papelera están conectadas al BFF autenticado; la pantalla de Mi unidad incluye controles frontend de transferencia. La Fase 5 sigue en curso: recientes, favoritos y búsqueda aún son placeholders; faltan auditoría completa de presentación/accesibilidad, evidencia HTTP de assets/cabeceras, pruebas E2E de integración UI-transferencias y verificación automatizada del composition root. Cuotas (Fase 6), compartición (Fase 7), certificación global (Fase 8) y rollback/operación (Fase 9) siguen pendientes. Ver [FRONTEND_BFF_PHASE_5.md](./FRONTEND_BFF_PHASE_5.md).
 
 ## Arquitectura
 
@@ -27,9 +27,9 @@ La política de rollback del Worker, compatibilidad de D1/R2, staging y evidenci
 
 Las reglas obligatorias, los headers esperados para Workers/Hono y la matriz de regresión están en [Security.md](./Security.md). El roadmap detalla el trabajo de certificación en la [Fase 8](./roadmap.md#fase-8--endurecimiento-y-pruebas-de-seguridad).
 
-**La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban autenticación, autorización, aislamiento entre cuentas ni transferencias seguras. No habilites usuarios reales para almacenar archivos hasta verificar la privacidad real de R2 y probar los flujos de transferencia en producción; la certificación global de seguridad sigue pendiente.
+**La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban por sí solas autenticación, autorización, aislamiento entre cuentas ni todos los flujos. Las validaciones operativas de R2 de la Fase 4 se registraron como completadas el 2026-10-12; esto no equivale a la certificación transversal de la Fase 8.
 
-La autenticación y la resolución de sesión de `identity` están implementadas y probadas. El catálogo de `files` se consume desde Mi unidad y Papelera mediante rutas HTTP privadas sobre `FilesGateway`; el actor se obtiene de la sesión validada. Siguen pendientes el adaptador y las transferencias reales con R2, además de recientes, favoritos y búsqueda. `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
+La autenticación y la resolución de sesión de `identity` están implementadas y probadas. El catálogo de `files` se consume desde Mi unidad y Papelera mediante rutas HTTP privadas sobre `FilesGateway`; el actor se obtiene de la sesión validada. El código de transferencia física con R2 está implementado y sus validaciones operativas están registradas en [FILES_PHASE_4.md](./FILES_PHASE_4.md). En Fase 5 siguen pendientes recientes, favoritos, búsqueda y evidencia E2E de integración de la interfaz. `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
 
 ## Flujo de archivos previsto
 
@@ -39,7 +39,7 @@ La autenticación y la resolución de sesión de `identity` están implementadas
 4. El adaptador privado transmite el objeto a R2.
 5. El módulo registra los metadatos y devuelve un resultado seguro.
 
-Las descargas se realizan por `GET /api/files/:id/download`, tras autorizar el recurso y transmitir el contenido desde el Worker. Este flujo todavía no está implementado.
+Las descargas se realizan por `GET /api/files/:id/download`, tras autorizar el recurso. Según la configuración de transferencias, el Worker transmite el contenido o responde con una redirección a una URL temporal firmada para R2. La ruta frontend de descarga y la integración de transferencia forman parte de la verificación E2E de Fase 5.
 
 ## Estructura
 
@@ -53,7 +53,7 @@ Las descargas se realizan por `GET /api/files/:id/download`, tras autorizar el r
 - `public`: assets estáticos.
 - `tests`: pruebas de salud, configuración, migraciones, repositorios y arquitectura.
 
-El módulo `identity` ya implementa registro/login, logout, resolución de sesión y cambio de contraseña mediante sus APIs reales. El módulo `files` implementa el catálogo de metadatos y su persistencia D1; las transferencias de bytes a/desde R2 todavía no están implementadas.
+El módulo `identity` ya implementa registro/login, logout, resolución de sesión y cambio de contraseña mediante sus APIs reales. El módulo `files` implementa el catálogo de metadatos y su persistencia D1, así como las operaciones de transferencia con R2. La interfaz ya expone controles de subida en Mi unidad; la cobertura visual, accesible y E2E de extremo a extremo continúa en la Fase 5.
 
 ## Servicios Cloudflare
 
@@ -107,6 +107,6 @@ GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecuci
 
 **Fase 0: CERRADA (2026-10-10), dentro de su alcance fundacional.** El contrato, el esqueleto del Worker, los bindings base, el build, las pruebas, CI y el despliegue están verificados. Los pendientes operativos que dependen de funciones aún no implementadas se asignan a las fases que las incorporan; no bloquean el cierre de Fase 0. Evidencia del 2026-10-10: Cloudflare completó `pnpm run cloudflare:build` y `pnpm run deploy`; los 4 archivos de pruebas (12 tests), el typecheck, el control arquitectónico y `pnpm audit --audit-level=high` pasaron. D1 no tenía migraciones pendientes y la verificación remota confirmó 17 tablas/índices. La versión Worker desplegada más reciente registrada a las 07:13 UTC fue `a6bb5609-9afd-4566-b298-d0b3178c5698`, y `/api/health` respondió HTTP 200. GitHub Actions para el commit `23329baa646e38ecc816620c68eef8f861ae49b5` quedó verde (29 s), con 4 archivos/12 tests aprobados y Gitleaks sin fugas detectadas. El usuario confirmó en el panel que el bucket R2 es privado.
 
-Antes de habilitar las transferencias en producción, debe verificarse en el panel que R2 no tenga dominio público, `r2.dev` ni CORS de navegador y confirmarse permisos mínimos del adaptador. Turnstile y su secreto quedaron configurados y validados durante la Fase 2. No se deben inferir esos ajustes de un binding o de un escaneo de repositorio. El fundamento de la Fase 0 está cerrado, pero la aceptación operativa de Fase 4 depende de estos controles.
+Las verificaciones operativas de privacidad, CORS, permisos mínimos y transferencias reales de R2 quedaron registradas como completadas en la Fase 4 el 2026-10-12, según confirmación del propietario. Turnstile y su secreto quedaron configurados y validados durante la Fase 2. No se deben inferir ajustes de Cloudflare únicamente de un binding o de un escaneo de repositorio; consulta [FILES_PHASE_4.md](./FILES_PHASE_4.md) para el estado de cierre registrado. La certificación global de seguridad sigue pendiente.
 
-El despliegue por sí solo no certifica que Vega Drive esté lista para almacenar archivos con datos reales. Registro/login, sesiones, cambio de contraseña y Turnstile están implementados; Mi unidad y Papelera ya consumen el catálogo HTTP autenticado. Las transferencias físicas con R2 están implementadas en código, pero falta la comprobación de privacidad de R2 y la prueba E2E de la versión desplegada. También siguen pendientes recientes/favoritos/búsqueda, la certificación global de seguridad y rollback según [Security.md](./Security.md) y [Rollback.md](./Rollback.md).
+El despliegue por sí solo no certifica que Vega Drive esté lista para todos los escenarios de producción. Registro/login, sesiones, cambio de contraseña y Turnstile están implementados; Mi unidad y Papelera consumen el catálogo HTTP autenticado; las transferencias físicas con R2 están implementadas y las validaciones operativas de Fase 4 están registradas como completadas. Siguen pendientes recientes/favoritos/búsqueda, el cierre de presentación y accesibilidad, la evidencia de assets/cabeceras/operación y la verificación E2E de la integración frontend-transferencias. La certificación global de seguridad y el rollback siguen pendientes según [Security.md](./Security.md) y [Rollback.md](./Rollback.md).
