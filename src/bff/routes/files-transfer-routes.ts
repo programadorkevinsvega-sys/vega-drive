@@ -273,7 +273,7 @@ filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
   if (
     !Number.isSafeInteger(sizeBytes) ||
     sizeBytes <= 0 ||
-    sizeBytes > 16 * 1024 * 1024
+    sizeBytes > 50 * 1024 * 1024
   ) {
     return c.json(REQUEST_ERROR, 413);
   }
