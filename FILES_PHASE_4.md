@@ -73,4 +73,30 @@ La migración src/modules/files/infrastructure/persistence/d1/migrations/0003_fi
 - [ ] Adjuntar el SHA desplegado y el resultado verificable a la evidencia de fase, sin copiar credenciales o cookies.
 
 No llamar 100 % cerrada a la Fase 4 hasta resolver la lista de evidencia operativa anterior.
-\n## Migración a transferencia directa (ADR-001)\n\n- Las subidas de hasta 95 MiB pueden crear una sesión de PUT firmado, subir el cuerpo directamente a R2 y confirmar mediante `HEAD` antes de registrar metadatos.\n- Las subidas grandes conservan la sesión/reserva en D1 y pueden pedir URLs firmadas por parte; el navegador envía cada parte a R2 y confirma el ETag al Worker. El Worker conserva la autoridad sobre la lista de partes y completa el multipart. La compatibilidad de IDs/ETags entre la API de bindings y la API S3 debe probarse en E2E antes de habilitar el flag.\n- Las descargas pueden redirigir a una URL GET firmada de 120 segundos, emitida después de validar propiedad, carpeta activa, cuota de frecuencia y tamaño real. La URL es una credencial portadora hasta expirar; no hay revocación instantánea garantizada.\n- Configuración requerida fuera del repositorio: secretos del Worker `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`; `DIRECT_R2_TRANSFERS_ENABLED` permanece `false` hasta que CORS permita solo orígenes conocidos, métodos PUT/GET y cabeceras mínimas, exponiendo `ETag` para multipart.\n- Las URLs no se guardan en almacenamiento local ni se escriben en logs. Las credenciales S3 deben tener permisos mínimos limitados al bucket `vega-drive-files`.\n- El modo antiguo permanece como rollback cuando la autorización directa no está habilitada o no está configurada. No se afirma que CI certifique límites de CPU ni capacidad para 20 usuarios; se requieren pruebas de carga controlada.\n
+ 
+## Migración a transferencia directa (ADR-001)
+
+- Las subidas de hasta 95 MiB pueden crear una sesión de PUT firmado, subir el
+  cuerpo directamente a R2 y confirmar mediante `HEAD` antes de registrar
+  metadatos.
+- Las subidas grandes conservan la sesión/reserva en D1 y pueden pedir URLs
+  firmadas por parte; el navegador envía cada parte a R2 y confirma el ETag al
+  Worker. El Worker conserva la autoridad sobre la lista de partes y completa
+  el multipart. La compatibilidad de IDs/ETags entre la API de bindings y la
+  API S3 debe probarse en E2E antes de habilitar el flag.
+- Las descargas pueden redirigir a una URL GET firmada de 120 segundos, emitida
+  después de validar propiedad, carpeta activa, cuota de frecuencia y tamaño
+  real. La URL es una credencial portadora hasta expirar; no hay revocación
+  instantánea garantizada.
+- Configuración requerida fuera del repositorio: secretos del Worker
+  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`;
+  `DIRECT_R2_TRANSFERS_ENABLED` permanece `false` hasta que CORS permita solo
+  orígenes conocidos, métodos PUT/GET y cabeceras mínimas, exponiendo `ETag`
+  para multipart.
+- Las URLs no se guardan en almacenamiento local ni se escriben en logs. Las
+  credenciales S3 deben tener permisos mínimos limitados al bucket
+  `vega-drive-files`.
+- El modo antiguo permanece como rollback cuando la autorización directa no
+  está habilitada o no está configurada. No se afirma que CI certifique límites
+  de CPU ni capacidad para 20 usuarios; se requieren pruebas de carga
+  controlada.
