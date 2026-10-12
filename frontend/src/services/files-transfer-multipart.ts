@@ -82,7 +82,10 @@ export async function uploadMultipartFile(
             chunk,
             (loaded) =>
               onProgress?.(
-                Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
+                Math.min(
+                  99,
+                  Math.floor(((start + loaded) / file.size) * 100),
+                ),
               ),
             control,
           );
