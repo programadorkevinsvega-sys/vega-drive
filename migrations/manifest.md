@@ -21,7 +21,11 @@ Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
    - Migración: `files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql`.
    - Tabla e índices: `files_transfer_events`, `files_transfer_owner_kind_time_idx` y `files_transfer_time_idx`; registra límites temporales de transferencias dentro del módulo propietario.
 
-4. **Propietario: `identity`**
+4. **Propietario: `files`**
+   - Migración: `files/infrastructure/persistence/d1/migrations/0004_files_multipart_uploads.sql`.
+   - Tablas e índices: `files_multipart_uploads` y `files_multipart_parts`; conservan la propiedad del usuario, el estado R2 y los ETags/tamaños de las partes para completar o limpiar subidas grandes.
+
+5. **Propietario: `identity`**
    - Migración: `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`.
    - Tablas: `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
 
