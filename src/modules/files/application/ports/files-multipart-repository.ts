@@ -26,6 +26,13 @@ export interface FilesMultipartUploadRepository {
     id: string,
     ownerId: string,
   ): Promise<FilesMultipartSession | null>;
+  /** Finds same-name multipart sessions left before the first part was stored. */
+  findAbandonedUnstartedForOwnerAndName?(
+    ownerId: string,
+    folderId: string | null,
+    name: string,
+    createdBefore: string,
+  ): Promise<FilesMultipartSession | null>;
   savePart(part: FilesMultipartPart): Promise<void>;
   listParts(sessionId: string): Promise<FilesMultipartPart[]>;
   delete(id: string, ownerId: string): Promise<boolean>;
