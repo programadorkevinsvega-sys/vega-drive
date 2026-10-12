@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const createFolder = vi.fn();
+const { createFolder } = vi.hoisted(() => ({ createFolder: vi.fn() }));
 vi.mock("./files-service", () => ({ createFolder }));
 
 import { createFolderResolver, getRelativeDirectories } from "./files-folder-upload";
