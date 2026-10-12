@@ -47,10 +47,24 @@ await runGuard("Frontera del frontend", async (failures, notes) => {
         );
       }
     }
-    if (/\bXMLHttpRequest\b|\bWebSocket\s*\(/.test(source))
-      failures.push(
-        rel +
-          ": transporte alternativo detectado; revisar que solo use la API /api.",
-      );
+    if (/\bXMLHttpRequest\b/.test(source)) {
+      // XHR is permitted only for upload progress, and only with a literal same-origin /api target.
+      const xhrTargets = [
+        ...source.matchAll(
+          /\b\w+\.open\(\s*["'](?:GET|POST|PUT|PATCH|DELETE|HEAD)["']\s*,\s*["']([^"']+)["']/g,
+        ),
+      ].map((match) => match[1] ?? "");
+      if (
+        xhrTargets.length === 0 ||
+        xhrTargets.some((target) => !target.startsWith("/api/"))
+      ) {
+        failures.push(
+          rel +
+            ": XMLHttpRequest solo se permite para progreso de subida con rutas literales del mismo origen bajo /api.",
+        );
+      }
+    }
+    if (/\bWebSocket\s*\(/.test(source))
+      failures.push(rel + ": WebSocket no está permitido en el frontend.");
   }
 });
