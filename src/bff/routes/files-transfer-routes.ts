@@ -134,6 +134,7 @@ filesTransferRoutes.post("/", async (c) => {
   return c.json(result.value, 201);
 });
 
+// prettier-ignore
 filesTransferRoutes.post("/multipart", async (c) => {
   if (new URL(c.req.raw.url).searchParams.size > 0) {
     return c.json(REQUEST_ERROR, 400);
@@ -148,6 +149,7 @@ filesTransferRoutes.post("/multipart", async (c) => {
   return c.json(result.value, 201);
 });
 
+// prettier-ignore
 filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
   const request = c.req.raw;
   if (new URL(request.url).searchParams.size > 0) {
@@ -179,6 +181,7 @@ filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
   return c.json(result.value, 200);
 });
 
+// prettier-ignore
 filesTransferRoutes.post("/multipart/:id/complete", async (c) => {
   if (new URL(c.req.raw.url).searchParams.size > 0) {
     return c.json(REQUEST_ERROR, 400);
@@ -192,6 +195,7 @@ filesTransferRoutes.post("/multipart/:id/complete", async (c) => {
   return c.json(result.value, 201);
 });
 
+// prettier-ignore
 filesTransferRoutes.post("/multipart/:id/abort", async (c) => {
   if (new URL(c.req.raw.url).searchParams.size > 0) {
     return c.json(REQUEST_ERROR, 400);
