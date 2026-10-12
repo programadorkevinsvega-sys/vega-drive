@@ -411,7 +411,7 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
           session.r2UploadId,
         );
       }
-      await storage.delete(session.storageKey).catch(() => undefined);
+      await storage.delete(session.storageKey);
       await deps.names.release(actor.userId, "file", session.itemId);
       await deps.uploads.deleteByIdForOwner(
         session.reservationId,
