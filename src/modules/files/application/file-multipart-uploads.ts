@@ -266,40 +266,25 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
         : MULTIPART_PART_SIZE_BYTES;
     if (declaredSize !== expectedPartSize) return failure("size-mismatch");
 
-    let actualBytes = 0;
-    const guarded = body.pipeThrough(
-      new TransformStream<Uint8Array, Uint8Array>({
-        transform(chunk, controller) {
-          actualBytes += chunk.byteLength;
-          if (actualBytes > expectedPartSize) {
-            controller.error(new Error("Part too large"));
-          } else {
-            controller.enqueue(chunk);
-          }
-        },
-        flush(controller) {
-          if (actualBytes !== expectedPartSize) {
-            controller.error(new Error("Part size mismatch"));
-          }
-        },
-      }),
-    );
     try {
+      // R2FileStorage pipes through FixedLengthStream, which enforces the
+      // exact byte count without running an extra JS TransformStream over
+      // every chunk. Avoiding this second per-chunk pass reduces Worker CPU.
       const part = await storage.uploadMultipartPart(
         session.storageKey,
         session.r2UploadId,
         partNumber,
-        guarded,
+        body,
         expectedPartSize,
       );
-      if (actualBytes !== expectedPartSize || !part.etag) {
+      if (!part.etag || part.sizeBytes !== expectedPartSize) {
         return failure("size-mismatch");
       }
       await deps.multipart.savePart({
         sessionId,
         partNumber,
         etag: part.etag,
-        sizeBytes: actualBytes,
+        sizeBytes: expectedPartSize,
       });
       return success({ partNumber });
     } catch (error) {
