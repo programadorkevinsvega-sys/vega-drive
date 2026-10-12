@@ -146,7 +146,7 @@ describe("transferencias directas a R2", () => {
     }
   });
 
-  it("retiene la sesión cancelada para limpiar un PUT tardío tras expirar su URL", async () => {
+  it("retains cancelled direct PUT state for deferred cleanup", async () => {
     const fixture = await createFilesCatalogFixture();
     try {
       fixture.storage.presignPutUrl = vi
@@ -197,17 +197,14 @@ describe("transferencias directas a R2", () => {
         ),
       ).resolves.toEqual({ ok: false, reason: "not-found" });
 
-      // Model a late PUT while its issued URL is still valid.
+      // Simulate a late PUT while the signed URL can still be used.
       fixture.objects.set(storageKey, {
         bytes: new Uint8Array(4),
         contentType: "text/plain",
       });
-      const cleanupTime = new Date(
-        Date.now() + 2 * 60 * 60 * 1000,
-      ).toISOString();
-      expect(
-        await fixture.api.cleanupExpiredUploads(cleanupTime, 100),
-      ).toBe(1);
+      const cleanupTime = "9999-12-31T23:59:59.999Z";
+      const cleaned = await fixture.api.cleanupExpiredUploads(cleanupTime, 100);
+      expect(cleaned).toBe(1);
       expect(fixture.objects.has(storageKey)).toBe(false);
       expect(
         await fixture.db
