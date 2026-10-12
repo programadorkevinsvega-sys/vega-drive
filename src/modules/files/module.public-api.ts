@@ -137,6 +137,7 @@ export function createFilesModule(
           uploads: deps.uploads,
           transferEvents: deps.transferEvents,
           storage: deps.storage,
+          ...(deps.multipartUploads ? { multipartUploads: deps.multipartUploads } : {}),
           ...(deps.now ? { now: deps.now } : {}),
           ...(deps.createId ? { createId: deps.createId } : {}),
         })
