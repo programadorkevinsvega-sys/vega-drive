@@ -53,10 +53,7 @@ describe("politica del frontend", () => {
       .filter(NOT_TESTS)
       .filter((file) => new RegExp(XHR).test(file.text))
       .map((file) => file.path);
-    expect(offenders).toEqual([
-      "services/files-transfer-controller.ts",
-      "services/files-transfer-http.ts",
-    ]);
+    expect(offenders).toEqual(["services/files-transfer-service.ts"]);
 
     const transfer = readFileSync(
       join(SRC, "services/files-transfer-service.ts"),
