@@ -282,9 +282,13 @@ Estas validaciones se registran como realizadas por confirmación explícita del
 - [x] Implementar rutas Hono delgadas para el catálogo de metadatos: validan transporte y llaman `FilesGateway` sin importar capas internas.
 - [x] Traducir resultados del catálogo a 400/404/409/503, rechazar sesiones ausentes con 401 y evitar exponer detalles internos.
 - [x] Conectar Mi unidad, carpetas y papelera del frontend al BFF: listado, breadcrumbs, paginación, creación/renombrado/movimiento, papelera y restauración.
-- [ ] Conectar recientes, favoritos y búsqueda cuando existan los contratos de producto respectivos; implementar transferencias físicas en la Fase 4.
-- [ ] Completar las evidencias de presentación, assets, cabeceras y operación exigidas por la Fase 5.
-- [ ] Mantener los gateways del composition root como punto de entrada modular para las funciones que se implementen después.
+- [ ] Definir los contratos de producto y conectar recientes, favoritos y búsqueda al BFF; sus rutas de frontend todavía muestran placeholders.
+- [x] Integrar en la pantalla de Mi unidad los controles frontend de transferencia física y conectarlos a las rutas BFF de la Fase 4.
+- [ ] Verificar de extremo a extremo las transferencias desde la UI, incluidos progreso, errores, pausa/reanudación, cancelación, archivos grandes y descarga.
+- [ ] Completar la auditoría de presentación/accesibilidad y las evidencias de assets, cabeceras y operación en build/preview y producción.
+- [x] Mantener gateways tipados de Identity y Files, más gateways explícitos para módulos futuros en el composition root.
+- [ ] Añadir pruebas de composición y comprobar que los controllers de las funciones nuevas solo consumen APIs públicas/gateways; Quota y Sharing siguen siendo placeholders no disponibles.
+- **Seguimiento:** [FRONTEND_BFF_PHASE_5.md](./FRONTEND_BFF_PHASE_5.md) registra la auditoría inicial, las evidencias de código y los criterios de cierre.
 - **Aceptación:** controllers no importan domain, application, infrastructure, D1 ni R2; este hito no implica el cierre de la Fase 5.
 - 🔒 SEC-MOD-01, SEC-MOD-04, SEC-LOG-03.
 
