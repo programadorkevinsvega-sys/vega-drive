@@ -135,6 +135,7 @@ filesTransferRoutes.post("/", async (c) => {
 });
 
 filesTransferRoutes.post("/multipart", async (c) => {
+  if (new URL(c.req.raw.url).searchParams.size > 0) return c.json(REQUEST_ERROR, 400);
   if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
   const input = await c.req.json().catch(() => null);
   const result = await createCompositionRoot(c.env).files.beginMultipartUpload(actorFor(c), input);
@@ -160,6 +161,7 @@ filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
 });
 
 filesTransferRoutes.post("/multipart/:id/complete", async (c) => {
+  if (new URL(c.req.raw.url).searchParams.size > 0) return c.json(REQUEST_ERROR, 400);
   if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
   const result = await createCompositionRoot(c.env).files.completeMultipartUpload(actorFor(c), c.req.param("id"));
   if (!result.ok) return transferError(result.reason);
@@ -167,6 +169,7 @@ filesTransferRoutes.post("/multipart/:id/complete", async (c) => {
 });
 
 filesTransferRoutes.post("/multipart/:id/abort", async (c) => {
+  if (new URL(c.req.raw.url).searchParams.size > 0) return c.json(REQUEST_ERROR, 400);
   if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
   const result = await createCompositionRoot(c.env).files.abortMultipartUpload(actorFor(c), c.req.param("id"));
   if (!result.ok) return transferError(result.reason);
