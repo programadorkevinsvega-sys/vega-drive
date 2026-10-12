@@ -41,7 +41,11 @@ function file(overrides: Partial<File> = {}): File {
   } as File;
 }
 
-function emitProgress(request: FakeXMLHttpRequest, loaded: number, total: number) {
+function emitProgress(
+  request: FakeXMLHttpRequest,
+  loaded: number,
+  total: number,
+) {
   const event = new Event("progress");
   Object.defineProperties(event, {
     lengthComputable: { value: true },

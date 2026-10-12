@@ -63,9 +63,7 @@ export function FileTransferControls({
       state: file.size > MAX_FILE_SIZE_BYTES ? "error" : "pending",
       progress: 0,
       error:
-        file.size > MAX_FILE_SIZE_BYTES
-          ? "Supera el límite de 95 MiB."
-          : "",
+        file.size > MAX_FILE_SIZE_BYTES ? "Supera el límite de 95 MiB." : "",
     }));
     setItems(uploads);
     setSummary("Preparando " + files.length + " archivo(s)…");
@@ -79,7 +77,12 @@ export function FileTransferControls({
         if (!item || item.state === "error") continue;
         updateItem(item.id, { state: "uploading", progress: 0 });
         setSummary(
-          "Subiendo archivo " + (index + 1) + " de " + files.length + ": " + item.file.name,
+          "Subiendo archivo " +
+            (index + 1) +
+            " de " +
+            files.length +
+            ": " +
+            item.file.name,
         );
         try {
           await uploadFile(item.file, folderId, (progress) => {
@@ -108,7 +111,11 @@ export function FileTransferControls({
     if (failed > 0) {
       setSummary(
         completed > 0
-          ? "Proceso terminado: " + completed + " completado(s), " + failed + " con error."
+          ? "Proceso terminado: " +
+              completed +
+              " completado(s), " +
+              failed +
+              " con error."
           : "No se pudo subir ningún archivo. Revisa los detalles e inténtalo de nuevo.",
       );
       return;
@@ -148,7 +155,10 @@ export function FileTransferControls({
       ) : null}
 
       {items.length > 0 ? (
-        <section className="vd-transfer__queue" aria-label="Progreso de las subidas">
+        <section
+          className="vd-transfer__queue"
+          aria-label="Progreso de las subidas"
+        >
           <h2 className="vd-transfer__title">Subidas</h2>
           <ul className="vd-transfer__list">
             {items.map((item) => (
@@ -157,7 +167,10 @@ export function FileTransferControls({
                 key={item.id}
               >
                 <div className="vd-transfer__item-heading">
-                  <span className="vd-transfer__file-name" title={item.file.name}>
+                  <span
+                    className="vd-transfer__file-name"
+                    title={item.file.name}
+                  >
                     {item.file.name}
                   </span>
                   <span className="vd-transfer__file-size">
