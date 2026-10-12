@@ -6,7 +6,7 @@ import {
   UploadController,
 } from "./files-transfer-controller";
 
-function createRequest() {
+export function createRequest() {
   return new XMLHttpRequest();
 }
 
