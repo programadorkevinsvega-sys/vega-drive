@@ -1,4 +1,4 @@
-# Fase 5 — Auditoría inicial de Frontend y BFF
+# Fase 5 — Seguimiento de Frontend y BFF
 
 **Fecha:** 2026-10-12  
 **Estado:** EN CURSO. Este documento registra el estado observado en el código; no certifica producción ni sustituye la ejecución de CI.
