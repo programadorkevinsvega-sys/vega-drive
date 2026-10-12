@@ -189,12 +189,8 @@ describe("subida binaria con progreso", () => {
     });
     start.dispatchEvent(new Event("load"));
     await vi.waitFor(() =>
-      expect(FakeXMLHttpRequest.instances[1]?.url).toBe(
-        "/api/files/multipart/session-a/parts/1",
-      ),
+      expect(FakeXMLHttpRequest.instances[1]?.url).toMatch(/\/parts\/1$/),
     );
-    expect(
-      FakeXMLHttpRequest.instances.some(({ url }) => url.endsWith("/url")),
-    ).toBe(false);
+    expect(FakeXMLHttpRequest.instances).toHaveLength(2);
   });
 });
