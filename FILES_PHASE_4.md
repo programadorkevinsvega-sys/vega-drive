@@ -24,7 +24,7 @@
 | POST   | /api/files              | Subida binaria autenticada; X-File-Name (URI-encoded), X-File-Size y opcionalmente X-File-Folder-Id; Content-Type declara el tipo del archivo. |
 | GET    | /api/files/:id/download | Descarga autenticada con streaming; acepta un único encabezado Range.                                                                          |
 
-Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera— siguen activas en /api/files. La interfaz ya incorpora selección y subida binaria desde Mi unidad, y descarga mediante la ruta same-origin autenticada. El navegador no contacta R2 ni recibe claves o URLs de almacenamiento. La integración visual no sustituye las verificaciones operativas de privacidad, permisos, despliegue y E2E de esta fase.
+Las rutas existentes del catálogo —listado, carpetas, movimientos y papelera— siguen activas en /api/files. La interfaz incorpora selección y subida binaria desde Mi unidad, descarga mediante la ruta same-origin autenticada y una cola visual por archivo con estado, progreso real cuando el navegador lo informa, tamaño y errores. El progreso se obtiene con eventos de XMLHttpRequest; el 100 % solo se muestra cuando el servidor confirma la subida. El navegador no contacta R2 ni recibe claves o URLs de almacenamiento. La integración visual no sustituye las verificaciones operativas de privacidad, permisos, despliegue y E2E de esta fase.
 
 ## Papelera y retención
 
