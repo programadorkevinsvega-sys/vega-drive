@@ -62,6 +62,7 @@ export class R2FileStorage implements IFileStoragePort {
   async presignGetUrl(
     key: string,
     expiresInSeconds: number,
+    downloadName: string,
   ): Promise<string | null> {
     const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
     if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
@@ -74,7 +75,16 @@ export class R2FileStorage implements IFileStoragePort {
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,
       },
-      { method: "GET", key, expiresInSeconds },
+      {
+        method: "GET",
+        key,
+        expiresInSeconds,
+        query: {
+          "response-content-disposition":
+            `attachment; filename="${downloadName.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download"}`,
+          "response-content-type": "application/octet-stream",
+        },
+      },
     );
   }
 
