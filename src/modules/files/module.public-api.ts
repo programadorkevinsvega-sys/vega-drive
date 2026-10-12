@@ -127,6 +127,7 @@ export function createFilesModule(
         ...(deps.now ? { now: deps.now } : {}),
       })
     : null;
+  const multipartTransfers = deps.uploads && deps.transferEvents && deps.multipartUploads && deps.storage ? createFileMultipartUploads({ folders: deps.folders, items: deps.items, names: deps.names, uploads: deps.uploads, transferEvents: deps.transferEvents, multipart: deps.multipartUploads, storage: deps.storage, ...(deps.now ? { now: deps.now } : {}), ...(deps.createId ? { createId: deps.createId } : {}) }) : null;
   const transfers =
     deps.uploads && deps.transferEvents && deps.storage
       ? createFileTransfers({
