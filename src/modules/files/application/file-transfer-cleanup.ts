@@ -7,7 +7,7 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
   ): Promise<number> {
     let cleaned = 0;
     const boundedLimit = Math.min(100, Math.max(1, Math.trunc(limit)));
-    if (deps.multipartUploads && deps.storage.abortMultipartUpload) {
+    if (deps.multipartUploads) {
       const expiredSessions = await deps.multipartUploads.listExpired(
         nowIso,
         boundedLimit,
@@ -23,10 +23,10 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
             cleaned += 1;
             continue;
           }
-          if (
-            session.r2UploadId !== "direct-put" &&
-            deps.storage.abortMultipartUpload
-          ) {
+          if (session.r2UploadId !== "direct-put") {
+            if (!deps.storage.abortMultipartUpload) {
+              throw new Error("R2 multipart abort is unavailable");
+            }
             await deps.storage.abortMultipartUpload(
               session.storageKey,
               session.r2UploadId,

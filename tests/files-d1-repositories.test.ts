@@ -113,6 +113,7 @@ describe("files D1 repositories", () => {
       "2026-10-10T00:00:00Z",
       "upload-b",
       "user-a",
+      "failed",
     ]);
   });
 
