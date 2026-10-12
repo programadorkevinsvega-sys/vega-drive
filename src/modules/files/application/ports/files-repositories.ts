@@ -210,3 +210,32 @@ export interface FilesCatalogNameRepository {
     nodeId: string,
   ): Promise<void>;
 }
+
+
+export type FilesRecentActivityKind = "open" | "download";
+
+export interface FilesRecentActivityRecord {
+  itemId: string;
+  activityType: FilesRecentActivityKind;
+  occurredAt: string;
+}
+
+export interface FilesRecentActivityCursor {
+  occurredAt: string;
+  itemId: string;
+}
+
+/** Recent activity is owned by files and scoped by the server-authenticated owner ID. */
+export interface FilesRecentActivityRepository {
+  record(
+    ownerId: string,
+    itemId: string,
+    activityType: FilesRecentActivityKind,
+    occurredAt: string,
+  ): Promise<void>;
+  listByOwner(
+    ownerId: string,
+    limit: number,
+    cursor?: FilesRecentActivityCursor | null,
+  ): Promise<FilesRecentActivityRecord[]>;
+}
