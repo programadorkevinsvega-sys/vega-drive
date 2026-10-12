@@ -5,17 +5,29 @@ import type { UploadItem } from "./UploadQueue";
 type Controls = Map<string, UploadController>;
 type UpdateItem = (id: string, changes: Partial<UploadItem>) => void;
 
-export function pauseUpload(controls: Controls, update: UpdateItem, id: string) {
+export function pauseUpload(
+  controls: Controls,
+  update: UpdateItem,
+  id: string,
+) {
   controls.get(id)?.pause();
   update(id, { state: "paused" });
 }
 
-export function resumeUpload(controls: Controls, update: UpdateItem, id: string) {
+export function resumeUpload(
+  controls: Controls,
+  update: UpdateItem,
+  id: string,
+) {
   controls.get(id)?.resume();
   update(id, { state: "uploading" });
 }
 
-export function cancelUpload(controls: Controls, update: UpdateItem, id: string) {
+export function cancelUpload(
+  controls: Controls,
+  update: UpdateItem,
+  id: string,
+) {
   controls.get(id)?.cancel();
   update(id, { state: "cancelled", error: "" });
 }
