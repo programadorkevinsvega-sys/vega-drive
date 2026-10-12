@@ -81,6 +81,7 @@ export async function tryDirectSingleUpload(
         "Content-Type",
         file.type || "application/octet-stream",
       );
+      request.setRequestHeader("If-None-Match", "*");
       control.attach(request);
       request.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable && file.size > 0) {
