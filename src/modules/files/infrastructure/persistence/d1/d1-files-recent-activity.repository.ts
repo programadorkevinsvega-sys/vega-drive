@@ -23,9 +23,11 @@ export class D1FilesRecentActivityRepository
   ): Promise<void> {
     await this.db
       .prepare(
-        "INSERT INTO files_recent_activity (owner_id, item_id, activity_type, occurred_at) " +
-          "VALUES (?, ?, ?, ?) ON CONFLICT(owner_id, item_id) DO UPDATE SET " +
-          "activity_type = excluded.activity_type, occurred_at = excluded.occurred_at " +
+        "INSERT INTO files_recent_activity " +
+          "(owner_id, item_id, activity_type, occurred_at) " +
+          "VALUES (?, ?, ?, ?) ON CONFLICT(owner_id, item_id) " +
+          "DO UPDATE SET activity_type = excluded.activity_type, " +
+          "occurred_at = excluded.occurred_at " +
           "WHERE excluded.occurred_at >= files_recent_activity.occurred_at",
       )
       .bind(ownerId, itemId, activityType, occurredAt)
@@ -41,8 +43,9 @@ export class D1FilesRecentActivityRepository
       ? " AND (occurred_at < ? OR (occurred_at = ? AND item_id < ?))"
       : "";
     const statement = this.db.prepare(
-      "SELECT item_id AS itemId, activity_type AS activityType, occurred_at AS occurredAt " +
-        "FROM files_recent_activity WHERE owner_id = ?" +
+      "SELECT item_id AS itemId, activity_type AS activityType, " +
+        "occurred_at AS occurredAt FROM files_recent_activity " +
+        "WHERE owner_id = ?" +
         after +
         " ORDER BY occurred_at DESC, item_id DESC LIMIT ?",
     );
