@@ -7,23 +7,20 @@ Este runbook prepara la cuenta para el flujo aprobado en [ADR-001](./ADR-001-dir
 Bucket: `vega-drive-files`  
 Endpoint S3 mostrado por Cloudflare: `https://03f46bf3839f506fe22124be5f1cda25.r2.cloudflarestorage.com/vega-drive-files`
 
-La URL pública `r2.dev` está desactivada, pero el dominio personalizado `s3-vegadirve.jnmtortas.com` aparece **Activo**, con **Access habilitado**. Esto significa que el contenido del bucket puede servirse públicamente por ese dominio aunque `r2.dev` esté desactivado; contradice el requisito de privacidad y debe tratarse como un bloqueo de seguridad. **Antes de continuar con pruebas de datos privados, deshabilita el dominio personalizado** en R2 → bucket → Settings → Custom Domains → `...` → **Disable domain** (y usa **Remove domain** si no se necesita). Luego confirma que el acceso figure como `Not allowed` y que un objeto de prueba no se pueda leer anónimamente por el dominio. No basta con CORS para protegerlo. El firmador usa el endpoint S3 estándar basado en el Account ID; Vega Drive no necesita un dominio público de R2 para usar URLs S3 prefirmadas.
+Estado actualizado informado por el propietario el 2026-10-12: `r2.dev` está desactivado, el bucket está privado y el dominio personalizado `s3-vegadirve.jnmtortas.com` está desactivado. Mantener esos tres controles así. Antes de la prueba E2E, comprobar desde una sesión no autenticada que un objeto de prueba no pueda leerse por una URL pública. No basta con CORS para proteger el bucket. El firmador usa el endpoint S3 estándar basado en el Account ID; Vega Drive no necesita un dominio público de R2 para usar URLs S3 prefirmadas.
 
 ## 1. Corregir CORS del bucket
 
-La configuración informada actualmente no es adecuada para el navegador: incluye `https://s3-vegadirve.jnmtortas.com` como origen permitido, pero ese es el dominio de almacenamiento, no el origen desde el que se ejecuta la aplicación; además, no hay encabezados permitidos ni `ETag` expuesto.
+La política CORS configurada e informada el 2026-10-12 permite `https://vega-drive.programadorkevinsvega.workers.dev`, métodos `GET`/`PUT`, encabezados `Content-Type`/`If-None-Match`, expone `ETag` y usa `MaxAgeSeconds: 3600`. Esa configuración es correcta para solicitudes iniciadas desde el origen `workers.dev`.
 
-En la política CORS de `vega-drive-files`, configurar:
+La aplicación también contempla el origen de producción `https://drive.jnmtortas.com`. Si ese dominio es el que los usuarios usan para abrir Vega Drive, añadirlo a `AllowedOrigins` y guardar la política. Si no se usa, no hace falta añadirlo. No incluir el dominio de R2 como origen del navegador ni usar `*`. `http://localhost:3000` solo debe permitirse temporalmente para desarrollo local controlado y retirarse de CORS de producción.
 
-- **Allowed origins (producción):**
-  - `https://drive.jnmtortas.com`
-  - `https://vega-drive.programadorkevinsvega.workers.dev`
 - **Allowed methods:** `GET`, `PUT`
 - **Allowed headers:** `Content-Type`, `If-None-Match`
 - **Expose headers:** `ETag`
-- **Max age:** un valor moderado, por ejemplo `3600` segundos, si la interfaz permite configurarlo.
+- **Max age:** `3600` segundos.
 
-No usar `*`. No incluir localhost en la política de producción. Para desarrollo local, agregar `http://localhost:3000` solo en una política/cuenta de desarrollo controlada o añadirlo temporalmente y retirarlo antes de producción. No se necesita permitir el dominio de R2 como origen del navegador.
+CORS no autoriza usuarios ni objetos: las URLs firmadas y las comprobaciones del Worker siguen siendo obligatorias.
 
 CORS no autoriza usuarios ni objetos: las URLs firmadas y las comprobaciones del Worker siguen siendo obligatorias.
 
@@ -49,9 +46,15 @@ pnpm exec wrangler secret put R2_SECRET_ACCESS_KEY
 
 Introducir cada valor cuando Wrangler lo solicite. No escribir secretos en `wrangler.toml`, archivos `.env` versionados ni en el frontend. Si no se han creado las credenciales, detenerse aquí; no inventar valores.
 
+## Estado de credenciales tras una posible exposición
+
+El propietario confirmó que los secretos `R2_ACCESS_KEY_ID`, `R2_ACCOUNT_ID` y `R2_SECRET_ACCESS_KEY` aparecen configurados en el panel del Worker. Sin embargo, los valores de credenciales se compartieron parcialmente en una conversación. Por precaución, **no considerar seguras las credenciales actuales aunque el texto parezca truncado**: crear un nuevo token S3 de R2 con el mismo alcance mínimo, actualizar los tres secretos correspondientes si cambian sus valores, probarlo y revocar las credenciales anteriores. Si también se compartió un token de API de Cloudflare, revocarlo/rotarlo por separado; no es lo mismo que la clave S3.
+
+No se han verificado las credenciales mediante una operación real contra R2. Nunca pedir ni copiar sus valores en este documento, el repositorio, logs o chats.
+
 ## 3. Mantener la transferencia directa deshabilitada hasta validar
 
-La aplicación solo usa las rutas directas cuando `DIRECT_R2_TRANSFERS_ENABLED` vale `true`. No habilitar esa variable todavía. Primero confirmar que los tres secretos están configurados en el entorno correcto y que el bucket continúa privado.
+La aplicación solo usa las rutas directas cuando `DIRECT_R2_TRANSFERS_ENABLED` vale `true`. No habilitar esa variable todavía. Primero rotar las credenciales compartidas, comprobar que los tres secretos están configurados en el entorno correcto y que el bucket continúa privado.
 
 La activación futura debe hacerse explícitamente mediante la configuración de entorno del Worker, después de completar las pruebas descritas abajo y con autorización de despliegue. No añadir la variable a `wrangler.toml` ni desplegar como parte de este runbook.
 
