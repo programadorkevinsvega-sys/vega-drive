@@ -56,7 +56,6 @@ describe("politica del frontend", () => {
     expect(offenders).toEqual([
       "services/files-transfer-controller.ts",
       "services/files-transfer-http.ts",
-      "services/files-transfer-service.ts",
     ]);
 
     const transfer = readFileSync(
