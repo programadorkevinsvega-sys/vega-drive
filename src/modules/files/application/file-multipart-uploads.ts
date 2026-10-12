@@ -330,6 +330,8 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
     }
 
     let itemInserted = false;
+    let completionFailure: "unavailable" | "size-mismatch" | "integrity-mismatch" =
+      "unavailable";
     try {
       const storageParts: FileStorageMultipartPart[] = parts.map(
         ({ partNumber, etag, sizeBytes }) => ({
@@ -345,7 +347,12 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
       );
       const stored = await storage.head(session.storageKey);
       if (!stored || stored.sizeBytes !== session.expectedSizeBytes) {
+        completionFailure = "size-mismatch";
         throw new Error("Stored object size mismatch");
+      }
+      if (stored.contentType !== session.contentType) {
+        completionFailure = "integrity-mismatch";
+        throw new Error("Stored object metadata mismatch");
       }
       const timestamp = now().toISOString();
       const item: FilesItemRecord = {
@@ -390,7 +397,7 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
         .deleteByIdForOwner(session.reservationId, actor.userId)
         .catch(() => false);
       await deps.multipart.delete(sessionId, actor.userId).catch(() => false);
-      return failure("unavailable");
+      return failure(completionFailure);
     }
   }
 

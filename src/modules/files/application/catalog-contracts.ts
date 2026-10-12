@@ -16,7 +16,8 @@ export type CatalogFailureReason =
   | "too-large"
   | "quota-exceeded"
   | "rate-limited"
-  | "size-mismatch";
+  | "size-mismatch"
+  | "integrity-mismatch";
 
 export type CatalogResult<T> =
   | { ok: true; value: T }

@@ -79,6 +79,11 @@ No llamar 100 % cerrada a la Fase 4 hasta resolver la lista de evidencia operati
 - Las subidas de hasta 95 MiB pueden crear una sesión de PUT firmado, subir el
   cuerpo directamente a R2 y confirmar mediante `HEAD` antes de registrar
   metadatos.
+- Tanto la subida directa simple como la finalización multipart comparan el
+  tamaño y el `Content-Type` devueltos por `HEAD` con la sesión autorizada
+  antes de publicar el catálogo. Una discrepancia rechaza la finalización y
+  activa la limpieza/reconciliación existente; si falla la limpieza, el cierre
+  operativo de la fase sigue pendiente.
 - Las subidas grandes conservan la sesión/reserva en D1 y pueden pedir URLs
   firmadas por parte; el navegador envía cada parte a R2 y confirma el ETag al
   Worker. El Worker conserva la autoridad sobre la lista de partes y completa

@@ -27,6 +27,7 @@ function transferError(reason: string, totalSizeBytes?: number): Response {
   switch (reason) {
     case "invalid-input":
     case "size-mismatch":
+    case "integrity-mismatch":
       return Response.json(
         { error: "Invalid file transfer request" },
         { status: 400 },

@@ -223,7 +223,11 @@ export function createFileDirectUploads(
       }
 
       const stored = await deps.storage.head(session.storageKey);
-      if (!stored || stored.sizeBytes !== session.expectedSizeBytes) {
+      const sizeMismatch =
+        !stored || stored.sizeBytes !== session.expectedSizeBytes;
+      const contentTypeMismatch =
+        stored !== null && stored.contentType !== session.contentType;
+      if (sizeMismatch || contentTypeMismatch) {
         try {
           await deps.storage.delete(session.storageKey);
         } catch {
@@ -241,7 +245,9 @@ export function createFileDirectUploads(
           actor.userId,
         );
         await deps.multipartUploads.delete(sessionId, actor.userId);
-        return failure("size-mismatch");
+        return failure(
+          sizeMismatch ? "size-mismatch" : "integrity-mismatch",
+        );
       }
 
       const timestamp = now().toISOString();

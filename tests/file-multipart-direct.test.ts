@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createFilesCatalogFixture } from "./helpers/files-catalog.js";
 import { createMultipartPartAuthorizations } from "../src/modules/files/application/file-multipart-direct.js";
 import type { FilesMultipartSession } from "../src/modules/files/application/ports/files-multipart-repository.js";
 
@@ -18,6 +19,95 @@ const session: FilesMultipartSession = {
 };
 
 describe("autorizaciones multipart directas a R2", () => {
+  it("no publica multipart si el Content-Type real no coincide con la sesión", async () => {
+    const fixture = await createFilesCatalogFixture();
+    try {
+      const sizeBytes = 100 * 1024 * 1024;
+      fixture.storage.createMultipartUpload = vi
+        .fn()
+        .mockResolvedValue("r2-upload-a");
+      fixture.storage.completeMultipartUpload = vi
+        .fn()
+        .mockResolvedValue(undefined);
+      fixture.storage.head = vi.fn().mockResolvedValue({
+        sizeBytes,
+        contentType: "application/octet-stream",
+      });
+      const deleteObject = vi.spyOn(fixture.storage, "delete");
+
+      const started = await fixture.api.beginMultipartUpload(
+        { userId: "owner-a" },
+        {
+          name: "large-video-metadata-mismatch.mp4",
+          folderId: null,
+          sizeBytes,
+          contentType: "video/mp4",
+        },
+      );
+      expect(started.ok).toBe(true);
+      if (!started.ok) {
+        throw new Error("No se pudo iniciar la sesión multipart de prueba.");
+      }
+
+      const session = await fixture.db
+        .prepare(
+          "SELECT item_id AS itemId, storage_key AS storageKey FROM files_multipart_uploads WHERE id = ?",
+        )
+        .bind(started.value.uploadId)
+        .first<{ itemId: string; storageKey: string }>();
+      expect(session).not.toBeNull();
+      if (!session) throw new Error("No se encontró la sesión multipart.");
+
+      for (
+        let partNumber = 1;
+        partNumber <= started.value.totalParts;
+        partNumber += 1
+      ) {
+        const partSize =
+          partNumber === started.value.totalParts
+            ? sizeBytes - 16 * 1024 * 1024 * (started.value.totalParts - 1)
+            : 16 * 1024 * 1024;
+        const recorded = await fixture.api.recordMultipartPart(
+          { userId: "owner-a" },
+          started.value.uploadId,
+          partNumber,
+          partSize,
+          "0123456789abcdef0123456789abcdef",
+        );
+        expect(recorded.ok).toBe(true);
+      }
+
+      await expect(
+        fixture.api.completeMultipartUpload(
+          { userId: "owner-a" },
+          started.value.uploadId,
+        ),
+      ).resolves.toEqual({ ok: false, reason: "integrity-mismatch" });
+
+      expect(deleteObject).toHaveBeenCalledWith(session.storageKey);
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_items WHERE id = ?")
+          .bind(session.itemId)
+          .first(),
+      ).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_uploads WHERE item_id = ?")
+          .bind(session.itemId)
+          .first(),
+      ).toBeNull();
+      expect(
+        await fixture.db
+          .prepare("SELECT id FROM files_multipart_uploads WHERE id = ?")
+          .bind(started.value.uploadId)
+          .first(),
+      ).toBeNull();
+    } finally {
+      fixture.close();
+    }
+  });
+
   it("firma solo la parte y el tamaño esperados para el propietario", async () => {
     const findByIdForOwner = vi.fn().mockResolvedValue(session);
     const presignMultipartPartUrl = vi

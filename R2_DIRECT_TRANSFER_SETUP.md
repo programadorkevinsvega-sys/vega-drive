@@ -65,8 +65,8 @@ La activación futura debe hacerse explícitamente mediante la configuración de
 - [ ] Las credenciales están limitadas al bucket y guardadas como secretos del Worker.
 - [ ] Una URL firmada expira; método, clave, encabezados o parte alterados son rechazados.
 - [ ] Un usuario no puede iniciar, completar, cancelar ni descargar recursos de otro usuario.
-- [ ] Subida directa pequeña: verificar tamaño real, Content-Type, cuota y publicación de metadatos solo tras HEAD.
-- [ ] Subida multipart grande: todas las partes, reintentos, reanudación, pausa, cancelación y limpieza de sesiones incompletas.
+- [ ] Subida directa pequeña: verificar que tamaño real y Content-Type de HEAD coincidan con la sesión antes de publicar metadatos; comprobar cuota y limpieza ante discrepancias.
+- [ ] Subida multipart grande: verificar todas las partes, reintentos, reanudación, pausa, cancelación, Content-Type de HEAD y limpieza/reintento de sesiones incompletas.
 - [ ] Descarga directa: permisos, papelera, nombre seguro, URL temporal y ausencia de secretos en logs.
 - [ ] CORS rechaza un origen no permitido y expone `ETag` a la aplicación autorizada.
 - [ ] Prueba E2E real y concurrencia controlada; documentar resultados y ruta de rollback al flujo por Worker.
