@@ -146,9 +146,9 @@ filesTransferRoutes.put("/multipart/:id/parts/:partNumber", async (c) => {
   const request = c.req.raw;
   if (!originAllowed(request)) return c.json(ORIGIN_ERROR, 403);
   const partNumber = Number(c.req.param("partNumber"));
-  const contentLength = request.headers.get("Content-Length");
-  if (!contentLength || !/^\d+$/.test(contentLength)) return c.json(REQUEST_ERROR, 400);
-  const sizeBytes = Number(contentLength);
+  const declaredPartSize = request.headers.get("X-Part-Size") ?? request.headers.get("Content-Length");
+  if (!declaredPartSize || !/^\d+$/.test(declaredPartSize)) return c.json(REQUEST_ERROR, 400);
+  const sizeBytes = Number(declaredPartSize);
   if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > 16 * 1024 * 1024) {
     return c.json(REQUEST_ERROR, 413);
   }
