@@ -5,6 +5,12 @@
   min-width: 0;
 }
 
+.vd-transfer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vd-space-2);
+}
+
 .vd-transfer__input {
   position: absolute;
   width: 1px;
