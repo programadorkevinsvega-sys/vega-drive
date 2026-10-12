@@ -48,7 +48,9 @@ class FakeXMLHttpRequest extends EventTarget {
     ) {
       response = { type: "file", id: "file-a" };
     } else {
-      throw new Error("Solicitud inesperada en la prueba: " + this.method + " " + this.url);
+      throw new Error(
+        "Solicitud inesperada en la prueba: " + this.method + " " + this.url,
+      );
     }
 
     this.status = 200;
@@ -67,34 +69,39 @@ afterEach(() => {
 });
 
 describe("transferencia multipart con direct R2 deshabilitado", () => {
-  it("usa el respaldo por Worker sin solicitar URLs directas que devolverían 404", async () => {
-    vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
-    const size = 96 * 1024 * 1024;
-    const file = {
-      name: "VSCodeUserSetup-x64-1.141.0.exe",
-      size,
-      type: "application/x-msdownload",
-      lastModified: 1,
-      slice: (start: number, end: number) =>
-        ({ size: end - start }) as Blob,
-    } as File;
+  it(
+    "usa el respaldo por Worker sin solicitar URLs directas que devolverían 404",
+    async () => {
+      vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
+      const size = 96 * 1024 * 1024;
+      const file = {
+        name: "VSCodeUserSetup-x64-1.141.0.exe",
+        size,
+        type: "application/x-msdownload",
+        lastModified: 1,
+        slice: (start: number, end: number) =>
+          ({ size: end - start }) as Blob,
+      } as File;
 
-    const result = await uploadMultipartFile(
-      file,
-      null,
-      undefined,
-      new UploadController(),
-    );
+      const result = await uploadMultipartFile(
+        file,
+        null,
+        undefined,
+        new UploadController(),
+      );
 
-    expect(result).toMatchObject({ type: "file", id: "file-a" });
-    const requests = FakeXMLHttpRequest.instances;
-    expect(requests[0]?.url).toBe("/api/files/multipart");
-    expect(requests.filter((request) => request.method === "PUT")).toHaveLength(6);
-    expect(
-      requests.some((request) => request.url.endsWith("/url")),
-    ).toBe(false);
-    expect(requests.at(-1)?.url).toBe(
-      "/api/files/multipart/session-a/complete",
-    );
-  });
+      expect(result).toMatchObject({ type: "file", id: "file-a" });
+      const requests = FakeXMLHttpRequest.instances;
+      expect(requests[0]?.url).toBe("/api/files/multipart");
+      expect(
+        requests.filter((request) => request.method === "PUT"),
+      ).toHaveLength(6);
+      expect(
+        requests.some((request) => request.url.endsWith("/url")),
+      ).toBe(false);
+      expect(requests.at(-1)?.url).toBe(
+        "/api/files/multipart/session-a/complete",
+      );
+    },
+  );
 });
