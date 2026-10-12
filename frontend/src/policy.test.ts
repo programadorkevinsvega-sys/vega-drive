@@ -76,7 +76,9 @@ describe("politica del frontend", () => {
       "utf8",
     );
     expect(directSingle).toContain('request.open("PUT", started.url, true)');
-    expect(directSingle).toContain('request.setRequestHeader("If-None-Match", "*")');
+    expect(directSingle).toContain(
+      'request.setRequestHeader("If-None-Match", "*")',
+    );
     expect(directMultipart).toContain(
       'request.open("PUT", authorization.url, true)',
     );
