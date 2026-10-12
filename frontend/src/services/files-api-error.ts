@@ -34,7 +34,7 @@ export function messageForStatus(status: number): string {
     return "Se alcanzó el límite temporal de transferencias. Inténtalo más tarde.";
   }
   if (status === 503) {
-    return "El catálogo no está disponible temporalmente. Inténtalo de nuevo.";
+    return "El almacenamiento de archivos no respondió. La subida intentó recuperarse; inténtalo de nuevo si persiste.";
   }
   return "No se pudo completar la operación. Inténtalo de nuevo.";
 }
