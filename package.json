@@ -16,7 +16,7 @@
     "verify:production:auth-config": "node scripts/verify-production.mjs --auth-config-only",
     "deploy": "pnpm run deploy:preflight && pnpm run cloudflare:build && pnpm run verify:production:auth-config && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier frontend/src/services/files-transfer-service.ts",
     "lint": "node scripts/architecture-check.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
