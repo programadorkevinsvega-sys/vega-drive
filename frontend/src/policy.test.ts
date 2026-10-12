@@ -34,7 +34,6 @@ const STORAGE_TERMS = [
 // Las llamadas de red solo se permiten en los clientes HTTP de identidad y
 // catálogo. El script remoto solo se permite en el widget oficial de Turnstile.
 const FORBIDDEN: ReadonlyArray<[string, RegExp]> = [
-  ["peticiones XHR", new RegExp(XHR)],
   ["sockets / eventos de servidor", new RegExp("\\b(" + SOCKETS + ")\\b")],
   ["sendBeacon", /sendBeacon/],
   [
@@ -49,6 +48,22 @@ const FORBIDDEN: ReadonlyArray<[string, RegExp]> = [
 ];
 
 describe("politica del frontend", () => {
+  it("permite XHR solo para progreso en la subida same-origin", () => {
+    const offenders = sourceFiles(CODE)
+      .filter(NOT_TESTS)
+      .filter((file) => new RegExp(XHR).test(file.text))
+      .map((file) => file.path);
+    expect(offenders).toEqual(["services/files-transfer-service.ts"]);
+
+    const transfer = readFileSync(
+      join(SRC, "services/files-transfer-service.ts"),
+      "utf8",
+    );
+    expect(transfer.match(new RegExp(XHR, "g"))).toHaveLength(1);
+    expect(transfer).toContain('request.open("POST", "/api/files", true)');
+    expect(transfer).not.toMatch(/https?:\\/\\//);
+  });
+
   it.each(FORBIDDEN)("el codigo no usa %s", (_name, pattern) => {
     const offenders = sourceFiles(CODE)
       .filter(NOT_TESTS)
