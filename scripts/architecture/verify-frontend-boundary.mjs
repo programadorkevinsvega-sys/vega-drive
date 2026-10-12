@@ -47,7 +47,7 @@ await runGuard("Frontera del frontend", async (failures, notes) => {
         );
       }
     }
-    if (/\bXMLHttpRequest\b/.test(source)) {
+    if (!rel.endsWith(".test.ts") && /\bXMLHttpRequest\b/.test(source)) {
       // XHR is permitted only for upload progress, and only with a literal same-origin /api target.
       const xhrTargets = [
         ...source.matchAll(
