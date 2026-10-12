@@ -52,7 +52,7 @@ export function createFileDirectUploads(
       sizeBytes < 0 ||
       sizeBytes > DIRECT_UPLOAD_MAX_BYTES ||
       !isValidContentType(contentType)
-    ) return failure(sizeBytes > DIRECT_UPLOAD_MAX_BYTES ? "too-large" : "invalid-input");
+    ) return failure(typeof sizeBytes === "number" && sizeBytes > DIRECT_UPLOAD_MAX_BYTES ? "too-large" : "invalid-input");
 
     let reservation: FilesUploadRecord | null = null;
     let claimed = false;
