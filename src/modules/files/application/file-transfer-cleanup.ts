@@ -11,7 +11,7 @@ export function createFileTransferCleanup(deps: FileTransferDependencies) {
       const expiredSessions = await deps.multipartUploads.listExpired(nowIso, boundedLimit);
       for (const session of expiredSessions) {
         try {
-          await deps.storage.abortMultipartUpload(session.storageKey, session.r2UploadId);
+          await deps.storage.abortMultipartUpload(session.storageKey, session.r2UploadId).catch(() => undefined);
           await deps.storage.delete(session.storageKey).catch(() => undefined);
           await deps.names.release(session.ownerId, "file", session.itemId);
           await deps.uploads.deleteByIdForOwner(session.reservationId, session.ownerId);
