@@ -12,7 +12,7 @@ interface MultipartStart {
   totalParts: number;
 }
 
-function createRequest(): XMLHttpRequest {
+function createRequest() {
   return new XMLHttpRequest();
 }
 
