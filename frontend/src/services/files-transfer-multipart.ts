@@ -1,5 +1,6 @@
 import type { FilesFileView } from "./files-contract";
 import { FilesApiError } from "./files-api-error";
+import { tryDirectMultipartPart } from "./files-transfer-direct";
 import { parseFileResponse, requestJson } from "./files-transfer-http";
 import {
   UploadCancelledError,
@@ -75,24 +76,36 @@ export async function uploadMultipartFile(
       let attempts = 0;
       while (true) {
         try {
-          await requestJson<{ partNumber: number }>(
-            "PUT",
-            "/api/files/multipart/" +
-              encodeURIComponent(started.uploadId) +
-              "/parts/" +
-              partNumber,
+          const direct = await tryDirectMultipartPart(
+            started.uploadId,
+            partNumber,
             chunk,
-            {
-              "Content-Type": "application/octet-stream",
-              "X-Part-Size": String(chunk.size),
-            },
             (loaded) =>
               onProgress?.(
                 Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
               ),
-            chunk.size,
             control,
           );
+          if (!direct) {
+            await requestJson<{ partNumber: number }>(
+              "PUT",
+              "/api/files/multipart/" +
+                encodeURIComponent(started.uploadId) +
+                "/parts/" +
+                partNumber,
+              chunk,
+              {
+                "Content-Type": "application/octet-stream",
+                "X-Part-Size": String(chunk.size),
+              },
+              (loaded) =>
+                onProgress?.(
+                  Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
+                ),
+              chunk.size,
+              control,
+            );
+          }
           index += 1;
           break;
         } catch (error) {
