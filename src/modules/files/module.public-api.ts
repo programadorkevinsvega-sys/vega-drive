@@ -15,6 +15,7 @@ import type { FilesDownloadResult } from "./application/file-download.js";
 import type { FilesDownloadUrlResult } from "./application/file-download-url.js";
 import { createFileDownloadUrl } from "./application/file-download-url.js";
 import { createFileDirectUploads, type DirectUploadStarted } from "./application/file-direct-uploads.js";
+import { createMultipartPartAuthorizations, type MultipartPartAuthorization } from "./application/file-multipart-direct.js";
 import type { IFileStoragePort } from "./application/ports/file-storage.js";
 import type {
   FilesCatalogNameRepository,
@@ -66,6 +67,8 @@ export interface FilesPublicApi {
   createDownloadUrl(actor: FilesActor, id: unknown): Promise<FilesDownloadUrlResult>;
   beginDirectUpload(actor: FilesActor, input: unknown): Promise<CatalogResult<DirectUploadStarted>>;
   completeDirectUpload(actor: FilesActor, sessionId: string): Promise<CatalogResult<FilesFileView>>;
+  authorizeMultipartPart(actor: FilesActor, sessionId: string, partNumber: number): Promise<CatalogResult<MultipartPartAuthorization>>;
+  recordMultipartPart(actor: FilesActor, sessionId: string, partNumber: number, sizeBytes: number, etag: string): Promise<CatalogResult<{ partNumber: number }>>;
   cleanupExpiredUploads(nowIso: string, limit: number): Promise<number>;
   beginMultipartUpload(
     actor: FilesActor,
@@ -165,6 +168,13 @@ export function createFilesModule(
           ...(deps.createId ? { createId: deps.createId } : {}),
         })
       : null;
+  const directPartAuthorizations = deps.multipartUploads && deps.storage
+    ? createMultipartPartAuthorizations({
+        multipart: deps.multipartUploads,
+        storage: deps.storage,
+        ...(deps.now ? { now: deps.now } : {}),
+      })
+    : null;
   const directUploads =
     deps.uploads && deps.transferEvents && deps.multipartUploads && deps.storage
       ? createFileDirectUploads({
@@ -237,6 +247,12 @@ export function createFilesModule(
       : Promise.resolve({ ok: false, reason: "unavailable" }),
     completeDirectUpload: (...args) => directUploads
       ? directUploads.completeDirectUpload(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    authorizeMultipartPart: (...args) => directPartAuthorizations
+      ? directPartAuthorizations.authorizeMultipartPart(...args)
+      : Promise.resolve({ ok: false, reason: "unavailable" }),
+    recordMultipartPart: (...args) => directPartAuthorizations
+      ? directPartAuthorizations.recordMultipartPart(...args)
       : Promise.resolve({ ok: false, reason: "unavailable" }),
     cleanupExpiredUploads: (nowIso, limit) =>
       transfers
