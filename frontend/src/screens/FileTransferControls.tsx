@@ -74,10 +74,13 @@ export function FileTransferControls({
     let failed = uploads.filter((item) => item.state === "error").length;
 
     try {
-      for (const item of uploads) {
-        if (item.state === "error") continue;
+      for (let index = 0; index < uploads.length; index += 1) {
+        const item = uploads[index];
+        if (!item || item.state === "error") continue;
         updateItem(item.id, { state: "uploading", progress: 0 });
-        setSummary("Subiendo archivos · " + (completed + failed + 1) + " de " + files.length);
+        setSummary(
+          "Subiendo archivo " + (index + 1) + " de " + files.length + ": " + item.file.name,
+        );
         try {
           await uploadFile(item.file, folderId, (progress) => {
             updateItem(item.id, { progress });
