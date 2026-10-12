@@ -101,7 +101,9 @@ export async function tryDirectSingleUpload(
         finish(() => {
           if (control.cancelled) reject(new UploadCancelledError());
           else if (control.paused) reject(new UploadPausedError());
-          else reject(new FilesApiError("La subida directa se interrumpió.", 0));
+          else {
+            reject(new FilesApiError("La subida directa se interrumpió.", 0));
+          }
         }),
       );
       request.addEventListener("load", () =>
@@ -135,7 +137,8 @@ export async function tryDirectSingleUpload(
     await abortSession();
     if (control.cancelled) throw new UploadCancelledError();
     if (error instanceof FilesApiError && error.status === 403) {
-      // A long pause can outlive the signed URL; retry through the safe API path.
+      // A long pause can outlive the signed URL; retry through the safe API
+      // path.
       return null;
     }
     throw error;
