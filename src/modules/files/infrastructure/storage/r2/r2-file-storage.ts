@@ -62,6 +62,7 @@ export class R2FileStorage implements IFileStoragePort {
   async presignPutUrl(
     key: string,
     contentType: string,
+    expectedSizeBytes: number,
     expiresInSeconds: number,
   ): Promise<string | null> {
     const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
@@ -79,6 +80,7 @@ export class R2FileStorage implements IFileStoragePort {
         method: "PUT",
         key,
         contentType,
+        contentLength: expectedSizeBytes,
         ifNoneMatch: "*",
         expiresInSeconds,
       },
@@ -89,6 +91,7 @@ export class R2FileStorage implements IFileStoragePort {
     key: string,
     uploadId: string,
     partNumber: number,
+    expectedSizeBytes: number,
     expiresInSeconds: number,
   ): Promise<string | null> {
     const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
@@ -113,6 +116,7 @@ export class R2FileStorage implements IFileStoragePort {
       {
         method: "PUT",
         key,
+        contentLength: expectedSizeBytes,
         expiresInSeconds,
         query: { partNumber: String(partNumber), uploadId },
       },
