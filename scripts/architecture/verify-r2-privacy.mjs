@@ -13,9 +13,8 @@ await runGuard(
     for (const file of files) {
       const rel = relativePath(file);
       const source = await readFile(file, "utf8");
-      const isServerSidePresigner = rel.endsWith(
-        "/src/modules/files/infrastructure/storage/r2/r2-sigv4-presigner.ts",
-      );
+      const isServerSidePresigner =
+        rel === "src/modules/files/infrastructure/storage/r2/r2-sigv4-presigner.ts";
       if (
         !isServerSidePresigner &&
         /https?:\/\/[^\s\"'<>]*(?:r2\.dev|r2\.cloudflarestorage\.com|amazonaws\.com|s3[.-])/i.test(
