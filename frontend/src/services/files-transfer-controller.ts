@@ -13,7 +13,7 @@ export class UploadPausedError extends Error {
 }
 
 /** Control compartido por la cola y el transporte HTTP de cada archivo. */
-export export class UploadController {
+export class UploadController {
   paused = false;
   cancelled = false;
   private request: XMLHttpRequest | null = null;
