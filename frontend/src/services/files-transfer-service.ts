@@ -2,15 +2,16 @@ import type { FilesFileView } from "./files-contract";
 import { FilesApiError, messageForStatus } from "./files-api-error";
 import { uploadMultipartFile } from "./files-transfer-multipart";
 import { parseFileResponse, createRequest } from "./files-transfer-http";
-import { UploadCancelledError, UploadPausedError, UploadController } from "./files-transfer-controller";
+import {
+  UploadCancelledError,
+  UploadPausedError,
+  UploadController,
+  type UploadProgressListener,
+} from "./files-transfer-controller";
 export { UploadCancelledError, UploadController } from "./files-transfer-controller";
 export type { UploadProgressListener } from "./files-transfer-controller";
 
 const MAX_SINGLE_UPLOAD_BYTES = 95 * 1024 * 1024;
-const MULTIPART_PART_BYTES = 16 * 1024 * 1024;
-
-
-
 
 function uploadSingleFile(
   file: File,
