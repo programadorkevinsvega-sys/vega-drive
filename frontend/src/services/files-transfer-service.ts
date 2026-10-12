@@ -1,6 +1,7 @@
 import type { FilesFileView } from "./files-contract";
 import { FilesApiError, messageForStatus } from "./files-api-error";
 import { uploadMultipartFile } from "./files-transfer-multipart";
+import { tryDirectSingleUpload } from "./files-transfer-direct";
 import { parseFileResponse } from "./files-transfer-http";
 import {
   UploadCancelledError,
@@ -107,6 +108,8 @@ export async function uploadFile(
     if (control.paused) await control.waitUntilReady();
     if (control.cancelled) throw new UploadCancelledError();
     try {
+      const direct = await tryDirectSingleUpload(file, folderId, onProgress, control);
+      if (direct) return direct;
       return await uploadSingleFile(file, folderId, onProgress, control);
     } catch (error) {
       if (control.cancelled) throw new UploadCancelledError();
