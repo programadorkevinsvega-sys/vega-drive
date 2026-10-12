@@ -198,7 +198,7 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
     const session = await deps.multipart.findByIdForOwner(sessionId, actor.userId);
     if (!session) return failure("not-found");
     try {
-      if (storage.abortMultipartUpload) await storage.abortMultipartUpload(session.storageKey, session.r2UploadId);
+      if (storage.abortMultipartUpload) await storage.abortMultipartUpload(session.storageKey, session.r2UploadId).catch(() => undefined);
       await storage.delete(session.storageKey).catch(() => undefined);
       await deps.names.release(actor.userId, "file", session.itemId);
       await deps.uploads.deleteByIdForOwner(session.reservationId, actor.userId);
