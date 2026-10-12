@@ -6,6 +6,7 @@ import type {
   FilesUploadRepository,
 } from "./ports/files-repositories.js";
 import type { IFileStoragePort } from "./ports/file-storage.js";
+import type { FilesMultipartUploadRepository } from "./ports/files-multipart-repository.js";
 
 export interface FileTransferDependencies {
   folders: FilesFolderRepository;
@@ -14,6 +15,7 @@ export interface FileTransferDependencies {
   uploads: FilesUploadRepository;
   transferEvents: FilesTransferEventRepository;
   storage: IFileStoragePort;
+  multipartUploads?: FilesMultipartUploadRepository;
   now?: () => Date;
   createId?: () => string;
 }
