@@ -1,10 +1,7 @@
 import type { FilesActor } from "./catalog-contracts.js";
 import type { FileTransferDependencies } from "./file-transfer-dependencies.js";
 import { DOWNLOADS_PER_HOUR } from "./transfer-contracts.js";
-import {
-  hasValidActor,
-  isValidCatalogId,
-} from "../domain/catalog-validation.js";
+import { hasValidActor, isValidCatalogId } from "../domain/catalog-validation.js";
 import { activeFolderPath } from "./catalog-service-utils.js";
 
 export type FilesDownloadUrlResult =
