@@ -7,7 +7,7 @@ Este runbook prepara la cuenta para el flujo aprobado en [ADR-001](./ADR-001-dir
 Bucket: `vega-drive-files`  
 Endpoint S3 mostrado por Cloudflare: `https://03f46bf3839f506fe22124be5f1cda25.r2.cloudflarestorage.com/vega-drive-files`
 
-La URL pública `r2.dev` está desactivada. Debe seguir desactivada y el bucket debe permanecer privado. El dominio personalizado `s3-vegadirve.jnmtortas.com` aparece como inicializando; el firmador actual usa el endpoint S3 estándar basado en el Account ID, no ese dominio personalizado. No cambiar el host de las URLs firmadas sin implementar y probar explícitamente ese soporte.
+La URL pública `r2.dev` está desactivada. Debe seguir desactivada y el bucket debe permanecer privado. **La captura informa un dominio personalizado `s3-vegadirve.jnmtortas.com` con Access habilitado. Un dominio personalizado de R2 habilitado expone públicamente el contenido del bucket aunque `r2.dev` esté desactivado; esto contradice el requisito de privacidad.** Antes de usar datos privados, entra en R2 → bucket → Settings → Custom Domains y usa `...` → **Disable domain** (y después **Remove domain** si no se necesita). Confirma que el acceso figure como `Not allowed` y que el dominio ya no pueda servir objetos sin autorización. No basta con CORS para protegerlo. El firmador actual usa el endpoint S3 estándar basado en el Account ID, no ese dominio personalizado; Vega Drive no necesita un dominio público de R2 para usar URLs S3 prefirmadas.
 
 ## 1. Corregir CORS del bucket
 
