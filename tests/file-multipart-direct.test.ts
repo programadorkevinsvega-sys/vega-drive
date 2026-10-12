@@ -20,7 +20,9 @@ const session: FilesMultipartSession = {
 };
 
 describe("autorizaciones multipart directas a R2", () => {
-  it("recupera una reserva de nombre de una sesión abandonada sin partes", async () => {
+  it(
+    "recupera una reserva de nombre de una sesión abandonada sin partes",
+    async () => {
     const fixture = await createFilesCatalogFixture();
     try {
       const createMultipartUpload = vi
@@ -75,7 +77,8 @@ describe("autorizaciones multipart directas a R2", () => {
     } finally {
       fixture.close();
     }
-  });
+    },
+  );
 
   it("no publica multipart si el Content-Type real no coincide con la sesión", async () => {
     const fixture = await createFilesCatalogFixture();
