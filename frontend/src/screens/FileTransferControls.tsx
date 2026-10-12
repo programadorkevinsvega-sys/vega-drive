@@ -129,7 +129,14 @@ export function FileTransferControls({
         </span>
       ) : null}
 
-      <UploadQueue items={items} />
+      <UploadQueue
+        items={items}
+        uploading={uploading}
+        onClear={() => {
+          setItems([]);
+          setSummary("");
+        }}
+      />
     </div>
   );
 }
