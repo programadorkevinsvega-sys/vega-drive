@@ -29,6 +29,8 @@ CORS no autoriza usuarios ni objetos: las URLs firmadas y las comprobaciones del
 
 ## 2. Credenciales S3 de alcance mínimo
 
+**Regla de respuesta ante exposición:** si un token de Cloudflare, un Access Key ID o una Secret Access Key se pega en un chat, issue, log, captura o commit, tratarlo como expuesto aunque el texto parezca truncado. Revocar la credencial afectada y generar una nueva antes de usarla. Si se compartieron un token de API de Cloudflare y credenciales S3, rotarlos por separado: son credenciales distintas. No copiar valores de secretos al repositorio ni a este runbook.
+
 La política que se ha compartido incluye los grupos **Workers R2 Storage Bucket Item Read** y **Workers R2 Storage Bucket Item Write** sobre el recurso específico `vega-drive-files`. Es el alcance de permisos adecuado para leer/escribir objetos sin conceder administración de la cuenta ni acceso a otros buckets.
 
 Importante: el JSON de la política muestra permisos y alcance; **no contiene por sí solo las credenciales S3**. Confirma que el token se creó desde **R2 → Overview → Manage API Tokens**, no desde el creador genérico de tokens de Cloudflare. En el resultado de creación de un token R2 deben aparecer **Access Key ID** y **Secret Access Key**. Si ya cerraste esa pantalla y no guardaste la clave secreta, crea otro token R2 equivalente y revoca el anterior cuando hayas confirmado que no se utiliza.
