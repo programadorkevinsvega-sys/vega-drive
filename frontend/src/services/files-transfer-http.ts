@@ -1,14 +1,11 @@
 import type { FilesFileView } from "./files-contract";
+import { createRequest } from "./files-transfer-service";
 import { FilesApiError, messageForStatus } from "./files-api-error";
 import {
   UploadCancelledError,
   UploadPausedError,
   UploadController,
 } from "./files-transfer-controller";
-
-export function createRequest() {
-  return new XMLHttpRequest();
-}
 
 export function parseFileResponse(value: unknown, status: number): FilesFileView {
   if (
