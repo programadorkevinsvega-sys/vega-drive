@@ -66,9 +66,7 @@ describe("transferencias directas a R2", () => {
         throw new Error("No se pudo crear el archivo de prueba.");
       }
 
-      const presignGetUrl = vi
-        .fn()
-        .mockResolvedValue("https://r2.test/download");
+      const presignGetUrl = vi.fn().mockResolvedValue("https://r2.test/download");
       fixture.storage.presignGetUrl = presignGetUrl;
 
       await expect(
