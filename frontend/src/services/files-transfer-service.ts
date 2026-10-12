@@ -168,8 +168,8 @@ async function uploadMultipartFile(
   onProgress: UploadProgressListener | undefined,
   control: UploadController,
 ): Promise<FilesFileView> {
-  // No abortamos la creación de sesión: si el servidor ya la creó, necesitamos
-  // recibir su ID para poder reanudarla o limpiarla al cancelar.
+  // No abortamos la creación de sesión: si el servidor ya la creó,
+  // necesitamos recibir su ID para reanudarla o limpiarla al cancelar.
   const started = await requestJson<MultipartStart>(
     "POST",
     "/api/files/multipart",
@@ -234,7 +234,10 @@ async function uploadMultipartFile(
             },
             (loaded) =>
               onProgress?.(
-                Math.min(99, Math.floor(((start + loaded) / file.size) * 100)),
+                Math.min(
+                  99,
+                  Math.floor(((start + loaded) / file.size) * 100),
+                ),
               ),
             chunk.size,
             control,
@@ -362,8 +365,9 @@ export async function uploadFile(
     return uploadMultipartFile(file, folderId, onProgress, control);
   }
 
-  // El endpoint simple no soporta offsets: al reanudar se reinicia ese archivo
-  // desde cero. Para archivos grandes, multipart conserva las partes aceptadas.
+  // El endpoint simple no soporta offsets: al reanudar se reinicia
+  // desde cero. Para archivos grandes, multipart conserva las partes
+  // aceptadas.
   while (true) {
     await control.waitUntilReady();
     try {
