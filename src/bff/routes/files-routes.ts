@@ -220,7 +220,6 @@ filesRoutes.post("/items/:id/open", async (c) => {
   );
 });
 
-
 filesRoutes.post("/trash/empty", async (c) => {
   const rejected = mutationRejection(c);
   if (rejected) return rejected;
