@@ -49,7 +49,9 @@ async function useLegacyUpload(): Promise<FakeXMLHttpRequest> {
   const direct = FakeXMLHttpRequest.instances[0];
   if (!direct) throw new Error("No se creó la solicitud directa.");
   direct.status = 404;
-  direct.responseText = JSON.stringify({ error: "Direct transfers unavailable" });
+  direct.responseText = JSON.stringify({
+    error: "Direct transfers unavailable",
+  });
   direct.dispatchEvent(new Event("load"));
   await vi.waitFor(() => {
     expect(FakeXMLHttpRequest.instances[1]).toBeDefined();
@@ -126,7 +128,7 @@ describe("subida binaria con progreso", () => {
     expect(progress).toHaveBeenLastCalledWith(100);
   });
 
-  it("no anuncia el 100 % antes de que el servidor confirme la subida", async () => {
+  it("no anuncia 100 % antes de la confirmación del servidor", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const progress = vi.fn();
     const task = uploadFile(file(), null, progress);
@@ -142,7 +144,7 @@ describe("subida binaria con progreso", () => {
     expect(progress).toHaveBeenLastCalledWith(100);
   });
 
-  it("traduce los errores HTTP sin exponer el cuerpo del servidor", async () => {
+  it("traduce errores HTTP sin exponer el cuerpo del servidor", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const task = uploadFile(file(), null);
     const request = FakeXMLHttpRequest.instances[0];
