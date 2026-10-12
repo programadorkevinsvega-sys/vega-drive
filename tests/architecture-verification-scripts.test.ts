@@ -91,6 +91,14 @@ describe("independent architecture verification scripts", () => {
     expect(result.stderr).toContain("fetch() debe apuntar");
   });
 
+  it("allows only API-issued signed transfer URLs in the direct upload client", async () => {
+    const result = await runFixture("frontend", {
+      "frontend/src/services/files-transfer-direct.ts":
+        'const start = "/api/files/direct"; const part = "/parts/url"; const request = new XMLHttpRequest(); request.open("PUT", started.url, true);',
+    });
+    expect(result.status).toBe(0);
+  });
+
   it("rejects infrastructure dependencies from domain code", async () => {
     const result = await runFixture("extraction", {
       "src/modules/files/domain/file.ts": 'import "../infrastructure/r2.js";',
