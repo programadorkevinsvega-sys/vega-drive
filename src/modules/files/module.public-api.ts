@@ -12,6 +12,8 @@ import {
 import type { FilesMultipartUploadRepository } from "./application/ports/files-multipart-repository.js";
 import { createTrashMutations } from "./application/trash-mutations.js";
 import type { FilesDownloadResult } from "./application/file-download.js";
+import type { FilesDownloadUrlResult } from "./application/file-download-url.js";
+import { createFileDownloadUrl } from "./application/file-download-url.js";
 import type { IFileStoragePort } from "./application/ports/file-storage.js";
 import type {
   FilesCatalogNameRepository,
@@ -60,6 +62,7 @@ export interface FilesPublicApi {
     id: unknown,
     range: string | null,
   ): Promise<FilesDownloadResult>;
+  createDownloadUrl(actor: FilesActor, id: unknown): Promise<FilesDownloadUrlResult>;
   cleanupExpiredUploads(nowIso: string, limit: number): Promise<number>;
   beginMultipartUpload(
     actor: FilesActor,
@@ -159,6 +162,19 @@ export function createFilesModule(
           ...(deps.createId ? { createId: deps.createId } : {}),
         })
       : null;
+  const downloadUrl =
+    deps.uploads && deps.transferEvents && deps.storage
+      ? createFileDownloadUrl({
+          folders: deps.folders,
+          items: deps.items,
+          names: deps.names,
+          uploads: deps.uploads,
+          transferEvents: deps.transferEvents,
+          storage: deps.storage,
+          ...(deps.now ? { now: deps.now } : {}),
+          ...(deps.createId ? { createId: deps.createId } : {}),
+        })
+      : null;
   const transfers =
     deps.uploads && deps.transferEvents && deps.storage
       ? createFileTransfers({
@@ -194,6 +210,10 @@ export function createFilesModule(
     downloadFile: (...args) =>
       transfers
         ? transfers.downloadFile(...args)
+        : Promise.resolve({ ok: false, reason: "unavailable" }),
+    createDownloadUrl: (...args) =>
+      downloadUrl
+        ? downloadUrl(...args)
         : Promise.resolve({ ok: false, reason: "unavailable" }),
     cleanupExpiredUploads: (nowIso, limit) =>
       transfers
