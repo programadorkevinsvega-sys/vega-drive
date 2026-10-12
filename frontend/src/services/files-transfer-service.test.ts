@@ -120,14 +120,11 @@ describe("subida binaria con progreso", () => {
     });
   });
 
-  it("rechaza archivos que superan el límite antes de abrir una solicitud", async () => {
+  it("inicia una sesión multipart para archivos grandes", () => {
     vi.stubGlobal("XMLHttpRequest", FakeXMLHttpRequest);
     const oversized = file({ size: 95 * 1024 * 1024 + 1 });
-
-    await expect(uploadFile(oversized, null)).rejects.toMatchObject({
-      name: "FilesApiError",
-      status: 413,
-    });
-    expect(FakeXMLHttpRequest.instances).toHaveLength(0);
+    void uploadFile(oversized, null);
+    expect(FakeXMLHttpRequest.instances[0]?.url).toBe("/api/files/multipart");
+    expect(FakeXMLHttpRequest.instances[0]?.method).toBe("POST");
   });
 });
