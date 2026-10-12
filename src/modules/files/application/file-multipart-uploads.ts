@@ -129,14 +129,15 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
       // A client may have rejected the start response before it could enter
       // its abort handler. Reclaim only same-name sessions with no stored
       // parts that have been idle for at least 15 minutes.
-      const abandoned = await deps.multipart.findAbandonedUnstartedForOwnerAndName?.(
-        actor.userId,
-        folderId,
-        name,
-        new Date(
-          now().getTime() - ABANDONED_EMPTY_MULTIPART_SESSION_MS,
-        ).toISOString(),
-      );
+      const abandoned =
+        await deps.multipart.findAbandonedUnstartedForOwnerAndName?.(
+          actor.userId,
+          folderId,
+          name,
+          new Date(
+            now().getTime() - ABANDONED_EMPTY_MULTIPART_SESSION_MS,
+          ).toISOString(),
+        );
       if (abandoned) {
         const previousReservation = await deps.uploads.findByIdForOwner(
           abandoned.reservationId,
