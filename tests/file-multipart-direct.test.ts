@@ -26,13 +26,13 @@ describe("autorizaciones multipart directas a R2", () => {
       savePart: vi.fn().mockResolvedValue(undefined),
     };
     const storage = { presignMultipartPartUrl };
-    const authorize = createMultipartPartAuthorizations({
+    const service = createMultipartPartAuthorizations({
       multipart: multipart as never,
       storage: storage as never,
       now: () => new Date("2026-10-11T14:00:00.000Z"),
     });
 
-    const result = await authorize(
+    const result = await service.authorizeMultipartPart(
       { userId: "owner-a" },
       session.id,
       7,
@@ -66,7 +66,7 @@ describe("autorizaciones multipart directas a R2", () => {
       now: () => new Date("2026-10-11T14:00:00.000Z"),
     });
 
-    const result = await authorize({ userId: "owner-b" }, session.id, 1);
+    const result = await service.authorizeMultipartPart({ userId: "owner-b" }, session.id, 1);
 
     expect(result).toEqual({ ok: false, reason: "not-found" });
     expect(findByIdForOwner).toHaveBeenCalledWith(session.id, "owner-b");
@@ -85,7 +85,7 @@ describe("autorizaciones multipart directas a R2", () => {
       now: () => new Date("2026-10-11T14:00:00.000Z"),
     });
 
-    await expect(authorize({ userId: "owner-a" }, session.id, 1)).resolves.toEqual({
+    await expect(service.authorizeMultipartPart({ userId: "owner-a" }, session.id, 1)).resolves.toEqual({
       ok: false,
       reason: "not-found",
     });
