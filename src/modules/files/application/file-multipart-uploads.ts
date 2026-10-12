@@ -302,7 +302,11 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
         sizeBytes: actualBytes,
       });
       return success({ partNumber });
-    } catch {
+    } catch (error) {
+      console.error("[files] multipart part persistence failed", {
+        partNumber,
+        error: error instanceof Error ? error.message : "unknown error",
+      });
       return failure("unavailable");
     }
   }
