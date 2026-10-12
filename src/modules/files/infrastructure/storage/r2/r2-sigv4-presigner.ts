@@ -116,7 +116,12 @@ export async function presignR2Object(
   const requestHash = hex(
     await crypto.subtle.digest("SHA-256", encoder.encode(canonicalRequest)),
   );
-  const stringToSign = [AWS_ALGORITHM, timestamp, scope, requestHash].join("\n");
+  const stringToSign = [
+    AWS_ALGORITHM,
+    timestamp,
+    scope,
+    requestHash,
+  ].join("\n");
   const key = await signingKey(config.secretAccessKey, day);
   const signature = hex(await hmac(key, stringToSign));
   return (
