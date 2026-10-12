@@ -22,9 +22,15 @@ export interface FilesMultipartPart {
 
 export interface FilesMultipartUploadRepository {
   insert(session: FilesMultipartSession): Promise<void>;
-  findByIdForOwner(id: string, ownerId: string): Promise<FilesMultipartSession | null>;
+  findByIdForOwner(
+    id: string,
+    ownerId: string,
+  ): Promise<FilesMultipartSession | null>;
   savePart(part: FilesMultipartPart): Promise<void>;
   listParts(sessionId: string): Promise<FilesMultipartPart[]>;
   delete(id: string, ownerId: string): Promise<boolean>;
-  listExpired(now: string, limit: number): Promise<FilesMultipartSession[]>;
+  listExpired(
+    now: string,
+    limit: number,
+  ): Promise<FilesMultipartSession[]>;
 }
