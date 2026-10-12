@@ -45,6 +45,7 @@ export { MULTIPART_PART_SIZE_BYTES };
 const MAX_MULTIPART_FILE_SIZE_BYTES = 5 * 1024 * 1024 * 1024 * 1024;
 const MAX_MULTIPART_PARTS = 10_000;
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const ABANDONED_EMPTY_MULTIPART_SESSION_MS = 15 * 60 * 1000;
 
 export interface FileMultipartDependencies {
   folders: FilesFolderRepository;
@@ -123,6 +124,44 @@ export function createFileMultipartUploads(deps: FileMultipartDependencies) {
         ))
       ) {
         return failure("duplicate-name");
+      }
+
+      // A client may have rejected the start response before it could enter
+      // its abort handler. Reclaim only same-name sessions with no stored
+      // parts that have been idle for at least 15 minutes.
+      const abandoned = await deps.multipart.findAbandonedUnstartedForOwnerAndName?.(
+        actor.userId,
+        folderId,
+        name,
+        new Date(
+          now().getTime() - ABANDONED_EMPTY_MULTIPART_SESSION_MS,
+        ).toISOString(),
+      );
+      if (abandoned) {
+        const previousReservation = await deps.uploads.findByIdForOwner(
+          abandoned.reservationId,
+          actor.userId,
+        );
+        if (previousReservation?.status !== "completed") {
+          if (abandoned.r2UploadId !== "direct-put") {
+            if (!storage.abortMultipartUpload) {
+              return failure("unavailable");
+            }
+            await storage.abortMultipartUpload(
+              abandoned.storageKey,
+              abandoned.r2UploadId,
+            );
+          }
+          await storage.delete(abandoned.storageKey);
+          await deps.names.release(actor.userId, "file", abandoned.itemId);
+          if (previousReservation) {
+            await deps.uploads.deleteByIdForOwner(
+              abandoned.reservationId,
+              actor.userId,
+            );
+          }
+          await deps.multipart.delete(abandoned.id, actor.userId);
+        }
       }
 
       const timestamp = now();
