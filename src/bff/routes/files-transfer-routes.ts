@@ -210,7 +210,8 @@ filesTransferRoutes.post(
     }
     if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
     const partNumber = Number(c.req.param("partNumber"));
-    const result = await createCompositionRoot(c.env).files.authorizeMultipartPart(
+    const result = await createCompositionRoot(c.env).files
+      .authorizeMultipartPart(
       actorFor(c),
       c.req.param("id"),
       partNumber,
@@ -292,7 +293,8 @@ filesTransferRoutes.post("/multipart/:id/complete", async (c) => {
     return c.json(REQUEST_ERROR, 400);
   }
   if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
-  const result = await createCompositionRoot(c.env).files.completeMultipartUpload(
+  const result = await createCompositionRoot(c.env).files
+    .completeMultipartUpload(
     actorFor(c),
     c.req.param("id"),
   );
