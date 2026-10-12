@@ -5,7 +5,6 @@ import { uploadFile } from "../services/files-transfer-service";
 import { Button } from "../ui/Button";
 import { UploadQueue, type UploadItem } from "./UploadQueue";
 
-const MAX_FILE_SIZE_BYTES = 95 * 1024 * 1024;
 
 interface FileTransferControlsProps {
   folderId: string | null;
@@ -40,22 +39,21 @@ export function FileTransferControls({
     const uploads = files.map<UploadItem>((file, index) => ({
       id: String(index) + "-" + file.name + "-" + file.lastModified,
       file,
-      state: file.size > MAX_FILE_SIZE_BYTES ? "error" : "pending",
+      state: "pending",
       progress: 0,
-      error:
-        file.size > MAX_FILE_SIZE_BYTES ? "Supera el límite de 95 MiB." : "",
+      error: "",
     }));
     setItems(uploads);
     setSummary("Preparando " + files.length + " archivo(s)…");
     setUploading(uploads.some((item) => item.state === "pending"));
     let completed = 0;
-    let failed = uploads.filter((item) => item.state === "error").length;
+    let failed = 0;
     const resolveFolder = createFolderResolver(folderId);
 
     try {
       for (let index = 0; index < uploads.length; index += 1) {
         const item = uploads[index];
-        if (!item || item.state === "error") continue;
+        if (!item) continue;
         updateItem(item.id, { state: "uploading", progress: 0 });
         const fileLabel = includeFolderStructure
           ? item.file.webkitRelativePath || item.file.name
