@@ -81,7 +81,7 @@ export class R2FileStorage implements IFileStoragePort {
         expiresInSeconds,
         query: {
           "response-content-disposition":
-            `attachment; filename="${downloadName.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download"}`,
+            `attachment; filename="${downloadName.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download"}"`,
           "response-content-type": "application/octet-stream",
         },
       },
