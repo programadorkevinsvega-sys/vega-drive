@@ -32,7 +32,7 @@ La papelera conserva archivos y carpetas durante 30 días desde `deleted_at`. El
 
 ## Límites iniciales
 
-- Tamaño máximo por archivo: 95 MiB para permanecer por debajo del límite de cuerpo de Worker.
+- Tamaño máximo de subida directa: 95 MiB para permanecer por debajo del límite de cuerpo del proxy. Los archivos mayores se dividen en partes de 16 MiB; el máximo de objeto está limitado por R2 y por el límite de partes.\n- Capacidad inicial reservada por propietario: 10 GiB. Esta es una cuota de producto inicial, no un límite de R2; el módulo de cuotas de la Fase 6 deberá reemplazarla por una política configurable.
 - Capacidad reservada por propietario: 1 GiB; se cuentan metadatos existentes, incluidos elementos en papelera, además de reservas pendientes/fallidas.
 - Frecuencia por propietario: máximo 20 intentos de subida y 120 descargas en una ventana móvil de una hora.
 - El MIME se valida como tipo declarativo, no se considera una prueba de la naturaleza real del archivo. Las descargas siempre son attachment con nosniff.
@@ -41,7 +41,7 @@ Estos valores son límites iniciales del producto en files; cuotas configurables
 
 ## Integración de interfaz
 
-- [x] El navegador sube archivos binarios a `POST /api/files` usando `X-File-Name`, `X-File-Size`, el MIME declarativo y, cuando corresponde, `X-File-Folder-Id`.
+- [x] El navegador sube archivos de hasta 95 MiB a `POST /api/files` usando `X-File-Name`, `X-File-Size`, el MIME declarativo y, cuando corresponde, `X-File-Folder-Id`.\n- [x] Los archivos mayores usan sesiones multipart autenticadas y fragmentos de 16 MiB a través del mismo origen; el Worker conserva el ID R2 y los ETags en estado privado del módulo files.
 - [x] La interfaz limita la selección a 95 MiB por archivo para orientar al usuario; el backend mantiene la validación autoritativa.
 - [x] Las filas de archivos ofrecen descarga a través de `GET /api/files/:id/download`, que conserva la autorización y el streaming privado del Worker.
 - [x] Las transferencias usan mismo origen, cookies same-origin y `cache: no-store`; no se configura acceso a R2 desde el cliente.
