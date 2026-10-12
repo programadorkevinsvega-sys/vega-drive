@@ -81,7 +81,8 @@ export async function presignR2Object(
     input.key.startsWith("/") ||
     input.key.includes("..") ||
     (input.contentLength !== undefined &&
-      (!Number.isSafeInteger(input.contentLength) || input.contentLength < 0)) ||
+      (!Number.isSafeInteger(input.contentLength) ||
+        input.contentLength < 0)) ||
     !Number.isSafeInteger(input.expiresInSeconds) ||
     input.expiresInSeconds < 1 ||
     input.expiresInSeconds > 900
