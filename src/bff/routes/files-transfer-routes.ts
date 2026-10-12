@@ -213,6 +213,21 @@ filesTransferRoutes.get("/:id/download", async (c) => {
   if (new URL(c.req.raw.url).searchParams.size > 0) {
     return c.json(REQUEST_ERROR, 400);
   }
+  if (c.env.DIRECT_R2_TRANSFERS_ENABLED === "true") {
+    const direct = await createCompositionRoot(c.env).files.createDownloadUrl(
+      actorFor(c),
+      c.req.param("id"),
+    );
+    if (!direct.ok) return transferError(direct.reason);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: direct.value.url,
+        "Cache-Control": "no-store",
+        "Referrer-Policy": "no-referrer",
+      },
+    });
+  }
   const result = await createCompositionRoot(c.env).files.downloadFile(
     actorFor(c),
     c.req.param("id"),
