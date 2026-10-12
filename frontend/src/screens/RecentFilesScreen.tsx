@@ -4,7 +4,6 @@ import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
 import { Spinner } from "../ui/Spinner";
-import { formatFileSize } from "../lib/format-file-size";
 import {
   FilesApiError,
   listRecent,
@@ -134,7 +133,6 @@ export function RecentFilesScreen() {
         >
           <div className="vd-catalog__row vd-catalog__row--header" role="row">
             <span role="columnheader">Nombre</span>
-            <span role="columnheader">Tamaño</span>
             <span role="columnheader">Actividad</span>
             <span role="columnheader">Fecha</span>
             <span role="columnheader" className="vd-catalog__actions-heading">
@@ -152,9 +150,6 @@ export function RecentFilesScreen() {
                     {item.file.name}
                   </span>
                 </div>
-                <span className="vd-catalog__meta" role="cell">
-                  {formatFileSize(item.file.sizeBytes)}
-                </span>
                 <span className="vd-catalog__meta" role="cell">
                   {item.activityType === "open" ? "Apertura" : "Descarga"}
                 </span>
