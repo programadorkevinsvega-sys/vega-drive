@@ -39,7 +39,10 @@ function amzDate(date: Date): { timestamp: string; day: string } {
   return { timestamp: value, day: value.slice(0, 8) };
 }
 
-async function hmac(key: ArrayBuffer | Uint8Array, value: string): Promise<ArrayBuffer> {
+async function hmac(
+  key: ArrayBuffer | Uint8Array,
+  value: string,
+): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     key instanceof Uint8Array ? key : new Uint8Array(key),
@@ -79,7 +82,10 @@ export async function presignR2Object(
 
   const { timestamp, day } = amzDate(now);
   const host = config.accountId + ".r2.cloudflarestorage.com";
-  const path = "/" + encode(config.bucketName) + "/" +
+  const path =
+    "/" +
+    encode(config.bucketName) +
+    "/" +
     input.key.split("/").map(encode).join("/");
   const scope = day + "/" + AWS_REGION + "/" + AWS_SERVICE + "/aws4_request";
   const query: Record<string, string> = {
@@ -94,18 +100,32 @@ export async function presignR2Object(
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, value]) => encode(key) + "=" + encode(value))
     .join("&");
+  const canonicalHeaders =
+    (input.contentType ? "content-type:" + input.contentType + "\n" : "") +
+    "host:" +
+    host;
+  const signedHeaders = input.contentType ? "content-type;host" : "host";
   const canonicalRequest = [
     input.method,
     path,
     canonicalQuery,
-    (input.contentType ? "content-type:" + input.contentType + "\n" : "") +
-      "host:" + host,
-    input.contentType ? "content-type;host" : "host",
+    canonicalHeaders,
+    signedHeaders,
     "UNSIGNED-PAYLOAD",
   ].join("\n");
-  const requestHash = hex(await crypto.subtle.digest("SHA-256", encoder.encode(canonicalRequest)));
+  const requestHash = hex(
+    await crypto.subtle.digest("SHA-256", encoder.encode(canonicalRequest)),
+  );
   const stringToSign = [AWS_ALGORITHM, timestamp, scope, requestHash].join("\n");
   const key = await signingKey(config.secretAccessKey, day);
   const signature = hex(await hmac(key, stringToSign));
-  return "https://" + host + path + "?" + canonicalQuery + "&X-Amz-Signature=" + signature;
+  return (
+    "https://" +
+    host +
+    path +
+    "?" +
+    canonicalQuery +
+    "&X-Amz-Signature=" +
+    signature
+  );
 }
