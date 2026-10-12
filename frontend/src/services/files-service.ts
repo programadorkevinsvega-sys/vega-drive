@@ -13,6 +13,7 @@ export type {
   FilesFolderView,
   FilesTrashListing,
   FilesRecentListing,
+  FilesRecentItem,
 } from "./files-contract";
 
 import { FilesApiError, messageForStatus } from "./files-api-error";
