@@ -191,6 +191,16 @@ export class InProcessFilesGateway implements FilesGateway {
   listTrash(...args: Parameters<FilesPublicApi["listTrash"]>) {
     return this.api.listTrash(...args);
   }
+
+  recordRecentActivity(
+    ...args: Parameters<FilesPublicApi["recordRecentActivity"]>
+  ) {
+    return this.api.recordRecentActivity(...args);
+  }
+
+  listRecent(...args: Parameters<FilesPublicApi["listRecent"]>) {
+    return this.api.listRecent(...args);
+  }
 }
 
 export class InProcessQuotaGateway implements QuotaGateway {
