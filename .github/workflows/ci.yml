@@ -27,6 +27,12 @@ jobs:
             pnpm-lock.yaml
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Temporary Markdown formatting inspection
+        run: |
+          pnpm exec prettier --write frontend/src/screens/MarkdownPreview.tsx
+          echo "BEGIN_FORMATTED_FILE:frontend/src/screens/MarkdownPreview.tsx"
+          cat frontend/src/screens/MarkdownPreview.tsx
+          echo "END_FORMATTED_FILE:frontend/src/screens/MarkdownPreview.tsx"
       - run: pnpm run verify:module-migrations
       - name: Apply D1 migrations to ephemeral local database
         run: pnpm run db:migrate:local
