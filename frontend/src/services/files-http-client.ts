@@ -53,7 +53,11 @@ export function queryString(
   return serialized ? "?" + serialized : "";
 }
 
-export function sendJson<T>(path: string, method: string, body: unknown): Promise<T> {
+export function sendJson<T>(
+  path: string,
+  method: string,
+  body: unknown,
+): Promise<T> {
   return requestJson<T>(path, { method, body: JSON.stringify(body) });
 }
 

@@ -66,7 +66,15 @@ export function CatalogNodeRow({
       ]
     : [
         ...(!isFolder && canPreviewFile(node.name)
-          ? [{ id: "preview", label: "Vista previa", icon: "file" as const, onSelect: () => onPreview(node as Extract<FilesCatalogNode, { type: "file" }>) } satisfies MenuItem]
+          ? [
+              {
+                id: "preview",
+                label: "Vista previa",
+                icon: "file",
+                onSelect: () =>
+                  onPreview(node as Extract<FilesCatalogNode, { type: "file" }>),
+              } satisfies MenuItem,
+            ]
           : []),
         ...(!isFolder
           ? [
@@ -120,7 +128,13 @@ export function CatalogNodeRow({
             {node.name}
           </button>
         ) : !isFolder && !trashed && canPreviewFile(node.name) ? (
-          <button type="button" className="vd-catalog__name vd-catalog__name--link" onClick={() => onPreview(node)}>{node.name}</button>
+          <button
+            type="button"
+            className="vd-catalog__name vd-catalog__name--link"
+            onClick={() => onPreview(node)}
+          >
+            {node.name}
+          </button>
         ) : (
           <span className="vd-catalog__name" title={node.name}>{node.name}</span>
         )}

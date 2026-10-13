@@ -170,7 +170,12 @@ export function FilesCatalogScreen({
         </section>
       ) : null}
 
-      {previewFile ? <FilePreviewDialog file={previewFile} onClose={() => setPreviewFile(null)} /> : null}
+      {previewFile ? (
+        <FilePreviewDialog
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
+      ) : null}
 
       <CatalogDialogs
         actions={actions}

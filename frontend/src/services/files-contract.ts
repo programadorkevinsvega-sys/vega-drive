@@ -35,7 +35,6 @@ export interface FilesTrashListing {
   nextCursor: string | null;
 }
 
-
 export interface FilesRecentItem {
   file: FilesFileView;
   activityType: "open" | "download";

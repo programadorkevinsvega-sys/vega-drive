@@ -58,8 +58,12 @@ export function downloadFileUrl(id: string): string {
 }
 
 export interface FilesPreviewUrl { url: string; expiresInSeconds: number }
-export function createFilePreviewUrl(id: string): Promise<FilesPreviewUrl> {
-  return requestJson<FilesPreviewUrl>("/api/files/" + encodeURIComponent(id) + "/preview");
+export function createFilePreviewUrl(
+  id: string,
+): Promise<FilesPreviewUrl> {
+  return requestJson<FilesPreviewUrl>(
+    "/api/files/" + encodeURIComponent(id) + "/preview",
+  );
 }
 
 export function createFolder(

@@ -160,8 +160,24 @@ export function RecentFilesScreen() {
                   {dateLabel(item.lastActivityAt)}
                 </span>
                 <div className="vd-catalog__actions" role="cell">
-                  {canPreviewFile(item.file.name) ? <Button size="sm" variant="secondary" onClick={() => setPreviewFile(item.file)}>Vista previa</Button> : null}
-                  <Button size="sm" variant="secondary" onClick={() => window.location.assign(downloadFileUrl(item.file.id))}>Descargar</Button>
+                  {canPreviewFile(item.file.name) ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setPreviewFile(item.file)}
+                    >
+                      Vista previa
+                    </Button>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() =>
+                      window.location.assign(downloadFileUrl(item.file.id))
+                    }
+                  >
+                    Descargar
+                  </Button>
                 </div>
               </div>
             ))}
@@ -180,7 +196,12 @@ export function RecentFilesScreen() {
           ) : null}
         </section>
       ) : null}
-      {previewFile ? <FilePreviewDialog file={previewFile} onClose={() => setPreviewFile(null)} /> : null}
+      {previewFile ? (
+        <FilePreviewDialog
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
+      ) : null}
     </div>
   );
 }
