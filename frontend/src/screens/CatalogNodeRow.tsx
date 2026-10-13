@@ -2,12 +2,14 @@ import { MenuButton, type MenuItem } from "../ui/MenuButton";
 import { Icon } from "../ui/Icon";
 import { formatFileSize } from "../lib/format-file-size";
 import { downloadFileUrl } from "../services/files-service";
+import { canPreviewFile } from "./preview-format";
 import type { FilesCatalogNode } from "../services/files-contract";
 
 interface CatalogNodeRowProps {
   node: FilesCatalogNode;
   trashed?: boolean;
   onOpen: (id: string) => void;
+  onPreview: (node: Extract<FilesCatalogNode, { type: "file" }>) => void;
   onRename: (node: FilesCatalogNode) => void;
   onMove: (node: FilesCatalogNode) => void;
   onDelete: (node: FilesCatalogNode) => void;
@@ -30,6 +32,7 @@ export function CatalogNodeRow({
   node,
   trashed = false,
   onOpen,
+  onPreview,
   onRename,
   onMove,
   onDelete,
@@ -62,6 +65,9 @@ export function CatalogNodeRow({
         },
       ]
     : [
+        ...(!isFolder && canPreviewFile(node.name)
+          ? [{ id: "preview", label: "Vista previa", icon: "file" as const, onSelect: () => onPreview(node as Extract<FilesCatalogNode, { type: "file" }>) } satisfies MenuItem]
+          : []),
         ...(!isFolder
           ? [
               {
@@ -113,10 +119,10 @@ export function CatalogNodeRow({
           >
             {node.name}
           </button>
+        ) : !isFolder && !trashed && canPreviewFile(node.name) ? (
+          <button type="button" className="vd-catalog__name vd-catalog__name--link" onClick={() => onPreview(node)}>{node.name}</button>
         ) : (
-          <span className="vd-catalog__name" title={node.name}>
-            {node.name}
-          </span>
+          <span className="vd-catalog__name" title={node.name}>{node.name}</span>
         )}
       </div>
       <span className="vd-catalog__meta" role="cell">

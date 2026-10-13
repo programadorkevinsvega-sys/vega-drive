@@ -11,6 +11,8 @@ import { navigate } from "../router/use-route";
 import { FileTransferControls } from "./FileTransferControls";
 import { buildCatalogBreadcrumbs } from "./catalog-breadcrumbs";
 import { CatalogDialogs } from "./CatalogDialogs";
+import { FilePreviewDialog } from "./FilePreviewDialog";
+import type { FilesFileView } from "../services/files-contract";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -24,6 +26,7 @@ export function FilesCatalogScreen({
   const data = useCatalogData(view, folderId);
   const actions = useCatalogActions(folderId, data.refresh);
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
   const breadcrumbs = buildCatalogBreadcrumbs(
     view,
     folderId,
@@ -139,6 +142,7 @@ export function FilesCatalogScreen({
                 node={node}
                 trashed={view === "trash"}
                 onOpen={(id) => navigate({ name: "drive", folderId: id })}
+                onPreview={(file) => setPreviewFile(file)}
                 onRename={(item) =>
                   actions.setAction({ type: "rename", node: item })
                 }
@@ -165,6 +169,8 @@ export function FilesCatalogScreen({
           ) : null}
         </section>
       ) : null}
+
+      {previewFile ? <FilePreviewDialog file={previewFile} onClose={() => setPreviewFile(null)} /> : null}
 
       <CatalogDialogs
         actions={actions}
