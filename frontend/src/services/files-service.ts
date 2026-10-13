@@ -61,9 +61,7 @@ export interface FilesPreviewUrl {
   url: string;
   expiresInSeconds: number;
 }
-export function createFilePreviewUrl(
-  id: string,
-): Promise<FilesPreviewUrl> {
+export function createFilePreviewUrl(id: string): Promise<FilesPreviewUrl> {
   return requestJson<FilesPreviewUrl>(
     "/api/files/" + encodeURIComponent(id) + "/preview",
   );

@@ -85,8 +85,7 @@ export function FilePreviewDialog({
     onClose();
   }
 
-  const localRead =
-    kind === "text" || kind === "docx" || kind === "xlsx";
+  const localRead = kind === "text" || kind === "docx" || kind === "xlsx";
   const tooLarge = localRead && file.sizeBytes > 25 * 1024 * 1024;
 
   return (

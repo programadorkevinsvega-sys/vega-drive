@@ -6,7 +6,8 @@ activos, registra la apertura y devuelve la URL; no retransmite los bytes.
 
 ## Formatos y límites
 
-- Imágenes rasterizadas, audio/vídeo compatibles con el navegador, PDF y texto.
+- Imágenes rasterizadas, audio/vídeo compatibles con el navegador, PDF y
+  texto.
 - DOCX: extracción local del texto principal. XLSX: valores de la primera hoja,
   máximo 500 filas.
 - HTML, SVG, JavaScript, ejecutables, DOC y XLS antiguos no se muestran en
@@ -48,8 +49,8 @@ vídeo nativos no requieren que JavaScript lea los bytes.
 
 1. Abrir imagen, vídeo, PDF, TXT/MD, DOCX y XLSX desde Mi unidad y Recientes.
 2. En DevTools → Network, confirmar que los bytes se descargan de
-   *.r2.cloudflarestorage.com; el endpoint /api/files/:id/preview solo devuelve
-   metadatos y la URL.
+   host de R2; el endpoint /api/files/:id/preview solo devuelve metadatos y la
+   URL.
 3. Confirmar que HTML/SVG no se muestran como documentos activos y que no hay
    visores externos.
 4. Probar acceso cruzado entre cuentas, URL expirada, solicitudes Range para

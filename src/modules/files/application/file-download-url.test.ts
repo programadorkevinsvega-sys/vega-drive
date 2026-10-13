@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { createFileDownloadUrl } from "./file-download-url.js";
-import type { FilesItemRecord, FilesItemRepository, FilesFolderRepository, FilesCatalogNameRepository, FilesUploadRepository, FilesTransferEventRepository } from "./ports/files-repositories.js";
+import type {
+  FilesItemRecord,
+  FilesItemRepository,
+  FilesFolderRepository,
+  FilesCatalogNameRepository,
+  FilesUploadRepository,
+  FilesTransferEventRepository,
+} from "./ports/files-repositories.js";
 import type { IFileStoragePort } from "./ports/file-storage.js";
 import type { FileTransferDependencies } from "./file-transfer-dependencies.js";
 
@@ -28,7 +35,10 @@ function dependencies(ownerHasFile = true) {
     consume: vi.fn(async () => true),
   } as unknown as FilesTransferEventRepository;
   const storage = {
-    head: vi.fn(async () => ({ sizeBytes: item.sizeBytes, contentType: item.contentType })),
+    head: vi.fn(async () => ({
+      sizeBytes: item.sizeBytes,
+      contentType: item.contentType,
+    })),
     presignGetUrl: vi.fn(async () => "https://r2.example/signed-object"),
   } as unknown as IFileStoragePort;
   const deps = {
@@ -61,7 +71,10 @@ describe("file preview URL authorization", () => {
       "private/server/key",
       900,
       "notes.txt",
-      { disposition: "inline", responseContentType: "text/plain; charset=utf-8" },
+      {
+        disposition: "inline",
+        responseContentType: "text/plain; charset=utf-8",
+      },
     );
   });
 

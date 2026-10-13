@@ -207,8 +207,7 @@ export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
     const cells: string[] = [];
     for (const cell of Array.from(row.getElementsByTagNameNS("*", "c"))) {
       const index = columnIndex(cell.getAttribute("r") ?? "A1");
-      const value =
-        cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
+      const value = cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
       cells[index] =
         cell.getAttribute("t") === "s"
           ? (sharedStrings[Number(value)] ?? "")
@@ -234,7 +233,7 @@ export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
   );
   if (declaredLength > MAX_PREVIEW_BYTES) {
     throw new Error(
-      "El archivo supera el límite de 25 MB para vista previa; puedes descargarlo.",
+      "Archivo mayor de 25 MB; descarga para verlo.",
     );
   }
 
@@ -253,7 +252,7 @@ export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
       if (totalBytes > MAX_PREVIEW_BYTES) {
         await reader.cancel();
         throw new Error(
-          "El archivo supera el límite de 25 MB para vista previa; puedes descargarlo.",
+          "Archivo mayor de 25 MB; descarga para verlo.",
         );
       }
       chunks.push(part.value);
