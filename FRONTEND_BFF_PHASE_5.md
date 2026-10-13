@@ -26,7 +26,7 @@
 ### Recientes, favoritos y búsqueda
 
 - [x] Recientes ya tiene contrato público en `files`: lista archivos por última apertura/descarga, con paginación por cursor y solo recursos activos visibles para el actor.
-- [x] La migración `0004_files_recent_activity.sql` registra la última actividad por combinación de propietario y archivo; las escrituras usan el actor autenticado y la consulta D1 filtra por `owner_id`.
+- [x] La migración `0005_files_recent_activity.sql` registra la última actividad por combinación de propietario y archivo; las escrituras usan el actor autenticado y la consulta D1 filtra por `owner_id`.
 - [x] El BFF expone `GET /api/files/recent` y `POST /api/files/items/:id/open`, detrás del middleware de sesión. Las descargas registran actividad al iniciar el flujo autorizado, tanto en la ruta de URL firmada como en el fallback del Worker.
 - [x] La pantalla Recientes consume el BFF y muestra carga, error, reintento, vacío, paginación y acción de descarga.
 - [ ] La migración aún no se ha aplicado ni desplegado desde esta tarea; requiere autorización operativa explícita y posterior verificación de D1.
