@@ -145,6 +145,9 @@ describe("module-owned D1 migrations", () => {
       "files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
     );
     expect(manifest).toContain(
+      "files/infrastructure/persistence/d1/migrations/0005_files_recent_activity.sql",
+    );
+    expect(manifest).toContain(
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
     );
     expect(manifest).toContain("migrations/0001_initial_schema.sql");
