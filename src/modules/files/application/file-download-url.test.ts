@@ -129,7 +129,6 @@ describe("file preview URL authorization", () => {
       "private/server/key",
       120,
       "notes.txt",
-      undefined,
     );
   });
 });

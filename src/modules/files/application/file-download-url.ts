@@ -95,14 +95,22 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
         return { ok: false, reason: "unavailable" };
       }
       const expiresInSeconds = purpose === "preview" ? 900 : 120;
-      const url = await deps.storage.presignGetUrl(
-        item.storageKey,
-        expiresInSeconds,
-        item.name,
+      const url =
         purpose === "preview"
-          ? { disposition: "inline", responseContentType: contentType! }
-          : undefined,
-      );
+          ? await deps.storage.presignGetUrl(
+              item.storageKey,
+              expiresInSeconds,
+              item.name,
+              {
+                disposition: "inline",
+                responseContentType: contentType!,
+              },
+            )
+          : await deps.storage.presignGetUrl(
+              item.storageKey,
+              expiresInSeconds,
+              item.name,
+            );
       if (!url) return { ok: false, reason: "unavailable" };
       return { ok: true, value: { url, expiresInSeconds } };
     } catch {
