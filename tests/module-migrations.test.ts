@@ -66,7 +66,7 @@ describe("module-owned D1 migrations", () => {
       "files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
       "files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
       "files/infrastructure/persistence/d1/migrations/0004_files_multipart_uploads.sql",
-      "files/infrastructure/persistence/d1/migrations/0004_files_recent_activity.sql",
+      "files/infrastructure/persistence/d1/migrations/0005_files_recent_activity.sql",
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
       "identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql",
     ]);
