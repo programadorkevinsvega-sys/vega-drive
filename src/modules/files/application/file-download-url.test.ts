@@ -60,9 +60,7 @@ function dependencies(ownerHasFile = true) {
 }
 
 describe("file preview URL authorization", () => {
-  it(
-    "returns a short-lived inline URL with a server-selected safe MIME type",
-    async () => {
+  it("returns a short-lived inline URL with a server-selected safe MIME type", async () => {
     const deps = dependencies();
     const result = await deps.service(
       { userId: "user_a" },
@@ -92,9 +90,7 @@ describe("file preview URL authorization", () => {
     );
   });
 
-  it(
-    "does not issue a signed URL for a file owned by another user",
-    async () => {
+  it("does not issue a signed URL for a file owned by another user", async () => {
     const deps = dependencies(false);
     const result = await deps.service(
       { userId: "user_b" },
@@ -121,9 +117,7 @@ describe("file preview URL authorization", () => {
     expect(deps.storage.presignGetUrl).not.toHaveBeenCalled();
   });
 
-  it(
-    "keeps ordinary downloads as attachment URLs with their shorter lifetime",
-    async () => {
+  it("keeps ordinary downloads as attachment URLs with their shorter lifetime", async () => {
     const deps = dependencies();
     const result = await deps.service({ userId: "user_a" }, "file_a");
 

@@ -20,7 +20,7 @@ activos, registra la apertura y devuelve la URL; no retransmite los bytes.
 En Cloudflare Dashboard → R2 → bucket privado vega-drive-files → Settings →
 CORS Policy, configurar:
 
-~~~json
+```json
 [
   {
     "AllowedOrigins": [
@@ -39,7 +39,7 @@ CORS Policy, configurar:
     "MaxAgeSeconds": 3600
   }
 ]
-~~~
+```
 
 No habilitar acceso público ni usar origen wildcard. DOCX/XLSX y texto
 necesitan CORS porque el navegador lee el contenido directamente; imágenes y

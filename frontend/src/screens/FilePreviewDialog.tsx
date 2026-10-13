@@ -45,7 +45,8 @@ export function FilePreviewDialog({
         if (cancelled) return;
         setUrl(result.url);
 
-        const needsLocalRead = kind === "text" || kind === "docx" || kind === "xlsx";
+        const needsLocalRead =
+          kind === "text" || kind === "docx" || kind === "xlsx";
         if (needsLocalRead && file.sizeBytes <= 25 * 1024 * 1024) {
           const buffer = await fetchPreviewBytes(result.url);
           if (cancelled) return;
@@ -120,9 +121,7 @@ export function FilePreviewDialog({
       </header>
 
       <div className="vd-preview__body" aria-live="polite">
-        {loading ? (
-          <p role="status">Preparando vista previa segura…</p>
-        ) : null}
+        {loading ? <p role="status">Preparando vista previa segura…</p> : null}
         {error ? (
           <div role="alert" className="vd-preview__error">
             <p>{error}</p>

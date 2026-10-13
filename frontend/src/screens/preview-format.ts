@@ -200,9 +200,7 @@ export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
     sharedStrings = [];
   }
 
-  const sheet = parseXml(
-    await unzipEntry(buffer, "xl/worksheets/sheet1.xml"),
-  );
+  const sheet = parseXml(await unzipEntry(buffer, "xl/worksheets/sheet1.xml"));
   return Array.from(sheet.getElementsByTagNameNS("*", "row"), (row) => {
     const cells: string[] = [];
     for (const cell of Array.from(row.getElementsByTagNameNS("*", "c"))) {
@@ -228,9 +226,7 @@ export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
     throw new Error("R2 no pudo entregar el archivo para la vista previa.");
   }
 
-  const declaredLength = Number(
-    response.headers.get("Content-Length") ?? "0",
-  );
+  const declaredLength = Number(response.headers.get("Content-Length") ?? "0");
   if (declaredLength > MAX_PREVIEW_BYTES) {
     throw new Error("Archivo mayor de 25 MB; descarga para verlo.");
   }
