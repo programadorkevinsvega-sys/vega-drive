@@ -23,6 +23,13 @@
 - [x] La Fase 4 y sus validaciones operativas están registradas como completadas en `FILES_PHASE_4.md`.
 - [ ] En esta auditoría de documentación no se volvió a ejecutar una prueba E2E ni CI. El cierre de integración de Fase 5 requiere comprobar que el flujo de UI, los endpoints y los estados de error/cancelación encajan en el commit candidato.
 
+### Vista previa segura de archivos
+
+- [x] El BFF autoriza URLs GET firmadas de corta duración; los bytes se sirven directamente desde R2.
+- [x] Visor nativo de imágenes, audio/vídeo y PDF, lectura de texto y extracción local limitada de DOCX/XLSX.
+- [ ] Configurar y verificar CORS del bucket R2; instrucciones en FILES_PREVIEW.md.
+- [ ] Verificar acceso cruzado, caducidad, Range y host R2 en producción.
+
 ### Recientes, favoritos y búsqueda
 
 - [x] Recientes ya tiene contrato público en `files`: lista archivos por última apertura/descarga, con paginación por cursor y solo recursos activos visibles para el actor.
