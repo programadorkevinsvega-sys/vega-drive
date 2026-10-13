@@ -165,16 +165,31 @@ export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
   }
 
   const sheet = parseXml(await unzipEntry(buffer, "xl/worksheets/sheet1.xml"));
-  return Array.from(sheet.getElementsByTagNameNS("*", "row"), (row) => {
+  const xmlRows = sheet.getElementsByTagNameNS("*", "row");
+  const result: string[][] = [];
+  const rowCount = Math.min(xmlRows.length, 500);
+
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const row = xmlRows.item(rowIndex);
+    if (!row) continue;
+    const xmlCells = row.getElementsByTagNameNS("*", "c");
     const cells: string[] = [];
-    for (const cell of Array.from(row.getElementsByTagNameNS("*", "c"))) {
-      const index = columnIndex(cell.getAttribute("r") ?? "A1");
-      const value = cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
-      cells[index] =
+    const cellCount = Math.min(xmlCells.length, 100);
+
+    for (let cellIndex = 0; cellIndex < cellCount; cellIndex++) {
+      const cell = xmlCells.item(cellIndex);
+      if (!cell) continue;
+      const column = columnIndex(cell.getAttribute("r") ?? "A1");
+      if (column < 0 || column >= 100) continue;
+      const value =
+        cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
+      cells[column] =
         cell.getAttribute("t") === "s"
           ? (sharedStrings[Number(value)] ?? "")
           : value;
     }
-    return cells;
-  }).slice(0, 500);
+    result.push(cells);
+  }
+
+  return result;
 }

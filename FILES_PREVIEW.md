@@ -8,8 +8,8 @@ activos, registra la apertura y devuelve la URL; no retransmite los bytes.
 
 - Imágenes rasterizadas, audio/vídeo compatibles con el navegador, PDF y
   texto.
-- DOCX: extracción local del texto principal. XLSX: valores de la primera
-  hoja, máximo 500 filas.
+- Markdown: títulos, listas, citas, bloques de código y enlaces seguros sin ejecutar HTML.
+- DOCX: extracción local del texto principal. XLSX: primera hoja, máximo 500 filas y 100 columnas.
 - HTML, SVG, JavaScript, ejecutables, DOC y XLS antiguos no se muestran en
   línea.
 - Texto/DOCX/XLSX: máximo 25 MiB. El contenido no se envía a proveedores
