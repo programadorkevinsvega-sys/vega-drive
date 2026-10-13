@@ -27,6 +27,14 @@ jobs:
             pnpm-lock.yaml
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Temporary preview formatting inspection
+        run: |
+          pnpm exec prettier --write FILES_PREVIEW.md frontend/src/screens/FilePreviewDialog.tsx frontend/src/screens/preview-format.ts src/modules/files/application/file-download-url.test.ts src/modules/files/application/file-download-url.ts src/modules/files/application/recent-activity.ts
+          for file in FILES_PREVIEW.md frontend/src/screens/FilePreviewDialog.tsx frontend/src/screens/preview-format.ts src/modules/files/application/file-download-url.test.ts src/modules/files/application/file-download-url.ts src/modules/files/application/recent-activity.ts; do
+            echo "BEGIN_FORMATTED_FILE:$file"
+            cat "$file"
+            echo "END_FORMATTED_FILE:$file"
+          done
       - run: pnpm run verify:module-migrations
       - name: Apply D1 migrations to ephemeral local database
         run: pnpm run db:migrate:local
