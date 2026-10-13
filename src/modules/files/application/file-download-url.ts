@@ -71,14 +71,15 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
       if (!head || head.sizeBytes !== item.sizeBytes) {
         return { ok: false, reason: "unavailable" };
       }
+      const expiresInSeconds = purpose === "preview" ? 900 : 120;
       const url = await deps.storage.presignGetUrl(
         item.storageKey,
-        purpose === "preview" ? 900 : 120,
+        expiresInSeconds,
         item.name,
         purpose === "preview" ? { disposition: "inline", responseContentType: contentType! } : undefined,
       );
       if (!url) return { ok: false, reason: "unavailable" };
-      return { ok: true, value: { url, expiresInSeconds: 120 } };
+      return { ok: true, value: { url, expiresInSeconds } };
     } catch {
       return { ok: false, reason: "unavailable" };
     }
