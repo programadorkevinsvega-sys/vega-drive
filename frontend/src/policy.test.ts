@@ -106,7 +106,7 @@ describe("politica del frontend", () => {
 
     for (const path of callers) {
       const client = readFileSync(join(SRC, path), "utf8");
-      expect(client.match(/\\bfetch\\s*\\(/g)).toHaveLength(1);
+      expect(client.match(/\bfetch\s*\(/g)).toHaveLength(1);
       if (path === "services/preview-http-client.ts") {
         expect(client).toContain('mode: "cors"');
         expect(client).toContain('credentials: "omit"');
