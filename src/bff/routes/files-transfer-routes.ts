@@ -25,6 +25,8 @@ function actorFor(c: Context<AuthenticatedEnv>) {
 
 function transferError(reason: string, totalSizeBytes?: number): Response {
   switch (reason) {
+    case "unsupported-preview":
+      return Response.json({ error: "Preview is not supported for this file type" }, { status: 415 });
     case "invalid-input":
     case "size-mismatch":
     case "integrity-mismatch":
@@ -315,6 +317,15 @@ filesTransferRoutes.post("/multipart/:id/abort", async (c) => {
   );
   if (!result.ok) return transferError(result.reason);
   return c.json({ ok: true }, 200);
+});
+
+filesTransferRoutes.get("/:id/preview", async (c) => {
+  if (new URL(c.req.raw.url).searchParams.size > 0) return c.json(REQUEST_ERROR, 400);
+  const files = createCompositionRoot(c.env).files;
+  const result = await files.createPreviewUrl(actorFor(c), c.req.param("id"));
+  if (!result.ok) return transferError(result.reason);
+  await files.recordRecentActivity(actorFor(c), c.req.param("id"), "open");
+  return c.json(result.value, 200, { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
 });
 
 filesTransferRoutes.get("/:id/download", async (c) => {

@@ -1,4 +1,17 @@
 import type { FilesActor } from "./catalog-contracts.js";
+
+export type FileUrlPurpose = "download" | "preview";
+
+function previewContentType(name: string): string | null {
+  const extension = name.toLowerCase().split(".").pop() ?? "";
+  const types: Record<string, string> = {
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", avif: "image/avif", bmp: "image/bmp",
+    mp4: "video/mp4", webm: "video/webm", ogv: "video/ogg", mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", m4a: "audio/mp4",
+    pdf: "application/pdf", txt: "text/plain; charset=utf-8", md: "text/plain; charset=utf-8", markdown: "text/plain; charset=utf-8", csv: "text/plain; charset=utf-8", json: "text/plain; charset=utf-8", log: "text/plain; charset=utf-8", yaml: "text/plain; charset=utf-8", yml: "text/plain; charset=utf-8",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  };
+  return types[extension] ?? null;
+}
 import type { FileTransferDependencies } from "./file-transfer-dependencies.js";
 import { DOWNLOADS_PER_HOUR } from "./transfer-contracts.js";
 import {
@@ -18,6 +31,7 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
   return async function createDownloadUrl(
     actor: FilesActor,
     rawId: unknown,
+    purpose: FileUrlPurpose = "download",
   ): Promise<FilesDownloadUrlResult> {
     if (!hasValidActor(actor) || !isValidCatalogId(rawId)) {
       return { ok: false, reason: "invalid-input" };
@@ -35,6 +49,9 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
       ) {
         return { ok: false, reason: "not-found" };
       }
+
+      const contentType = purpose === "preview" ? previewContentType(item.name) : null;
+      if (purpose === "preview" && !contentType) return { ok: false, reason: "unsupported-preview" };
 
       const timestamp = now();
       if (
@@ -56,8 +73,9 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
       }
       const url = await deps.storage.presignGetUrl(
         item.storageKey,
-        120,
+        purpose === "preview" ? 900 : 120,
         item.name,
+        purpose === "preview" ? { disposition: "inline", responseContentType: contentType! } : undefined,
       );
       if (!url) return { ok: false, reason: "unavailable" };
       return { ok: true, value: { url, expiresInSeconds: 120 } };

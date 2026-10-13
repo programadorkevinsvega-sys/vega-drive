@@ -132,6 +132,10 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.createDownloadUrl(...args);
   }
 
+  createPreviewUrl(...args: Parameters<FilesPublicApi["createPreviewUrl"]>) {
+    return this.api.createPreviewUrl(...args);
+  }
+
   beginDirectUpload(...args: Parameters<FilesPublicApi["beginDirectUpload"]>) {
     return this.api.beginDirectUpload(...args);
   }
