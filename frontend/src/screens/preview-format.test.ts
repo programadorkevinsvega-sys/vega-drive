@@ -10,8 +10,17 @@ describe("clasificación de vista previa", () => {
     expect(previewKind("informe.docx")).toBe("docx");
     expect(previewKind("datos.xlsx")).toBe("xlsx");
   });
+
   it("rechaza contenido activo y formatos Office antiguos", () => {
-    for (const name of ["pagina.html", "vector.svg", "script.js", "macro.docm", "antiguo.doc", "libro.xls", "app.exe"]) {
+    for (const name of [
+      "pagina.html",
+      "vector.svg",
+      "script.js",
+      "macro.docm",
+      "antiguo.doc",
+      "libro.xls",
+      "app.exe",
+    ]) {
       expect(canPreviewFile(name), name).toBe(false);
     }
   });
