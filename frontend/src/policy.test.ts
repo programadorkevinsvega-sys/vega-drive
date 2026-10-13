@@ -98,15 +98,22 @@ describe("politica del frontend", () => {
       .filter(NOT_TESTS)
       .filter((file) => /\bfetch\s*\(/.test(file.text))
       .map((file) => file.path);
-    expect(callers).toEqual([
+    expect(callers.sort()).toEqual([
       "services/files-http-client.ts",
       "services/identity-service.ts",
+      "services/preview-http-client.ts",
     ]);
 
     for (const path of callers) {
       const client = readFileSync(join(SRC, path), "utf8");
-      expect(client.match(/\bfetch\s*\(/g)).toHaveLength(1);
-      expect(client).toContain('"/api/');
+      expect(client.match(/\\bfetch\\s*\\(/g)).toHaveLength(1);
+      if (path === "services/preview-http-client.ts") {
+        expect(client).toContain('mode: "cors"');
+        expect(client).toContain('credentials: "omit"');
+        expect(client).toContain('referrerPolicy: "no-referrer"');
+        continue;
+      }
+      expect(client).toContain('"\/api/');
       expect(client).toContain('credentials: "same-origin"');
       expect(client).toContain('cache: "no-store"');
     }

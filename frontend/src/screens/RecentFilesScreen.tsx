@@ -10,9 +10,7 @@ import {
   downloadFileUrl,
   type FilesRecentItem,
 } from "../services/files-service";
-import type { FilesFileView } from "../services/files-contract";
-import { FilePreviewDialog } from "./FilePreviewDialog";
-import { canPreviewFile } from "./preview-format";
+import { RecentFilePreviewAction } from "./RecentFilePreviewAction";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
@@ -38,7 +36,6 @@ export function RecentFilesScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
-  const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -160,15 +157,7 @@ export function RecentFilesScreen() {
                   {dateLabel(item.lastActivityAt)}
                 </span>
                 <div className="vd-catalog__actions" role="cell">
-                  {canPreviewFile(item.file.name) ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => setPreviewFile(item.file)}
-                    >
-                      Vista previa
-                    </Button>
-                  ) : null}
+                  <RecentFilePreviewAction file={item.file} />
                   <Button
                     size="sm"
                     variant="secondary"
@@ -195,12 +184,6 @@ export function RecentFilesScreen() {
             </div>
           ) : null}
         </section>
-      ) : null}
-      {previewFile ? (
-        <FilePreviewDialog
-          file={previewFile}
-          onClose={() => setPreviewFile(null)}
-        />
       ) : null}
     </div>
   );
