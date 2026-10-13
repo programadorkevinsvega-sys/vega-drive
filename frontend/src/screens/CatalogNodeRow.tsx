@@ -25,7 +25,9 @@ function formattedDate(value: string | null): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(date);
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+  }).format(date);
 }
 
 export function CatalogNodeRow({
@@ -72,7 +74,9 @@ export function CatalogNodeRow({
                 label: "Vista previa",
                 icon: "file",
                 onSelect: () =>
-                  onPreview(node as Extract<FilesCatalogNode, { type: "file" }>),
+                  onPreview(
+                    node as Extract<FilesCatalogNode, { type: "file" }>,
+                  ),
               } satisfies MenuItem,
             ]
           : []),
@@ -136,7 +140,9 @@ export function CatalogNodeRow({
             {node.name}
           </button>
         ) : (
-          <span className="vd-catalog__name" title={node.name}>{node.name}</span>
+          <span className="vd-catalog__name" title={node.name}>
+            {node.name}
+          </span>
         )}
       </div>
       <span className="vd-catalog__meta" role="cell">

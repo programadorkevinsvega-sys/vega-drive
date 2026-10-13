@@ -122,7 +122,9 @@ export function FilePreviewDialog({
       </header>
 
       <div className="vd-preview__body" aria-live="polite">
-        {loading ? <p role="status">Preparando vista previa segura…</p> : null}
+        {loading ? (
+          <p role="status">Preparando vista previa segura…</p>
+        ) : null}
         {error ? (
           <div role="alert" className="vd-preview__error">
             <p>{error}</p>

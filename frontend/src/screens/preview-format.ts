@@ -207,7 +207,8 @@ export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
     const cells: string[] = [];
     for (const cell of Array.from(row.getElementsByTagNameNS("*", "c"))) {
       const index = columnIndex(cell.getAttribute("r") ?? "A1");
-      const value = cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
+      const value =
+        cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
       cells[index] =
         cell.getAttribute("t") === "s"
           ? (sharedStrings[Number(value)] ?? "")

@@ -57,7 +57,10 @@ export function downloadFileUrl(id: string): string {
   return "/api/files/" + encodeURIComponent(id) + "/download";
 }
 
-export interface FilesPreviewUrl { url: string; expiresInSeconds: number }
+export interface FilesPreviewUrl {
+  url: string;
+  expiresInSeconds: number;
+}
 export function createFilePreviewUrl(
   id: string,
 ): Promise<FilesPreviewUrl> {

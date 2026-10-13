@@ -29,7 +29,10 @@ export async function requestJson<T>(
 
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new FilesApiError(messageForStatus(response.status), response.status);
+    throw new FilesApiError(
+      messageForStatus(response.status),
+      response.status,
+    );
   }
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new FilesApiError(

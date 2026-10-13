@@ -28,7 +28,10 @@ function previewContentType(name: string): string | null {
     log: "text/plain; charset=utf-8",
     yaml: "text/plain; charset=utf-8",
     yml: "text/plain; charset=utf-8",
-    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    docx:
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xlsx:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   };
   return types[extension] ?? null;
 }
@@ -65,7 +68,11 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
         !item ||
         item.deletedAt !== null ||
         (item.folderId !== null &&
-          !(await activeFolderPath(deps.folders, actor.userId, item.folderId)))
+          !(await activeFolderPath(
+            deps.folders,
+            actor.userId,
+            item.folderId,
+          )))
       ) {
         return { ok: false, reason: "not-found" };
       }
