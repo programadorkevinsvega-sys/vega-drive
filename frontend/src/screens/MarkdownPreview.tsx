@@ -4,7 +4,8 @@ function renderInline(source: string): ReactNode[] {
   const tokenPattern =
     /(\[[^\]]+\]\((?:https?:\/\/|mailto:)[^\s)]+\)|\x60[^\x60]+\x60|\*\*[^*]+\*\*|\*[^*]+\*)/g;
   return source.split(tokenPattern).filter(Boolean).map((part, index) => {
-    const link = /^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)$/.exec(part);
+    const link =
+      /^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)$/.exec(part);
     if (link) {
       return (
         <a
