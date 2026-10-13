@@ -26,7 +26,7 @@ Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
    - Tablas e índices: `files_multipart_uploads` y `files_multipart_parts`; conservan la propiedad del usuario, el estado R2 y los ETags/tamaños de las partes para completar o limpiar subidas grandes.
 
 5. **Propietario: `files`**
-   - Migración: `files/infrastructure/persistence/d1/migrations/0004_files_recent_activity.sql`.
+   - Migración: `files/infrastructure/persistence/d1/migrations/0005_files_recent_activity.sql`.
    - Tabla e índice: `files_recent_activity` y `files_recent_owner_activity_idx`; registran por propietario la última apertura o descarga de cada elemento del catálogo.
 
 6. **Propietario: `identity`**
