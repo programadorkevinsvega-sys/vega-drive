@@ -1,5 +1,6 @@
 import type { FilesFileView } from "../services/files-contract";
 import type { PreviewKind } from "./preview-format";
+import { MarkdownPreview } from "./MarkdownPreview";
 
 export function FilePreviewContent({
   file,
@@ -76,7 +77,11 @@ export function FilePreviewContent({
         />
       ) : null}
       {!loading && !error && !tooLarge && kind === "text" ? (
-        <pre className="vd-preview__text">{text}</pre>
+        /\.md(own)?$/i.test(file.name) ? (
+          <MarkdownPreview source={text} />
+        ) : (
+          <pre className="vd-preview__text">{text}</pre>
+        )
       ) : null}
       {!loading && !error && !tooLarge && kind === "docx" ? (
         <article className="vd-preview__document">
