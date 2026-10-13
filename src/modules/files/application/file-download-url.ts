@@ -5,9 +5,29 @@ export type FileUrlPurpose = "download" | "preview";
 function previewContentType(name: string): string | null {
   const extension = name.toLowerCase().split(".").pop() ?? "";
   const types: Record<string, string> = {
-    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", avif: "image/avif", bmp: "image/bmp",
-    mp4: "video/mp4", webm: "video/webm", ogv: "video/ogg", mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", m4a: "audio/mp4",
-    pdf: "application/pdf", txt: "text/plain; charset=utf-8", md: "text/plain; charset=utf-8", markdown: "text/plain; charset=utf-8", csv: "text/plain; charset=utf-8", json: "text/plain; charset=utf-8", log: "text/plain; charset=utf-8", yaml: "text/plain; charset=utf-8", yml: "text/plain; charset=utf-8",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp",
+    avif: "image/avif",
+    bmp: "image/bmp",
+    mp4: "video/mp4",
+    webm: "video/webm",
+    ogv: "video/ogg",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    ogg: "audio/ogg",
+    m4a: "audio/mp4",
+    pdf: "application/pdf",
+    txt: "text/plain; charset=utf-8",
+    md: "text/plain; charset=utf-8",
+    markdown: "text/plain; charset=utf-8",
+    csv: "text/plain; charset=utf-8",
+    json: "text/plain; charset=utf-8",
+    log: "text/plain; charset=utf-8",
+    yaml: "text/plain; charset=utf-8",
+    yml: "text/plain; charset=utf-8",
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   };
   return types[extension] ?? null;
@@ -50,8 +70,11 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
         return { ok: false, reason: "not-found" };
       }
 
-      const contentType = purpose === "preview" ? previewContentType(item.name) : null;
-      if (purpose === "preview" && !contentType) return { ok: false, reason: "unsupported-preview" };
+      const contentType =
+        purpose === "preview" ? previewContentType(item.name) : null;
+      if (purpose === "preview" && !contentType) {
+        return { ok: false, reason: "unsupported-preview" };
+      }
 
       const timestamp = now();
       if (
@@ -76,7 +99,9 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
         item.storageKey,
         expiresInSeconds,
         item.name,
-        purpose === "preview" ? { disposition: "inline", responseContentType: contentType! } : undefined,
+        purpose === "preview"
+          ? { disposition: "inline", responseContentType: contentType! }
+          : undefined,
       );
       if (!url) return { ok: false, reason: "unavailable" };
       return { ok: true, value: { url, expiresInSeconds } };

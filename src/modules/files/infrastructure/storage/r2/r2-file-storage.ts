@@ -152,7 +152,10 @@ export class R2FileStorage implements IFileStoragePort {
     key: string,
     expiresInSeconds: number,
     downloadName: string,
-    response?: { disposition: "attachment" | "inline"; responseContentType: string },
+    response?: {
+      disposition: "attachment" | "inline";
+      responseContentType: string;
+    },
   ): Promise<string | null> {
     const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = this.env;
     if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
@@ -172,10 +175,12 @@ export class R2FileStorage implements IFileStoragePort {
         key,
         expiresInSeconds,
         query: {
-          "response-content-disposition": response?.disposition === "inline"
-            ? 'inline; filename="' + safeName + '"'
-            : 'attachment; filename="' + safeName + '"',
-          "response-content-type": response?.responseContentType ?? "application/octet-stream",
+          "response-content-disposition":
+            response?.disposition === "inline"
+              ? 'inline; filename="' + safeName + '"'
+              : 'attachment; filename="' + safeName + '"',
+          "response-content-type":
+            response?.responseContentType ?? "application/octet-stream",
         },
       },
     );

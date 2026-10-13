@@ -47,7 +47,10 @@ export interface IFileStoragePort {
     key: string,
     expiresInSeconds: number,
     downloadName: string,
-    response?: { disposition: "attachment" | "inline"; responseContentType: string },
+    response?: {
+      disposition: "attachment" | "inline";
+      responseContentType: string;
+    },
   ): Promise<string | null>;
   createMultipartUpload?(key: string, contentType: string): Promise<string>;
   uploadMultipartPart?(

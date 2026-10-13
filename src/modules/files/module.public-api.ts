@@ -79,7 +79,10 @@ export interface FilesPublicApi {
     actor: FilesActor,
     id: unknown,
   ): Promise<FilesDownloadUrlResult>;
-  createPreviewUrl(actor: FilesActor, id: unknown): Promise<FilesDownloadUrlResult>;
+  createPreviewUrl(
+    actor: FilesActor,
+    id: unknown,
+  ): Promise<FilesDownloadUrlResult>;
   beginDirectUpload(
     actor: FilesActor,
     input: unknown,
@@ -299,7 +302,9 @@ export function createFilesModule(
         ? downloadUrl(...args)
         : Promise.resolve({ ok: false, reason: "unavailable" }),
     createPreviewUrl: (actor, id) =>
-      downloadUrl ? downloadUrl(actor, id, "preview") : Promise.resolve({ ok: false, reason: "unavailable" }),
+      downloadUrl
+        ? downloadUrl(actor, id, "preview")
+        : Promise.resolve({ ok: false, reason: "unavailable" }),
     beginDirectUpload: (...args) =>
       directUploads
         ? directUploads.beginDirectUpload(...args)

@@ -211,7 +211,6 @@ export interface FilesCatalogNameRepository {
   ): Promise<void>;
 }
 
-
 export type FilesRecentActivityKind = "open" | "download";
 
 export interface FilesRecentActivityRecord {
