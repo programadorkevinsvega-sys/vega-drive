@@ -3,33 +3,37 @@ import type { ReactNode } from "react";
 function renderInline(source: string): ReactNode[] {
   const tokenPattern =
     /(\[[^\]]+\]\((?:https?:\/\/|mailto:)[^\s)]+\)|\x60[^\x60]+\x60|\*\*[^*]+\*\*|\*[^*]+\*)/g;
-  return source.split(tokenPattern).filter(Boolean).map((part, index) => {
-    const link =
-      /^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)$/.exec(part);
-    if (link) {
-      return (
-        <a
-          key={index}
-          href={link[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          referrerPolicy="no-referrer"
-        >
-          {link[1]}
-        </a>
+  return source
+    .split(tokenPattern)
+    .filter(Boolean)
+    .map((part, index) => {
+      const link = /^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)$/.exec(
+        part,
       );
-    }
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith("*") && part.endsWith("*")) {
-      return <em key={index}>{part.slice(1, -1)}</em>;
-    }
-    if (part.startsWith("\x60") && part.endsWith("\x60")) {
-      return <code key={index}>{part.slice(1, -1)}</code>;
-    }
-    return part;
-  });
+      if (link) {
+        return (
+          <a
+            key={index}
+            href={link[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+          >
+            {link[1]}
+          </a>
+        );
+      }
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return <em key={index}>{part.slice(1, -1)}</em>;
+      }
+      if (part.startsWith("\x60") && part.endsWith("\x60")) {
+        return <code key={index}>{part.slice(1, -1)}</code>;
+      }
+      return part;
+    });
 }
 
 export function MarkdownPreview({ source }: { source: string }) {
@@ -73,7 +77,7 @@ export function MarkdownPreview({ source }: { source: string }) {
 
     const listItem = /^\s*[-*+]\s+(.+)$/.exec(line);
     if (listItem) {
-      listItems.push(listItem[1]);
+      listItems.push(listItem[1] ?? "");
       continue;
     }
 
@@ -100,8 +104,8 @@ export function MarkdownPreview({ source }: { source: string }) {
       continue;
     }
 
-    const content = renderInline(heading[2]);
-    switch (heading[1].length) {
+    const content = renderInline(heading[2] ?? "");
+    switch (heading[1]?.length ?? 1) {
       case 1:
         nodes.push(<h1 key={index}>{content}</h1>);
         break;
