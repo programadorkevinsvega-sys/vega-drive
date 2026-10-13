@@ -48,7 +48,9 @@ export function FilePreviewDialog({
           const buffer = await fetchPreviewBytes(result.url);
           if (cancelled) return;
           if (kind === "text") {
-            setText(new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, ""));
+            setText(
+              new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, ""),
+            );
           } else if (kind === "docx") {
             setText(await readDocx(buffer));
           } else if (kind === "xlsx") {
@@ -79,8 +81,7 @@ export function FilePreviewDialog({
     onClose();
   }
 
-  const localRead =
-    kind === "text" || kind === "docx" || kind === "xlsx";
+  const localRead = kind === "text" || kind === "docx" || kind === "xlsx";
   const tooLarge = localRead && file.sizeBytes > 25 * 1024 * 1024;
 
   return (

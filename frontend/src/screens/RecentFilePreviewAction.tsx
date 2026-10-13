@@ -7,11 +7,7 @@ export function RecentFilePreviewAction({ file }: { file: FilesFileView }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => setOpen(true)}
-      >
+      <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
         Vista previa
       </Button>
       {open ? (

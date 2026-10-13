@@ -11,9 +11,7 @@ export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
     throw new Error("R2 no pudo entregar el archivo para la vista previa.");
   }
 
-  const declaredLength = Number(
-    response.headers.get("Content-Length") ?? "0",
-  );
+  const declaredLength = Number(response.headers.get("Content-Length") ?? "0");
   if (declaredLength > MAX_PREVIEW_BYTES) {
     throw new Error("Archivo mayor de 25 MB; descarga para verlo.");
   }

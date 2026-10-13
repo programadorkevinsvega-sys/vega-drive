@@ -178,4 +178,3 @@ export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
     return cells;
   }).slice(0, 500);
 }
-
