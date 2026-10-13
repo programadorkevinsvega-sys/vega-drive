@@ -99,7 +99,7 @@ describe("politica del frontend", () => {
       .filter((file) => /\bfetch\s*\(/.test(file.text))
       .map((file) => file.path);
     expect(callers).toEqual([
-      "services/files-service.ts",
+      "services/files-http-client.ts",
       "services/identity-service.ts",
     ]);
 
