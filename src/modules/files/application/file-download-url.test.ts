@@ -51,13 +51,24 @@ function dependencies(ownerHasFile = true) {
     now: () => new Date(timestamp),
     createId: () => "event_a",
   } satisfies FileTransferDependencies;
-  return { service: createFileDownloadUrl(deps), items, storage, transferEvents };
+  return {
+    service: createFileDownloadUrl(deps),
+    items,
+    storage,
+    transferEvents,
+  };
 }
 
 describe("file preview URL authorization", () => {
-  it("returns a short-lived inline URL with a server-selected safe MIME type", async () => {
+  it(
+    "returns a short-lived inline URL with a server-selected safe MIME type",
+    async () => {
     const deps = dependencies();
-    const result = await deps.service({ userId: "user_a" }, "file_a", "preview");
+    const result = await deps.service(
+      { userId: "user_a" },
+      "file_a",
+      "preview",
+    );
 
     expect(result).toEqual({
       ok: true,
@@ -66,7 +77,10 @@ describe("file preview URL authorization", () => {
         expiresInSeconds: 900,
       },
     });
-    expect(deps.items.findByIdForOwner).toHaveBeenCalledWith("file_a", "user_a");
+    expect(deps.items.findByIdForOwner).toHaveBeenCalledWith(
+      "file_a",
+      "user_a",
+    );
     expect(deps.storage.presignGetUrl).toHaveBeenCalledWith(
       "private/server/key",
       900,
@@ -78,9 +92,15 @@ describe("file preview URL authorization", () => {
     );
   });
 
-  it("does not issue a signed URL for a file owned by another user", async () => {
+  it(
+    "does not issue a signed URL for a file owned by another user",
+    async () => {
     const deps = dependencies(false);
-    const result = await deps.service({ userId: "user_b" }, "file_a", "preview");
+    const result = await deps.service(
+      { userId: "user_b" },
+      "file_a",
+      "preview",
+    );
 
     expect(result).toEqual({ ok: false, reason: "not-found" });
     expect(deps.storage.presignGetUrl).not.toHaveBeenCalled();
@@ -91,13 +111,19 @@ describe("file preview URL authorization", () => {
     const active = { ...item, name: "payload.html" };
     vi.mocked(deps.items.findByIdForOwner).mockResolvedValue(active);
 
-    const result = await deps.service({ userId: "user_a" }, "file_a", "preview");
+    const result = await deps.service(
+      { userId: "user_a" },
+      "file_a",
+      "preview",
+    );
 
     expect(result).toEqual({ ok: false, reason: "unsupported-preview" });
     expect(deps.storage.presignGetUrl).not.toHaveBeenCalled();
   });
 
-  it("keeps ordinary downloads as attachment URLs with their shorter lifetime", async () => {
+  it(
+    "keeps ordinary downloads as attachment URLs with their shorter lifetime",
+    async () => {
     const deps = dependencies();
     const result = await deps.service({ userId: "user_a" }, "file_a");
 

@@ -232,9 +232,7 @@ export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
     response.headers.get("Content-Length") ?? "0",
   );
   if (declaredLength > MAX_PREVIEW_BYTES) {
-    throw new Error(
-      "Archivo mayor de 25 MB; descarga para verlo.",
-    );
+    throw new Error("Archivo mayor de 25 MB; descarga para verlo.");
   }
 
   const reader = response.body?.getReader();
@@ -251,9 +249,7 @@ export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
       totalBytes += part.value.byteLength;
       if (totalBytes > MAX_PREVIEW_BYTES) {
         await reader.cancel();
-        throw new Error(
-          "Archivo mayor de 25 MB; descarga para verlo.",
-        );
+        throw new Error("Archivo mayor de 25 MB; descarga para verlo.");
       }
       chunks.push(part.value);
     }

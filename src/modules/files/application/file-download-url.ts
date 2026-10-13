@@ -76,8 +76,7 @@ export function createFileDownloadUrl(deps: FileTransferDependencies) {
         return { ok: false, reason: "not-found" };
       }
 
-      const contentType =
-        purpose === "preview" ? previewContentType(item.name) : null;
+      const contentType = purpose === "preview" ? previewContentType(item.name) : null;
       if (purpose === "preview" && !contentType) {
         return { ok: false, reason: "unsupported-preview" };
       }
