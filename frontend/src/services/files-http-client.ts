@@ -36,7 +36,7 @@ export async function requestJson<T>(
   return payload as T;
 }
 
-function queryString(
+export function queryString(
   values: Record<string, string | null | undefined>,
 ): string {
   const query = new URLSearchParams();
@@ -49,11 +49,11 @@ function queryString(
   return serialized ? "?" + serialized : "";
 }
 
-function sendJson<T>(path: string, method: string, body: unknown): Promise<T> {
+export function sendJson<T>(path: string, method: string, body: unknown): Promise<T> {
   return requestJson<T>(path, { method, body: JSON.stringify(body) });
 }
 
-function sendNoBody<T>(path: string, method: string): Promise<T> {
+export function sendNoBody<T>(path: string, method: string): Promise<T> {
   return requestJson<T>(path, { method });
 }
 
