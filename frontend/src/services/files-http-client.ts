@@ -5,6 +5,10 @@ export async function requestJson<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  if (!path.startsWith("/api/")) {
+    throw new FilesApiError("La ruta solicitada no es válida.", 0);
+  }
+
   let response: Response;
   try {
     response = await fetch(path, {
