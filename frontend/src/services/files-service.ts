@@ -17,7 +17,12 @@ export type {
 
 export { FilesApiError } from "./files-api-error";
 
-import { queryString, requestJson, sendJson, sendNoBody } from "./files-http-client";
+import {
+  queryString,
+  requestJson,
+  sendJson,
+  sendNoBody,
+} from "./files-http-client";
 export { requestJson } from "./files-http-client";
 
 export function listFolder(
