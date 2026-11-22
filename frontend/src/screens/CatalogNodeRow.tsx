@@ -1,7 +1,11 @@
 import { MenuButton, type MenuItem } from "../ui/MenuButton";
 import { Icon } from "../ui/Icon";
 import { formatFileSize } from "../lib/format-file-size";
-import { fileTypeIcon, fileTypeLabel, fileVisualType } from "../lib/file-type-icon";
+import {
+  fileTypeIcon,
+  fileTypeLabel,
+  fileVisualType,
+} from "../lib/file-type-icon";
 import { downloadFileUrl } from "../services/files-service";
 import { canPreviewFile } from "./preview-format";
 import type { FilesCatalogNode } from "../services/files-contract";

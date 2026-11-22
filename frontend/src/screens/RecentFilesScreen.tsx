@@ -11,7 +11,11 @@ import {
   type FilesRecentItem,
 } from "../services/files-service";
 import { RecentFilePreviewAction } from "./RecentFilePreviewAction";
-import { fileTypeIcon, fileTypeLabel, fileVisualType } from "../lib/file-type-icon";
+import {
+  fileTypeIcon,
+  fileTypeLabel,
+  fileVisualType,
+} from "../lib/file-type-icon";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 

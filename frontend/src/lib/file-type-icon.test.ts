@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  fileTypeIcon,
-  fileTypeLabel,
-  fileVisualType,
-} from "./file-type-icon";
+import { fileTypeIcon, fileTypeLabel, fileVisualType } from "./file-type-icon";
 
 describe("clasificación visual de archivos", () => {
   it.each([

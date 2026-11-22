@@ -8,7 +8,11 @@ import {
 import { fetchPreviewBytes } from "../services/preview-http-client";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
-import { fileTypeIcon, fileTypeLabel, fileVisualType } from "../lib/file-type-icon";
+import {
+  fileTypeIcon,
+  fileTypeLabel,
+  fileVisualType,
+} from "../lib/file-type-icon";
 import { readDocx, readXlsx } from "./office-document-parser";
 import { FilePreviewContent } from "./FilePreviewContent";
 import { previewKind } from "./preview-format";
