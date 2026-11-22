@@ -74,18 +74,35 @@ export async function presignR2Object(
   now = new Date(),
 ): Promise<string> {
   if (
-    !/^[a-z0-9-]{8,64}$/i.test(config.accountId) ||
-    !config.bucketName ||
+    !/^[a-f0-9]{32}$/i.test(config.accountId) ||
+    !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(config.bucketName) ||
     !config.accessKeyId ||
+    /[\\r\\n\\u0000-\\u001f\\u007f]/.test(config.accessKeyId) ||
     !config.secretAccessKey ||
+    /[\\r\\n\\u0000-\\u001f\\u007f]/.test(config.secretAccessKey) ||
+    !input.key ||
     input.key.startsWith("/") ||
-    input.key.includes("..") ||
+    input.key.includes("\\\\") ||
+    input.key.split("/").some((segment) => !segment || segment === "." || segment === "..") ||
+    /[\\u0000-\\u001f\\u007f]/.test(input.key) ||
+    (input.contentType !== undefined &&
+      (!input.contentType || /[\\r\\n\\u0000-\\u001f\\u007f]/.test(input.contentType))) ||
+    (input.ifNoneMatch !== undefined &&
+      (!input.ifNoneMatch || /[\\r\\n\\u0000-\\u001f\\u007f]/.test(input.ifNoneMatch))) ||
     (input.contentLength !== undefined &&
       (!Number.isSafeInteger(input.contentLength) ||
         input.contentLength < 0)) ||
     !Number.isSafeInteger(input.expiresInSeconds) ||
     input.expiresInSeconds < 1 ||
-    input.expiresInSeconds > 900
+    input.expiresInSeconds > 900 ||
+    !Number.isFinite(now.getTime()) ||
+    Object.entries(input.query ?? {}).some(
+      ([key, value]) =>
+        !key ||
+        !value ||
+        /[\\r\\n\\u0000-\\u001f\\u007f]/.test(key + value) ||
+        /^x-amz-/i.test(key),
+    )
   ) {
     throw new Error("Invalid R2 presign configuration");
   }
