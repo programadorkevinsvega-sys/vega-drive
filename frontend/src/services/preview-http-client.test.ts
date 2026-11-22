@@ -16,7 +16,7 @@ describe("descarga privada para vista previa", () => {
 
     expect([...new Uint8Array(result)]).toEqual([65, 66, 67]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://r2.example.test/signed",
+      "/api/files/file_a/preview/content",
       expect.objectContaining({
         mode: "cors",
         credentials: "same-origin",
