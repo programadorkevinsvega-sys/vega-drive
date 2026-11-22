@@ -14,4 +14,3 @@ function errorLabel(cause: unknown): string {
     ? cause.message
     : "No se pudieron cargar los archivos recientes. Inténtalo de nuevo.";
 }
-
