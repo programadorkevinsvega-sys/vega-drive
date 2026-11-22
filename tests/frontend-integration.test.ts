@@ -99,4 +99,15 @@ describe("integración de assets frontend/Cloudflare", () => {
     expect(deployWorkflow).not.toContain("push:");
     expect(deployWorkflow).toContain("run: pnpm run deploy:release");
   });
+  
+  it("fija Node.js y usa las opciones soportadas de observabilidad de Wrangler", () => {
+    expect(read(".nvmrc").trim()).toBe("22.23.5");
+    const toml = read("wrangler.toml");
+    const jsonc = read("wrangler.jsonc");
+    expect(toml).toContain("[observability.issues]");
+    expect(jsonc).toContain('"issues": {');
+    expect(toml).not.toContain("issue_detection");
+    expect(jsonc).not.toContain('"issue_detection"');
+  });
+
 });
