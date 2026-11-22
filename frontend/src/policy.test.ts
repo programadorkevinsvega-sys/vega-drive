@@ -93,7 +93,7 @@ describe("politica del frontend", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("limita fetch() a los clientes HTTP de identidad y catálogo", () => {
+  it("limita fetch() a los clientes HTTP autenticados de identidad, catálogo y vista previa", () => {
     const callers = sourceFiles(CODE)
       .filter(NOT_TESTS)
       .filter((file) => /\bfetch\s*\(/.test(file.text))
@@ -109,7 +109,7 @@ describe("politica del frontend", () => {
       expect(client.match(/\bfetch\s*\(/g)).toHaveLength(1);
       if (path === "services/preview-http-client.ts") {
         expect(client).toContain('mode: "cors"');
-        expect(client).toContain('credentials: "omit"');
+        expect(client).toContain('credentials: "same-origin"');
         expect(client).toContain('referrerPolicy: "no-referrer"');
         continue;
       }

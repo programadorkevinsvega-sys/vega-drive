@@ -74,6 +74,7 @@ export interface FilesPublicApi {
     actor: FilesActor,
     id: unknown,
     range: string | null,
+    purpose?: "download" | "preview",
   ): Promise<FilesDownloadResult>;
   createDownloadUrl(
     actor: FilesActor,

@@ -79,7 +79,7 @@ function transferError(reason: string, totalSizeBytes?: number): Response {
   }
 }
 
-function contentDisposition(name: string): string {
+function contentDisposition(name: string, inline = false): string {
   const fallback =
     name.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "download";
   const encoded = encodeURIComponent(name).replace(
@@ -87,7 +87,11 @@ function contentDisposition(name: string): string {
     (character) => "%" + character.charCodeAt(0).toString(16).toUpperCase(),
   );
   return (
-    'attachment; filename="' + fallback + "\"; filename*=UTF-8''" + encoded
+    (inline ? "inline" : "attachment") +
+    '; filename="' +
+    fallback +
+    "\"; filename*=UTF-8''" +
+    encoded
   );
 }
 
@@ -327,13 +331,47 @@ filesTransferRoutes.get("/:id/preview", async (c) => {
     return c.json(REQUEST_ERROR, 400);
   }
   const files = createCompositionRoot(c.env).files;
-  const result = await files.createPreviewUrl(actorFor(c), c.req.param("id"));
-  if (!result.ok) return transferError(result.reason);
   await files.recordRecentActivity(actorFor(c), c.req.param("id"), "open");
-  return c.json(result.value, 200, {
-    "Cache-Control": "no-store",
+  return c.json(
+    {
+      url:
+        "/api/files/" +
+        encodeURIComponent(c.req.param("id")) +
+        "/preview/content",
+      expiresInSeconds: 0,
+    },
+    200,
+    {
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
+    },
+  );
+});
+
+filesTransferRoutes.get("/:id/preview/content", async (c) => {
+  if (new URL(c.req.raw.url).searchParams.size > 0) {
+    return c.json(REQUEST_ERROR, 400);
+  }
+  const files = createCompositionRoot(c.env).files;
+  const result = await files.downloadFile(
+    actorFor(c),
+    c.req.param("id"),
+    c.req.header("Range") ?? null,
+    "preview",
+  );
+  if (!result.ok) return transferError(result.reason, result.totalSizeBytes);
+  const file = result.value;
+  const headers = new Headers({
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "private, no-store",
+    "Content-Disposition": contentDisposition(file.name, true),
+    "Content-Length": String(file.contentLength),
+    "Content-Type": file.contentType,
+    "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
   });
+  if (file.contentRange) headers.set("Content-Range", file.contentRange);
+  return new Response(file.body, { status: file.status, headers });
 });
 
 filesTransferRoutes.get("/:id/download", async (c) => {

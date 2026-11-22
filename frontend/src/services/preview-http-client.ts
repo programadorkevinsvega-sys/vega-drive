@@ -6,7 +6,7 @@ export async function fetchPreviewBytes(
 ): Promise<ArrayBuffer> {
   const response = await fetch(url, {
     mode: "cors",
-    credentials: "omit",
+    credentials: "same-origin",
     cache: "no-store",
     referrerPolicy: "no-referrer",
     ...(signal ? { signal } : {}),
