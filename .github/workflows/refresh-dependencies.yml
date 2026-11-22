@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.head_ref }}
           persist-credentials: true
       - uses: pnpm/action-setup@v6
         with:
@@ -53,5 +53,5 @@ jobs:
             echo "No dependency changes were required."
           else
             git commit -m "chore(security): refresh dependencies and lockfiles"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
           fi
