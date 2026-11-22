@@ -8,6 +8,7 @@ import {
 import { fetchPreviewBytes } from "../services/preview-http-client";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
+import { fileTypeIcon, fileTypeLabel, fileVisualType } from "../lib/file-type-icon";
 import { readDocx, readXlsx } from "./office-document-parser";
 import { FilePreviewContent } from "./FilePreviewContent";
 import { previewKind } from "./preview-format";
@@ -101,7 +102,16 @@ export function FilePreviewDialog({
     >
       <header className="vd-preview__header">
         <div className="vd-preview__title-wrap">
-          <Icon name="file" size="md" />
+          <span
+            className={
+              "vd-catalog__node-icon vd-catalog__node-icon--" +
+              fileVisualType(file.name)
+            }
+            title={fileTypeLabel(file.name)}
+            aria-hidden="true"
+          >
+            <Icon name={fileTypeIcon(file.name)} size="md" />
+          </span>
           <h2 className="vd-preview__title">{file.name}</h2>
         </div>
         <div className="vd-preview__actions">
