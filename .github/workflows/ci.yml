@@ -48,8 +48,7 @@ jobs:
         run: pnpm run db:migrate:local
       - name: Verify local D1 schema
         run: pnpm run db:verify:schema:local
-      - run: pnpm run cloudflare:build
-  secrets:
+secrets:
     runs-on: ubuntu-latest
     permissions:
       contents: read
