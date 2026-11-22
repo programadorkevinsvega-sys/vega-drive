@@ -51,6 +51,7 @@ export function createFileDownload(deps: FileTransferDependencies) {
     actor: FilesActor,
     rawId: unknown,
     rawRange: string | null,
+    purpose: "download" | "preview" = "download",
   ): Promise<FilesDownloadResult> {
     if (!hasValidActor(actor) || !isValidCatalogId(rawId)) {
       return { ok: false, reason: "invalid-input" };
@@ -65,7 +66,12 @@ export function createFileDownload(deps: FileTransferDependencies) {
       )
         return { ok: false, reason: "not-found" };
 
-      const previewType = purpose === "preview" ? previewContentType(item.name) : null;\n      if (purpose === "preview" && !previewType) {\n        return { ok: false, reason: "unsupported-preview" };\n      }\n\n      const timestamp = now();
+      const previewType = purpose === "preview" ? previewContentType(item.name) : null;\n      if (purpose === "preview" && !previewType) {\n        return { ok: false, reason: "unsupported-preview" };\n      }\n\n      const previewType = purpose === "preview" ? previewContentType(item.name) : null;
+      if (purpose === "preview" && !previewType) {
+        return { ok: false, reason: "unsupported-preview" };
+      }
+
+      const timestamp = now();
       if (
         !(await deps.transferEvents.consume(
           createId(),
@@ -101,9 +107,9 @@ export function createFileDownload(deps: FileTransferDependencies) {
         ok: true,
         value: {
           name: item.name,
-          contentType: isValidContentType(item.contentType)
+          contentType: previewType ?? (isValidContentType(item.contentType)
             ? item.contentType
-            : "application/octet-stream",
+            : "application/octet-stream"),
           sizeBytes: head.sizeBytes,
           contentLength: range ? range.length : head.sizeBytes,
           status: range ? 206 : 200,
