@@ -78,9 +78,7 @@ describe("R2 SigV4 presigner", () => {
     );
 
     const parsed = new URL(url);
-    expect(parsed.search).toContain(
-      "&a%2Fb=value%2Fwith%20space&a-b=other&",
-    );
+    expect(parsed.search).toContain("&a%2Fb=value%2Fwith%20space&a-b=other&");
     expect(parsed.searchParams.get("X-Amz-Signature")).toBe(
       "3f7badd75d4944168b1cc4404b9ca166aed2f011a97e62cc1edb96c42fdb1140",
     );
