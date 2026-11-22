@@ -1,9 +1,9 @@
 name: One-time secure dependency refresh
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/complete-document-viewer
+      - main
     paths:
       - .github/workflows/refresh-dependencies.yml
 
