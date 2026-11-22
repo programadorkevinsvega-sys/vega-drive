@@ -75,10 +75,14 @@ export async function presignR2Object(
 ): Promise<string> {
   if (
     (input.method !== "GET" && input.method !== "PUT") ||
+    typeof config.accountId !== "string" ||
     !/^[a-f0-9]{32}$/i.test(config.accountId) ||
+    typeof config.bucketName !== "string" ||
     !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(config.bucketName) ||
+    typeof config.accessKeyId !== "string" ||
     !config.accessKeyId ||
     /[\r\n\u0000-\u001f\u007f]/.test(config.accessKeyId) ||
+    typeof config.secretAccessKey !== "string" ||
     !config.secretAccessKey ||
     /[\r\n\u0000-\u001f\u007f]/.test(config.secretAccessKey) ||
     !input.key ||
@@ -89,10 +93,12 @@ export async function presignR2Object(
       .some((segment) => !segment || segment === "." || segment === "..") ||
     /[\u0000-\u001f\u007f]/.test(input.key) ||
     (input.contentType !== undefined &&
-      (!input.contentType ||
+      (typeof input.contentType !== "string" ||
+        !input.contentType ||
         /[\r\n\u0000-\u001f\u007f]/.test(input.contentType))) ||
     (input.ifNoneMatch !== undefined &&
-      (!input.ifNoneMatch ||
+      (typeof input.ifNoneMatch !== "string" ||
+        !input.ifNoneMatch ||
         /[\r\n\u0000-\u001f\u007f]/.test(input.ifNoneMatch))) ||
     (input.contentLength !== undefined &&
       (!Number.isSafeInteger(input.contentLength) ||
@@ -100,7 +106,12 @@ export async function presignR2Object(
     !Number.isSafeInteger(input.expiresInSeconds) ||
     input.expiresInSeconds < 1 ||
     input.expiresInSeconds > 900 ||
+    !(now instanceof Date) ||
     !Number.isFinite(now.getTime()) ||
+    (input.query !== undefined &&
+      (typeof input.query !== "object" ||
+        input.query === null ||
+        Array.isArray(input.query))) ||
     Object.entries(input.query ?? {}).some(
       ([key, value]) =>
         !key ||
