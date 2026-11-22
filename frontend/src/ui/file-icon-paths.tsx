@@ -67,4 +67,11 @@ export const FILE_ICON_PATHS = {
       <path d="m10.5 12-2 2 2 2M13.5 12l2 2-2 2" />
     </>
   ),
+  "file-text": (
+    <>
+      <path d="M6.5 5A1.5 1.5 0 0 1 8 3.5h5.5L19 9v10a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6.5 19z" />
+      <path d="M13.5 3.5V9H19" />
+      <path d="M9 12h6M9 14.5h6M9 17h4" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;

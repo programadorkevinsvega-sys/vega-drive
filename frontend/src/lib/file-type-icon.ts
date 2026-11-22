@@ -84,7 +84,7 @@ const ICONS: Record<FileVisualType, IconName> = {
   presentation: "file-presentation",
   archive: "file-archive",
   code: "file-code",
-  text: "file",
+  text: "file-text",
   generic: "file",
 };
 
