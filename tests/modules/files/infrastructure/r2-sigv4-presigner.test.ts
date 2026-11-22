@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { presignR2Object } from "../../../../../../src/modules/files/infrastructure/storage/r2/r2-sigv4-presigner.js";
+import { presignR2Object } from "../../../../src/modules/files/infrastructure/storage/r2/r2-sigv4-presigner.js";
 
 const config = {
   accountId: "0123456789abcdef0123456789abcdef",
