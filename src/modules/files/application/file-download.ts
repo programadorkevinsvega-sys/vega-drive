@@ -24,15 +24,29 @@ export interface FilesDownload {
 function previewContentType(name: string): string | null {
   const extension = name.toLowerCase().split(".").pop() ?? "";
   const types: Record<string, string> = {
-    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
-    webp: "image/webp", avif: "image/avif", bmp: "image/bmp",
-    mp4: "video/mp4", webm: "video/webm", ogv: "video/ogg",
-    mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", m4a: "audio/mp4",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp",
+    avif: "image/avif",
+    bmp: "image/bmp",
+    mp4: "video/mp4",
+    webm: "video/webm",
+    ogv: "video/ogg",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    ogg: "audio/ogg",
+    m4a: "audio/mp4",
     pdf: "application/pdf",
-    txt: "text/plain; charset=utf-8", md: "text/plain; charset=utf-8",
-    markdown: "text/plain; charset=utf-8", csv: "text/plain; charset=utf-8",
-    json: "text/plain; charset=utf-8", log: "text/plain; charset=utf-8",
-    yaml: "text/plain; charset=utf-8", yml: "text/plain; charset=utf-8",
+    txt: "text/plain; charset=utf-8",
+    md: "text/plain; charset=utf-8",
+    markdown: "text/plain; charset=utf-8",
+    csv: "text/plain; charset=utf-8",
+    json: "text/plain; charset=utf-8",
+    log: "text/plain; charset=utf-8",
+    yaml: "text/plain; charset=utf-8",
+    yml: "text/plain; charset=utf-8",
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   };
@@ -66,7 +80,8 @@ export function createFileDownload(deps: FileTransferDependencies) {
       )
         return { ok: false, reason: "not-found" };
 
-      const previewType = purpose === "preview" ? previewContentType(item.name) : null;
+      const previewType =
+        purpose === "preview" ? previewContentType(item.name) : null;
       if (purpose === "preview" && !previewType) {
         return { ok: false, reason: "unsupported-preview" };
       }
@@ -107,9 +122,11 @@ export function createFileDownload(deps: FileTransferDependencies) {
         ok: true,
         value: {
           name: item.name,
-          contentType: previewType ?? (isValidContentType(item.contentType)
-            ? item.contentType
-            : "application/octet-stream"),
+          contentType:
+            previewType ??
+            (isValidContentType(item.contentType)
+              ? item.contentType
+              : "application/octet-stream"),
           sizeBytes: head.sizeBytes,
           contentLength: range ? range.length : head.sizeBytes,
           status: range ? 206 : 200,
