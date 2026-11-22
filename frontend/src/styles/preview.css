@@ -132,6 +132,13 @@
   font-size: var(--vd-text-sm);
 }
 
+.vd-preview__notice {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+  color: var(--vd-text-muted);
+}
+
 .vd-preview__error {
   display: grid;
   gap: 0.75rem;
