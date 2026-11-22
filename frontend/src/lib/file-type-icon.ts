@@ -69,8 +69,6 @@ const EXTENSIONS: Record<FileVisualType, readonly string[]> = {
     "vue",
     "svelte",
     "graphql",
-    "md",
-    "markdown",
   ],
   text: ["txt", "log", "text", "md", "markdown"],
   generic: [],
