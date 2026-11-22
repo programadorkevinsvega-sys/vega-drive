@@ -69,32 +69,6 @@
   color: var(--vd-text-muted);
 }
 
-.vd-catalog__node-icon--folder,
-.vd-catalog__node-icon--document,
-.vd-catalog__node-icon--code {
-  background: var(--vd-accent-soft);
-  color: var(--vd-accent-text);
-}
-
-.vd-catalog__node-icon--image,
-.vd-catalog__node-icon--audio,
-.vd-catalog__node-icon--spreadsheet {
-  background: var(--vd-success-soft);
-  color: var(--vd-success-text);
-}
-
-.vd-catalog__node-icon--video,
-.vd-catalog__node-icon--pdf {
-  background: var(--vd-danger-soft);
-  color: var(--vd-danger-text);
-}
-
-.vd-catalog__node-icon--presentation,
-.vd-catalog__node-icon--archive {
-  background: var(--vd-warning-soft);
-  color: var(--vd-warning-text);
-}
-
 .vd-catalog__name {
   min-width: 0;
   overflow-wrap: anywhere;
