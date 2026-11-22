@@ -51,7 +51,7 @@ export function FilePreviewDialog({
           if (cancelled) return;
           if (kind === "text") {
             setText(
-              new TextDecoder("utf-8").decode(buffer).replace(/^\\uFEFF/, ""),
+              new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, ""),
             );
           } else if (kind === "docx") {
             setText(await readDocx(buffer));
