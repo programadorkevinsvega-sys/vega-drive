@@ -145,9 +145,23 @@ export async function presignR2Object(
     "X-Amz-Expires": String(input.expiresInSeconds),
     "X-Amz-SignedHeaders": signedHeaders,
   };
+  // SigV4 requires sorting the URI-encoded names (and values), not the
+  // original strings. Sorting before encoding can produce a different
+  // canonical request for reserved characters such as "/" in query names.
   const canonicalQuery = Object.entries(query)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([key, value]) => encode(key) + "=" + encode(value))
+    .map(([key, value]) => [encode(key), encode(value)] as const)
+    .sort(([leftKey, leftValue], [rightKey, rightValue]) =>
+      leftKey < rightKey
+        ? -1
+        : leftKey > rightKey
+          ? 1
+          : leftValue < rightValue
+            ? -1
+            : leftValue > rightValue
+              ? 1
+              : 0,
+    )
+    .map(([key, value]) => key + "=" + value)
     .join("&");
   const canonicalHeaders = [
     ...(input.contentLength !== undefined
