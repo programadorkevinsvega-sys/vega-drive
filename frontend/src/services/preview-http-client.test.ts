@@ -4,7 +4,7 @@ import { fetchPreviewBytes } from "./preview-http-client";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("descarga privada para vista previa", () => {
-  it("lee el contenido con CORS y sin enviar credenciales", async () => {
+  it("lee el contenido desde el mismo origen con la sesión autenticada", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(new Uint8Array([65, 66, 67]), {
         headers: { "Content-Length": "3" },
@@ -12,14 +12,14 @@ describe("descarga privada para vista previa", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await fetchPreviewBytes("https://r2.example.test/signed");
+    const result = await fetchPreviewBytes("/api/files/file_a/preview/content");
 
     expect([...new Uint8Array(result)]).toEqual([65, 66, 67]);
     expect(fetchMock).toHaveBeenCalledWith(
       "https://r2.example.test/signed",
       expect.objectContaining({
         mode: "cors",
-        credentials: "omit",
+        credentials: "same-origin",
         cache: "no-store",
         referrerPolicy: "no-referrer",
       }),
