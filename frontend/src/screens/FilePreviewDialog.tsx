@@ -25,6 +25,7 @@ export function FilePreviewDialog({
   const [rows, setRows] = useState<string[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const kind = previewKind(file.name);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function FilePreviewDialog({
     if (dialog && !dialog.open) dialog.showModal();
 
     let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setError("");
     setUrl("");
@@ -45,11 +47,11 @@ export function FilePreviewDialog({
         const needsLocalRead =
           kind === "text" || kind === "docx" || kind === "xlsx";
         if (needsLocalRead && file.sizeBytes <= 25 * 1024 * 1024) {
-          const buffer = await fetchPreviewBytes(result.url);
+          const buffer = await fetchPreviewBytes(result.url, controller.signal);
           if (cancelled) return;
           if (kind === "text") {
             setText(
-              new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, ""),
+              new TextDecoder("utf-8").decode(buffer).replace(/^\\uFEFF/, ""),
             );
           } else if (kind === "docx") {
             setText(await readDocx(buffer));
@@ -59,13 +61,12 @@ export function FilePreviewDialog({
         }
       })
       .catch((cause: unknown) => {
-        if (!cancelled) {
-          setError(
-            cause instanceof FilesApiError || cause instanceof Error
-              ? cause.message
-              : "No se pudo abrir la vista previa.",
-          );
-        }
+        if (cancelled || controller.signal.aborted) return;
+        setError(
+          cause instanceof FilesApiError || cause instanceof Error
+            ? cause.message
+            : "No se pudo abrir la vista previa.",
+        );
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -73,8 +74,9 @@ export function FilePreviewDialog({
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [file.id, file.sizeBytes, kind]);
+  }, [file.id, file.sizeBytes, kind, retryKey]);
 
   function close() {
     dialogRef.current?.close();
@@ -103,6 +105,17 @@ export function FilePreviewDialog({
           <h2 className="vd-preview__title">{file.name}</h2>
         </div>
         <div className="vd-preview__actions">
+          {url ? (
+            <a
+              className="vd-preview__open-link"
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+            >
+              Abrir original
+            </a>
+          ) : null}
           <Button
             size="sm"
             variant="secondary"
@@ -124,6 +137,7 @@ export function FilePreviewDialog({
         loading={loading}
         error={error}
         tooLarge={tooLarge}
+        onRetry={() => setRetryKey((value) => value + 1)}
       />
     </dialog>
   );
