@@ -64,7 +64,8 @@ describe("architecture guard", () => {
       resolve(".github/workflows/ci.yml"),
       "utf8",
     );
-    expect(workflow).toContain("pnpm run verify:module-migrations");
+    expect(workflow).toContain("pnpm run verify:architecture:all");
+    expect(workflow).toContain("pnpm run check");
   });
 
   it("rejects cross-module internal imports", async () => {
