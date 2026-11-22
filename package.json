@@ -14,7 +14,7 @@
     "db:verify:production": "pnpm run db:migration:list && pnpm run db:verify:schema:production",
     "verify:production": "node scripts/verify-production.mjs",
     "verify:production:auth-config": "node scripts/verify-production.mjs --auth-config-only",
-    "deploy": "pnpm run deploy:preflight && pnpm run cloudflare:build && pnpm run verify:production:auth-config && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
+    "deploy": "pnpm run deploy:preflight && pnpm run cloudflare:build && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "node scripts/architecture-check.mjs",
