@@ -34,9 +34,11 @@ describe("descarga privada para vista previa", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(body, { headers: { "Content-Length": "-1" } }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(body, { headers: { "Content-Length": "-1" } }),
+        ),
     );
 
     await expect(
@@ -59,9 +61,9 @@ describe("descarga privada para vista previa", () => {
 
   it("propaga la señal de cancelación al navegador", async () => {
     const controller = new AbortController();
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(new Uint8Array([1])),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(new Uint8Array([1])));
     vi.stubGlobal("fetch", fetchMock);
 
     await fetchPreviewBytes(
