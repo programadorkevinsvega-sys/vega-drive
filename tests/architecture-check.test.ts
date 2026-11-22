@@ -55,7 +55,8 @@ describe("architecture guard", () => {
     expect(pkg.scripts["verify:module-migrations"]).toContain(
       "check-module-migrations.mjs",
     );
-    expect(pkg.scripts.deploy).toMatch(/^pnpm run deploy:preflight &&/);
+    expect(pkg.scripts.deploy).toMatch(/^pnpm run cloudflare:build &&/);
+    expect(pkg.scripts.deploy).toContain("pnpm run deploy:release");
     expect(pkg.scripts["cloudflare:build"]).toMatch(
       /^pnpm run deploy:preflight &&/,
     );
@@ -63,7 +64,8 @@ describe("architecture guard", () => {
       resolve(".github/workflows/ci.yml"),
       "utf8",
     );
-    expect(workflow).toContain("pnpm run verify:module-migrations");
+    expect(workflow).toContain("pnpm run verify:architecture:all");
+    expect(workflow).toContain("pnpm run check");
   });
 
   it("rejects cross-module internal imports", async () => {
