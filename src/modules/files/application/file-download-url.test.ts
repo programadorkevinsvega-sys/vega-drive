@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createFileDownloadUrl } from "./file-download-url.js";
+import { createFileDownload } from "./file-download.js";
 import type {
   FilesItemRecord,
   FilesItemRepository,
@@ -40,6 +41,16 @@ function dependencies(ownerHasFile = true) {
       contentType: item.contentType,
     })),
     presignGetUrl: vi.fn(async () => "https://r2.example/signed-object"),
+    get: vi.fn(async () => ({
+      sizeBytes: item.sizeBytes,
+      contentType: item.contentType,
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array([65, 66]));
+          controller.close();
+        },
+      }),
+    })),
   } as unknown as IFileStoragePort;
   const deps = {
     items,
@@ -53,6 +64,7 @@ function dependencies(ownerHasFile = true) {
   } satisfies FileTransferDependencies;
   return {
     service: createFileDownloadUrl(deps),
+    downloadService: createFileDownload(deps),
     items,
     storage,
     transferEvents,
@@ -130,5 +142,48 @@ describe("file preview URL authorization", () => {
       120,
       "notes.txt",
     );
+  });
+});
+
+
+describe("authenticated inline preview stream", () => {
+  it("streams an owned text file with a server-selected preview MIME type", async () => {
+    const deps = dependencies();
+    const result = await deps.downloadService(
+      { userId: "user_a" },
+      "file_a",
+      null,
+      "preview",
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        name: "notes.txt",
+        contentType: "text/plain; charset=utf-8",
+        sizeBytes: 12,
+        status: 200,
+      },
+    });
+    expect(deps.storage.get).toHaveBeenCalledWith("private/server/key", undefined);
+    expect(deps.storage.presignGetUrl).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported active formats without reading storage", async () => {
+    const deps = dependencies();
+    vi.mocked(deps.items.findByIdForOwner).mockResolvedValue({
+      ...item,
+      name: "payload.html",
+    });
+
+    const result = await deps.downloadService(
+      { userId: "user_a" },
+      "file_a",
+      null,
+      "preview",
+    );
+
+    expect(result).toEqual({ ok: false, reason: "unsupported-preview" });
+    expect(deps.storage.get).not.toHaveBeenCalled();
   });
 });
