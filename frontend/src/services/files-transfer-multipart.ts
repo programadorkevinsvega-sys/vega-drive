@@ -81,7 +81,7 @@ export async function uploadMultipartFile(
 
   try {
     if (control.cancelled) throw new UploadCancelledError();
-    for (let index = 0; index < started.totalParts; ) {
+    for (let index = 0; index < started.totalParts;) {
       await control.waitUntilReady();
       const start = index * started.partSizeBytes;
       const chunk = file.slice(

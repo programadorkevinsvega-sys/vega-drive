@@ -6,8 +6,7 @@ export interface AuthConfig {
   ready: boolean;
 }
 export type SessionState =
-  | { authenticated: true; user: AuthenticatedUser }
-  | { authenticated: false };
+  { authenticated: true; user: AuthenticatedUser } | { authenticated: false };
 
 export class IdentityApiError extends Error {
   readonly status: number;

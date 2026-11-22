@@ -22,8 +22,7 @@ export interface ToastState {
 }
 
 export type ToastAction =
-  | { type: "add"; input: ToastInput }
-  | { type: "dismiss"; id: number };
+  { type: "add"; input: ToastInput } | { type: "dismiss"; id: number };
 
 export const MAX_TOASTS = 4;
 

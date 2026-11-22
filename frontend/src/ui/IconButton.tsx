@@ -12,8 +12,10 @@ export function iconButtonClass(
   return cx("vd-iconbtn", `vd-iconbtn--${variant}`, `vd-iconbtn--${size}`);
 }
 
-export interface IconButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
+export interface IconButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children"
+> {
   /** Obligatorio: nombre accesible (tambien se usa como tooltip nativo). */
   label: string;
   icon: IconName;

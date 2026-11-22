@@ -10,8 +10,7 @@ const ORIGIN_ERROR = { error: "Invalid request origin" } as const;
 const REQUEST_ERROR = { error: "Invalid request" } as const;
 
 type CatalogHttpResult =
-  | { ok: true; value: unknown }
-  | { ok: false; reason: string };
+  { ok: true; value: unknown } | { ok: false; reason: string };
 
 export const filesRoutes = new Hono<AuthenticatedEnv>();
 

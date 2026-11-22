@@ -3,12 +3,7 @@ import { Button } from "../ui/Button";
 import { formatFileSize } from "../lib/format-file-size";
 
 export type UploadState =
-  | "pending"
-  | "uploading"
-  | "paused"
-  | "cancelled"
-  | "completed"
-  | "error";
+  "pending" | "uploading" | "paused" | "cancelled" | "completed" | "error";
 
 export interface UploadItem {
   id: string;

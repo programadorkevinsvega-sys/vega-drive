@@ -12,8 +12,7 @@ export function createSqliteD1() {
         },
         async first<T>() {
           const result = sqlite.prepare(sql).get(...(bindings as never[])) as
-            | T
-            | undefined;
+            T | undefined;
           return result ?? null;
         },
         async all<T>() {

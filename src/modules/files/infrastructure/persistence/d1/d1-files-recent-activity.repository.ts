@@ -10,9 +10,7 @@ function boundedLimit(limit: number): number {
   return Math.min(101, Math.max(1, Math.trunc(limit)));
 }
 
-export class D1FilesRecentActivityRepository
-  implements FilesRecentActivityRepository
-{
+export class D1FilesRecentActivityRepository implements FilesRecentActivityRepository {
   constructor(private readonly db: D1Database) {}
 
   async record(

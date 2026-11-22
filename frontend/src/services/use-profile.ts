@@ -3,9 +3,7 @@ import type { UserProfile } from "../domain/user";
 import { useServices } from "./services-context";
 
 export type AsyncState<T> =
-  | { status: "loading" }
-  | { status: "ready"; data: T }
-  | { status: "error" };
+  { status: "loading" } | { status: "ready"; data: T } | { status: "error" };
 
 /** Carga el perfil actual. El error no expone detalles al usuario. */
 export function useProfile(): AsyncState<UserProfile> {

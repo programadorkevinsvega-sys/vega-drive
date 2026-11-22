@@ -11,9 +11,7 @@ function nameKey(name: string): string {
   return name.normalize("NFC").toLowerCase();
 }
 
-export class D1FilesCatalogNameRepository
-  implements FilesCatalogNameRepository
-{
+export class D1FilesCatalogNameRepository implements FilesCatalogNameRepository {
   constructor(private readonly db: D1Database) {}
 
   async claim(input: FilesCatalogNameClaim): Promise<boolean> {

@@ -14,10 +14,7 @@ import {
 } from "./identity-service";
 
 export type AuthStatus =
-  | "loading"
-  | "authenticated"
-  | "anonymous"
-  | "unavailable";
+  "loading" | "authenticated" | "anonymous" | "unavailable";
 interface AuthContextValue {
   status: AuthStatus;
   user: AuthenticatedUser | null;

@@ -9,9 +9,7 @@ interface AuthAttemptRow {
   lockedUntil: number | null;
 }
 
-export class D1IdentityAuthAttemptRepository
-  implements IdentityAuthAttemptRepository
-{
+export class D1IdentityAuthAttemptRepository implements IdentityAuthAttemptRepository {
   constructor(private readonly db: D1Database) {}
 
   async find(

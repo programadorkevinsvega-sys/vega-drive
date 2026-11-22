@@ -115,10 +115,7 @@ export function createFileUpload(deps: FileTransferDependencies) {
       let nameClaimed = false;
       let itemInserted = false;
       let streamFailure:
-        | "too-large"
-        | "size-mismatch"
-        | "integrity-mismatch"
-        | null = null;
+        "too-large" | "size-mismatch" | "integrity-mismatch" | null = null;
       try {
         nameClaimed = await deps.names.claim({
           ownerId: actor.userId,

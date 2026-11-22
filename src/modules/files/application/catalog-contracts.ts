@@ -20,8 +20,7 @@ export type CatalogFailureReason =
   | "integrity-mismatch";
 
 export type CatalogResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; reason: CatalogFailureReason };
+  { ok: true; value: T } | { ok: false; reason: CatalogFailureReason };
 
 export interface FilesFolderView {
   type: "folder";

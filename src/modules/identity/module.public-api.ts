@@ -87,8 +87,8 @@ export function createIdentityModule(
   const changePassword = createChangePassword({ users, sessions, outbox });
   const ready = Boolean(
     turnstileSiteKey &&
-      turnstileSecretConfigured &&
-      turnstileHostnamesConfigured,
+    turnstileSecretConfigured &&
+    turnstileHostnamesConfigured,
   );
   return {
     status: () => ({ module: "identity", ready }),

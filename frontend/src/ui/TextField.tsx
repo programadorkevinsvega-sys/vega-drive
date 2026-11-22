@@ -2,8 +2,10 @@ import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { cx } from "../lib/cx";
 import { Icon } from "./Icon";
 
-export interface TextFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
+export interface TextFieldProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "id"
+> {
   label: string;
   hint?: string;
   /** Mensaje de validacion visible; marca el campo como invalido. */

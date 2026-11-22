@@ -10,9 +10,7 @@ const SESSION_COLUMNS =
   "r2_upload_id AS r2UploadId, expected_size_bytes AS expectedSizeBytes, " +
   "content_type AS contentType, created_at AS createdAt, expires_at AS expiresAt";
 
-export class D1FilesMultipartUploadRepository
-  implements FilesMultipartUploadRepository
-{
+export class D1FilesMultipartUploadRepository implements FilesMultipartUploadRepository {
   constructor(private readonly db: D1Database) {}
 
   async insert(session: FilesMultipartSession): Promise<void> {

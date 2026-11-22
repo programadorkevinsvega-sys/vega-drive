@@ -3,9 +3,7 @@ import type {
   FilesTransferKind,
 } from "../../../application/ports/files-repositories.js";
 
-export class D1FilesTransferEventRepository
-  implements FilesTransferEventRepository
-{
+export class D1FilesTransferEventRepository implements FilesTransferEventRepository {
   constructor(private readonly db: D1Database) {}
 
   async consume(

@@ -5,9 +5,7 @@ export interface PasswordChangeValues {
 }
 
 export type PasswordChangeField =
-  | "currentPassword"
-  | "newPassword"
-  | "confirmPassword";
+  "currentPassword" | "newPassword" | "confirmPassword";
 
 export type PasswordChangeValidation =
   | { valid: true }
