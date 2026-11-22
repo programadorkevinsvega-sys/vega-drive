@@ -5,29 +5,20 @@ import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
 import { Spinner } from "../ui/Spinner";
 import {
-  FilesApiError,
   listRecent,
   downloadFileUrl,
   type FilesRecentItem,
 } from "../services/files-service";
 import { RecentFilePreviewAction } from "./RecentFilePreviewAction";
+import {
+  fileTypeIcon,
+  fileTypeLabel,
+  fileVisualType,
+} from "../lib/file-type-icon";
+
+import { dateLabel, errorLabel } from "./recent-files-format";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
-
-function dateLabel(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function errorLabel(cause: unknown): string {
-  return cause instanceof FilesApiError
-    ? cause.message
-    : "No se pudieron cargar los archivos recientes. Inténtalo de nuevo.";
-}
 
 export function RecentFilesScreen() {
   const [items, setItems] = useState<FilesRecentItem[]>([]);
@@ -143,8 +134,15 @@ export function RecentFilesScreen() {
             {items.map((item) => (
               <div className="vd-catalog__row" role="row" key={item.file.id}>
                 <div className="vd-catalog__node" role="cell">
-                  <span className="vd-catalog__node-icon">
-                    <Icon name="file" size="md" />
+                  <span
+                    className={
+                      "vd-catalog__node-icon vd-catalog__node-icon--" +
+                      fileVisualType(item.file.name)
+                    }
+                    title={fileTypeLabel(item.file.name)}
+                    aria-hidden="true"
+                  >
+                    <Icon name={fileTypeIcon(item.file.name)} size="md" />
                   </span>
                   <span className="vd-catalog__name" title={item.file.name}>
                     {item.file.name}

@@ -69,11 +69,6 @@
   color: var(--vd-text-muted);
 }
 
-.vd-catalog__node-icon--folder {
-  background: var(--vd-accent-soft);
-  color: var(--vd-accent-text);
-}
-
 .vd-catalog__name {
   min-width: 0;
   overflow-wrap: anywhere;

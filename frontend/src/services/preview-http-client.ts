@@ -1,19 +1,28 @@
 const MAX_PREVIEW_BYTES = 25 * 1024 * 1024;
 
-export async function fetchPreviewBytes(url: string): Promise<ArrayBuffer> {
+export async function fetchPreviewBytes(
+  url: string,
+  signal?: AbortSignal,
+): Promise<ArrayBuffer> {
   const response = await fetch(url, {
     mode: "cors",
     credentials: "omit",
     cache: "no-store",
     referrerPolicy: "no-referrer",
+    ...(signal ? { signal } : {}),
   });
   if (!response.ok) {
     throw new Error("R2 no pudo entregar el archivo para la vista previa.");
   }
 
-  const declaredLength = Number(response.headers.get("Content-Length") ?? "0");
-  if (declaredLength > MAX_PREVIEW_BYTES) {
-    throw new Error("Archivo mayor de 25 MB; descarga para verlo.");
+  const rawLength = response.headers.get("Content-Length");
+  if (rawLength !== null) {
+    if (!/^\d+$/.test(rawLength)) {
+      throw new Error("R2 devolvió un tamaño de archivo no válido.");
+    }
+    if (Number(rawLength) > MAX_PREVIEW_BYTES) {
+      throw new Error("Archivo mayor de 25 MB; descarga para verlo.");
+    }
   }
 
   const reader = response.body?.getReader();

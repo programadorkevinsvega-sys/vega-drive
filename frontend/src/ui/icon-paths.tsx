@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { FILE_ICON_PATHS } from "./file-icon-paths";
 
 /** Iconos propios, rejilla de 24 px, trazo de 1.75 px. */
 const PATHS = {
+  ...FILE_ICON_PATHS,
   drive: (
     <>
       <path d="M4 14.5 6.3 6.8A2 2 0 0 1 8.2 5.5h7.6a2 2 0 0 1 1.9 1.3L20 14.5" />

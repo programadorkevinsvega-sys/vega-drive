@@ -1,6 +1,11 @@
 import { MenuButton, type MenuItem } from "../ui/MenuButton";
 import { Icon } from "../ui/Icon";
 import { formatFileSize } from "../lib/format-file-size";
+import {
+  fileTypeIcon,
+  fileTypeLabel,
+  fileVisualType,
+} from "../lib/file-type-icon";
 import { downloadFileUrl } from "../services/files-service";
 import { canPreviewFile } from "./preview-format";
 import type { FilesCatalogNode } from "../services/files-contract";
@@ -116,12 +121,16 @@ export function CatalogNodeRow({
       <div className="vd-catalog__node" role="cell">
         <span
           className={
-            isFolder
-              ? "vd-catalog__node-icon vd-catalog__node-icon--folder"
-              : "vd-catalog__node-icon"
+            "vd-catalog__node-icon vd-catalog__node-icon--" +
+            (isFolder ? "folder" : fileVisualType(node.name))
           }
+          title={isFolder ? "Carpeta" : fileTypeLabel(node.name)}
+          aria-hidden="true"
         >
-          <Icon name={isFolder ? "folder" : "file"} size="md" />
+          <Icon
+            name={isFolder ? "folder" : fileTypeIcon(node.name)}
+            size="md"
+          />
         </span>
         {isFolder && !trashed ? (
           <button

@@ -1,6 +1,7 @@
 import type { FilesFileView } from "../services/files-contract";
 import type { PreviewKind } from "./preview-format";
 import { MarkdownPreview } from "./MarkdownPreview";
+import { Button } from "../ui/Button";
 
 export function FilePreviewContent({
   file,
@@ -11,6 +12,7 @@ export function FilePreviewContent({
   loading,
   error,
   tooLarge,
+  onRetry,
 }: {
   file: FilesFileView;
   kind: PreviewKind;
@@ -20,24 +22,39 @@ export function FilePreviewContent({
   loading: boolean;
   error: string;
   tooLarge: boolean;
+  onRetry: () => void;
 }) {
+  const needsCors = kind === "text" || kind === "docx" || kind === "xlsx";
+
   return (
     <div className="vd-preview__body" aria-live="polite">
       {loading ? <p role="status">Preparando vista previa segura…</p> : null}
       {error ? (
         <div role="alert" className="vd-preview__error">
           <p>{error}</p>
-          <p>
-            Para texto y Office, verifica la política CORS del bucket R2.
-            También puedes descargar el archivo.
-          </p>
+          {needsCors ? (
+            <p>
+              Para texto y Office, comprueba la política CORS del bucket R2.
+              También puedes abrir el original o descargar el archivo.
+            </p>
+          ) : (
+            <p>
+              Comprueba tu conexión o vuelve a generar el enlace privado del
+              archivo.
+            </p>
+          )}
+          <Button size="sm" variant="secondary" onClick={onRetry}>
+            Reintentar vista previa
+          </Button>
         </div>
       ) : null}
       {!loading && !error && tooLarge ? (
-        <p>
-          La vista previa de texto y documentos está limitada a 25 MB. Descarga
-          el archivo para abrirlo completo.
-        </p>
+        <div className="vd-preview__notice" role="status">
+          <p>
+            La vista previa de texto y documentos está limitada a 25 MiB.
+            Descarga el archivo para abrirlo completo.
+          </p>
+        </div>
       ) : null}
       {!loading && !error && !tooLarge && url && kind === "image" ? (
         <img
@@ -102,7 +119,7 @@ export function FilePreviewContent({
                 ))}
               </tbody>
             </table>
-            <p>Primera hoja, máximo 500 filas.</p>
+            <p>Primera hoja, máximo 500 filas y 100 columnas.</p>
           </div>
         ) : (
           <p>La hoja está vacía.</p>
