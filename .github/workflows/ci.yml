@@ -6,7 +6,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pull-requests: read
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: pnpm/action-setup@v6
         with:
           version: 10.18.3
@@ -27,6 +29,20 @@ jobs:
             pnpm-lock.yaml
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Refresh frontend lockfile
+        run: pnpm --dir frontend install --ignore-workspace --no-frozen-lockfile
+      - name: Apply Prettier formatting
+        run: pnpm exec prettier --write .
+      - name: Commit formatting changes to pull request
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "style: auto-format with Prettier"
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
+          fi
       - run: pnpm run verify:module-migrations
       - name: Apply D1 migrations to ephemeral local database
         run: pnpm run db:migrate:local
@@ -45,3 +61,4 @@ jobs:
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"

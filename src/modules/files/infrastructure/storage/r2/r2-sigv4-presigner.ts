@@ -74,18 +74,51 @@ export async function presignR2Object(
   now = new Date(),
 ): Promise<string> {
   if (
-    !/^[a-z0-9-]{8,64}$/i.test(config.accountId) ||
-    !config.bucketName ||
+    (input.method !== "GET" && input.method !== "PUT") ||
+    typeof config.accountId !== "string" ||
+    !/^[a-f0-9]{32}$/i.test(config.accountId) ||
+    typeof config.bucketName !== "string" ||
+    !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(config.bucketName) ||
+    typeof config.accessKeyId !== "string" ||
     !config.accessKeyId ||
+    /[\r\n\u0000-\u001f\u007f]/.test(config.accessKeyId) ||
+    typeof config.secretAccessKey !== "string" ||
     !config.secretAccessKey ||
+    /[\r\n\u0000-\u001f\u007f]/.test(config.secretAccessKey) ||
+    !input.key ||
     input.key.startsWith("/") ||
-    input.key.includes("..") ||
+    input.key.includes("\\") ||
+    input.key
+      .split("/")
+      .some((segment) => !segment || segment === "." || segment === "..") ||
+    /[\u0000-\u001f\u007f]/.test(input.key) ||
+    (input.contentType !== undefined &&
+      (typeof input.contentType !== "string" ||
+        !input.contentType ||
+        /[\r\n\u0000-\u001f\u007f]/.test(input.contentType))) ||
+    (input.ifNoneMatch !== undefined &&
+      (typeof input.ifNoneMatch !== "string" ||
+        !input.ifNoneMatch ||
+        /[\r\n\u0000-\u001f\u007f]/.test(input.ifNoneMatch))) ||
     (input.contentLength !== undefined &&
       (!Number.isSafeInteger(input.contentLength) ||
         input.contentLength < 0)) ||
     !Number.isSafeInteger(input.expiresInSeconds) ||
     input.expiresInSeconds < 1 ||
-    input.expiresInSeconds > 900
+    input.expiresInSeconds > 900 ||
+    !(now instanceof Date) ||
+    !Number.isFinite(now.getTime()) ||
+    (input.query !== undefined &&
+      (typeof input.query !== "object" ||
+        input.query === null ||
+        Array.isArray(input.query))) ||
+    Object.entries(input.query ?? {}).some(
+      ([key, value]) =>
+        !key ||
+        !value ||
+        /[\r\n\u0000-\u001f\u007f]/.test(key + value) ||
+        /^x-amz-/i.test(key),
+    )
   ) {
     throw new Error("Invalid R2 presign configuration");
   }
