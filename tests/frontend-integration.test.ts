@@ -56,8 +56,8 @@ describe("integración de assets frontend/Cloudflare", () => {
     if (deploy === undefined) {
       throw new Error("Falta el script deploy en package.json.");
     }
-    expect(deploy).toMatch(/^pnpm run deploy:preflight &&/);
-    expect(deploy).toContain("pnpm run cloudflare:build");
+    expect(deploy).toMatch(/^pnpm run cloudflare:build &&/);
+    expect(deploy).toContain("pnpm run deploy:release");
 
     const cloudflareBuild = rootPackage.scripts["cloudflare:build"];
     if (cloudflareBuild === undefined) {
@@ -73,26 +73,30 @@ describe("integración de assets frontend/Cloudflare", () => {
     expect(cloudflareBuild).toContain("pnpm run frontend:audit");
     expect(cloudflareBuild).toContain("wrangler deploy --dry-run");
 
-    const buildIndex = deploy.indexOf("pnpm run cloudflare:build");
-    const migrationIndex = deploy.indexOf("pnpm run db:migrate:production");
-    const databaseVerificationIndex = deploy.indexOf(
+    const release = rootPackage.scripts["deploy:release"];
+    if (release === undefined) {
+      throw new Error("Falta el script deploy:release en package.json.");
+    }
+    const migrationIndex = release.indexOf("pnpm run db:migrate:production");
+    const databaseVerificationIndex = release.indexOf(
       "pnpm run db:verify:production",
     );
-    const workerDeployIndex = deploy.indexOf("pnpm exec wrangler deploy");
-    const productionVerificationIndex = deploy.indexOf(
+    const workerDeployIndex = release.indexOf("pnpm exec wrangler deploy");
+    const productionVerificationIndex = release.indexOf(
       "pnpm run verify:production",
     );
-    expect(migrationIndex).toBeGreaterThan(buildIndex);
+    expect(migrationIndex).toBeGreaterThanOrEqual(0);
     expect(databaseVerificationIndex).toBeGreaterThan(migrationIndex);
     expect(workerDeployIndex).toBeGreaterThan(databaseVerificationIndex);
     expect(productionVerificationIndex).toBeGreaterThan(workerDeployIndex);
-    expect(deploy).not.toContain("pnpm run verify:production:auth-config");
+    expect(release).not.toContain("pnpm run verify:production:auth-config");
     expect(frontendPackage.scripts.check).toBe(
       "pnpm run typecheck && pnpm run test && pnpm run build",
     );
     expect(workflow).toContain("frontend/pnpm-lock.yaml");
     expect(workflow).not.toContain("pnpm run cloudflare:build");
-    expect(deployWorkflow).toContain("branches: [main]");
-    expect(deployWorkflow).toContain("run: pnpm run deploy");
+    expect(deployWorkflow).toContain("workflow_dispatch:");
+    expect(deployWorkflow).not.toContain("push:");
+    expect(deployWorkflow).toContain("run: pnpm run deploy:release");
   });
 });
