@@ -55,7 +55,8 @@ describe("architecture guard", () => {
     expect(pkg.scripts["verify:module-migrations"]).toContain(
       "check-module-migrations.mjs",
     );
-    expect(pkg.scripts.deploy).toMatch(/^pnpm run deploy:preflight &&/);
+    expect(pkg.scripts.deploy).toMatch(/^pnpm run cloudflare:build &&/);
+    expect(pkg.scripts.deploy).toContain("pnpm run deploy:release");
     expect(pkg.scripts["cloudflare:build"]).toMatch(
       /^pnpm run deploy:preflight &&/,
     );
