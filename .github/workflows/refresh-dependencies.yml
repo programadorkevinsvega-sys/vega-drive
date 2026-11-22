@@ -38,15 +38,13 @@ jobs:
       - name: Update npm CLI
         run: npm install --global npm@12.2.2
       - name: Update all root dependencies
-        run: pnpm update --latest -r
+        run: pnpm update --latest -r --lockfile-only
       - name: Update all frontend dependencies
-        run: pnpm --dir frontend update --latest
+        run: pnpm --dir frontend update --latest --lockfile-only
       - name: Audit root dependencies
         run: pnpm audit --audit-level=moderate
       - name: Audit frontend dependencies
         run: pnpm --dir frontend --ignore-workspace audit --audit-level=moderate
-      - name: Run complete Cloudflare build and verification
-        run: pnpm run cloudflare:build
       - name: Commit updated manifests and lockfiles
         run: |
           git config user.name "github-actions[bot]"
