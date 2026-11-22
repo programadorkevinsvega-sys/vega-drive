@@ -29,6 +29,8 @@ jobs:
             pnpm-lock.yaml
             frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Refresh frontend lockfile
+        run: pnpm --dir frontend install --ignore-workspace --no-frozen-lockfile
       - name: Apply Prettier formatting
         run: pnpm exec prettier --write .
       - name: Commit formatting changes to pull request
