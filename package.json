@@ -42,14 +42,14 @@
     "frontend:audit": "pnpm --dir frontend --ignore-workspace audit --audit-level=high"
   },
   "dependencies": {
-    "hono": "4.13.13"
+    "hono": "4.13.19"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20261006.1",
-    "@types/node": "^26.6.5",
-    "prettier": "3.6.2",
-    "typescript": "5.9.3",
-    "vitest": "5.0.3",
+    "@cloudflare/workers-types": "5.20261121.1",
+    "@types/node": "^26.6.6",
+    "prettier": "3.10.1",
+    "typescript": "7.0.2",
+    "vitest": "5.1.1",
     "wrangler": "4.166.0"
   },
   "packageManager": "pnpm@11.28.13"
