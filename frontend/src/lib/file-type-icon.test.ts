@@ -12,7 +12,7 @@ describe("clasificación visual de archivos", () => {
     ["reporte.pptx", "presentation", "file-presentation", "Presentación"],
     ["backup.tar.gz", "archive", "file-archive", "Archivo comprimido"],
     ["app.tsx", "code", "file-code", "Código"],
-    ["notas.md", "text", "file", "Texto"],
+    ["notas.md", "text", "file-text", "Texto"],
     ["sin-extension", "generic", "file", "Archivo"],
   ] as const)(
     "clasifica %s",
