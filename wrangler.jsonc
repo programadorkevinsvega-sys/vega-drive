@@ -1,0 +1,55 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "vega-drive",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-10-09",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "none"
+  },
+  "d1_databases": [
+    {
+      "binding": "VEGA_DRIVE_DB",
+      "database_name": "vega_drive_db",
+      "database_id": "822bf438-18c7-4492-9436-139988c1ec78",
+      "migrations_dir": "src/modules",
+      "migrations_pattern": "src/modules/*/infrastructure/persistence/d1/migrations/*.sql"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES_BUCKET",
+      "bucket_name": "vega-drive-files"
+    }
+  ],
+  "vars": {
+    "MAX_USERS": "10",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFTcVz9owrEuYzEP",
+    "TURNSTILE_HOSTNAMES": "vega-drive.programadorkevinsvega.workers.dev,drive.jnmtortas.com"
+  },
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "redact_query_string": false,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true
+    },
+    "issue_detection": {
+      "enabled": true
+    }
+  },
+  "triggers": {
+    "crons": ["17 * * * *"]
+  }
+}
