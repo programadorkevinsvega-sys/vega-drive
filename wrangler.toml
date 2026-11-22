@@ -25,6 +25,11 @@ MAX_USERS = "10"
 TURNSTILE_SITE_KEY = "0x4AAAAAAFTcVz9owrEuYzEP"
 TURNSTILE_HOSTNAMES = "vega-drive.programadorkevinsvega.workers.dev,drive.jnmtortas.com"
 
+[observability]
+enabled = false
+head_sampling_rate = 1
+redact_query_string = false
+
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
@@ -36,6 +41,9 @@ enabled = true
 head_sampling_rate = 1
 persist = true
 
+
+[observability.issue_detection]
+enabled = true
 
 [triggers]
 crons = ["17 * * * *"]
