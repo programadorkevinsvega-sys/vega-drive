@@ -21,6 +21,24 @@ export interface FilesDownload {
   body: ReadableStream<Uint8Array>;
 }
 
+function previewContentType(name: string): string | null {
+  const extension = name.toLowerCase().split(".").pop() ?? "";
+  const types: Record<string, string> = {
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
+    webp: "image/webp", avif: "image/avif", bmp: "image/bmp",
+    mp4: "video/mp4", webm: "video/webm", ogv: "video/ogg",
+    mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", m4a: "audio/mp4",
+    pdf: "application/pdf",
+    txt: "text/plain; charset=utf-8", md: "text/plain; charset=utf-8",
+    markdown: "text/plain; charset=utf-8", csv: "text/plain; charset=utf-8",
+    json: "text/plain; charset=utf-8", log: "text/plain; charset=utf-8",
+    yaml: "text/plain; charset=utf-8", yml: "text/plain; charset=utf-8",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  };
+  return types[extension] ?? null;
+}
+
 export type FilesDownloadResult =
   | { ok: true; value: FilesDownload }
   | { ok: false; reason: string; totalSizeBytes?: number };
@@ -47,7 +65,7 @@ export function createFileDownload(deps: FileTransferDependencies) {
       )
         return { ok: false, reason: "not-found" };
 
-      const timestamp = now();
+      const previewType = purpose === "preview" ? previewContentType(item.name) : null;\n      if (purpose === "preview" && !previewType) {\n        return { ok: false, reason: "unsupported-preview" };\n      }\n\n      const timestamp = now();
       if (
         !(await deps.transferEvents.consume(
           createId(),
