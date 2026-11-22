@@ -66,7 +66,7 @@ export function createFileDownload(deps: FileTransferDependencies) {
       )
         return { ok: false, reason: "not-found" };
 
-      const previewType = purpose === "preview" ? previewContentType(item.name) : null;\n      if (purpose === "preview" && !previewType) {\n        return { ok: false, reason: "unsupported-preview" };\n      }\n\n      const previewType = purpose === "preview" ? previewContentType(item.name) : null;
+      const previewType = purpose === "preview" ? previewContentType(item.name) : null;
       if (purpose === "preview" && !previewType) {
         return { ok: false, reason: "unsupported-preview" };
       }
