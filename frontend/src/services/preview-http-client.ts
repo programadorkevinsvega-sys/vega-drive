@@ -9,7 +9,7 @@ export async function fetchPreviewBytes(
     credentials: "omit",
     cache: "no-store",
     referrerPolicy: "no-referrer",
-    signal,
+    ...(signal ? { signal } : {}),
   });
   if (!response.ok) {
     throw new Error("R2 no pudo entregar el archivo para la vista previa.");
@@ -17,7 +17,7 @@ export async function fetchPreviewBytes(
 
   const rawLength = response.headers.get("Content-Length");
   if (rawLength !== null) {
-    if (!/^\\d+$/.test(rawLength)) {
+    if (!/^\d+$/.test(rawLength)) {
       throw new Error("R2 devolvió un tamaño de archivo no válido.");
     }
     if (Number(rawLength) > MAX_PREVIEW_BYTES) {
