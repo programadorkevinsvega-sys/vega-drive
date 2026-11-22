@@ -11,6 +11,7 @@ import {
   type FilesRecentItem,
 } from "../services/files-service";
 import { RecentFilePreviewAction } from "./RecentFilePreviewAction";
+import { fileTypeIcon, fileTypeLabel, fileVisualType } from "../lib/file-type-icon";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
@@ -143,8 +144,15 @@ export function RecentFilesScreen() {
             {items.map((item) => (
               <div className="vd-catalog__row" role="row" key={item.file.id}>
                 <div className="vd-catalog__node" role="cell">
-                  <span className="vd-catalog__node-icon">
-                    <Icon name="file" size="md" />
+                  <span
+                    className={
+                      "vd-catalog__node-icon vd-catalog__node-icon--" +
+                      fileVisualType(item.file.name)
+                    }
+                    title={fileTypeLabel(item.file.name)}
+                    aria-hidden="true"
+                  >
+                    <Icon name={fileTypeIcon(item.file.name)} size="md" />
                   </span>
                   <span className="vd-catalog__name" title={item.file.name}>
                     {item.file.name}
