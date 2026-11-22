@@ -87,7 +87,11 @@ function contentDisposition(name: string, inline = false): string {
     (character) => "%" + character.charCodeAt(0).toString(16).toUpperCase(),
   );
   return (
-    (inline ? "inline" : "attachment") + '; filename="' + fallback + "\"; filename*=UTF-8''" + encoded
+    (inline ? "inline" : "attachment") +
+    '; filename="' +
+    fallback +
+    "\"; filename*=UTF-8''" +
+    encoded
   );
 }
 
