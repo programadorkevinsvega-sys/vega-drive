@@ -71,11 +71,6 @@ export function createFileDownload(deps: FileTransferDependencies) {
         return { ok: false, reason: "unsupported-preview" };
       }
 
-      const previewType = purpose === "preview" ? previewContentType(item.name) : null;
-      if (purpose === "preview" && !previewType) {
-        return { ok: false, reason: "unsupported-preview" };
-      }
-
       const timestamp = now();
       if (
         !(await deps.transferEvents.consume(
