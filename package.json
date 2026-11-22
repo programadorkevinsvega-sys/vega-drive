@@ -14,7 +14,7 @@
     "db:verify:production": "pnpm run db:migration:list && pnpm run db:verify:schema:production",
     "verify:production": "node scripts/verify-production.mjs",
     "verify:production:auth-config": "node scripts/verify-production.mjs --auth-config-only",
-    "deploy": "pnpm run deploy:preflight && pnpm run cloudflare:build && pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production",
+    "deploy": "pnpm run cloudflare:build && pnpm run deploy:release",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "node scripts/architecture-check.mjs",
@@ -39,7 +39,8 @@
     "verify:architecture:all": "pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:module-ownership && pnpm run verify:sql-boundaries && pnpm run verify:r2-port-boundary && pnpm run verify:frontend-boundary && pnpm run verify:module-extraction && pnpm run verify:r2-privacy && pnpm run verify:bff-boundary && pnpm run verify:authenticated-actor && pnpm run verify:files-gateway-contract",
     "frontend:install": "pnpm --dir frontend install --ignore-workspace --frozen-lockfile",
     "frontend:check": "pnpm --dir frontend run check",
-    "frontend:audit": "pnpm --dir frontend --ignore-workspace audit --audit-level=high"
+    "frontend:audit": "pnpm --dir frontend --ignore-workspace audit --audit-level=high",
+    "deploy:release": "pnpm run db:migrate:production && pnpm run db:verify:production && pnpm exec wrangler deploy && pnpm run verify:production"
   },
   "dependencies": {
     "hono": "4.13.19"
