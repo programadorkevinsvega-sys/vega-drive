@@ -74,6 +74,7 @@ export async function presignR2Object(
   now = new Date(),
 ): Promise<string> {
   if (
+    (input.method !== "GET" && input.method !== "PUT") ||
     !/^[a-f0-9]{32}$/i.test(config.accountId) ||
     !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(config.bucketName) ||
     !config.accessKeyId ||
@@ -88,9 +89,11 @@ export async function presignR2Object(
       .some((segment) => !segment || segment === "." || segment === "..") ||
     /[\u0000-\u001f\u007f]/.test(input.key) ||
     (input.contentType !== undefined &&
-      (!input.contentType || /[\r\n\u0000-\u001f\u007f]/.test(input.contentType))) ||
+      (!input.contentType ||
+        /[\r\n\u0000-\u001f\u007f]/.test(input.contentType))) ||
     (input.ifNoneMatch !== undefined &&
-      (!input.ifNoneMatch || /[\r\n\u0000-\u001f\u007f]/.test(input.ifNoneMatch))) ||
+      (!input.ifNoneMatch ||
+        /[\r\n\u0000-\u001f\u007f]/.test(input.ifNoneMatch))) ||
     (input.contentLength !== undefined &&
       (!Number.isSafeInteger(input.contentLength) ||
         input.contentLength < 0)) ||
