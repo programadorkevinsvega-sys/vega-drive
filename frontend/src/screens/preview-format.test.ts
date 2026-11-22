@@ -7,6 +7,7 @@ describe("clasificación de vista previa", () => {
     expect(previewKind("clip.mp4")).toBe("video");
     expect(previewKind("manual.pdf")).toBe("pdf");
     expect(previewKind("README.md")).toBe("text");
+    expect(previewKind("guia.markdown")).toBe("text");
     expect(previewKind("informe.docx")).toBe("docx");
     expect(previewKind("datos.xlsx")).toBe("xlsx");
   });
