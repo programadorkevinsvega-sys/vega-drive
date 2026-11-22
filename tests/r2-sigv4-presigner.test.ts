@@ -56,41 +56,70 @@ describe("R2 SigV4 presigner", () => {
     expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
   });
 
+  it("binds method and exact object key into distinct signatures", async () => {
+    const input = {
+      key: "u/user-id/file-id",
+      expiresInSeconds: 120,
+    };
+    const now = new Date("2026-10-11T12:34:56.000Z");
+    const getUrl = new URL(
+      await presignR2Object(config, { ...input, method: "GET" }, now),
+    );
+    const putUrl = new URL(
+      await presignR2Object(config, { ...input, method: "PUT" }, now),
+    );
+    const otherKeyUrl = new URL(
+      await presignR2Object(
+        config,
+        { ...input, method: "GET", key: "u/other-user/file-id" },
+        now,
+      ),
+    );
+
+    expect(getUrl.searchParams.get("X-Amz-Signature")).not.toBe(
+      putUrl.searchParams.get("X-Amz-Signature"),
+    );
+    expect(getUrl.searchParams.get("X-Amz-Signature")).not.toBe(
+      otherKeyUrl.searchParams.get("X-Amz-Signature"),
+    );
+  });
+
   it(
     "rejects reserved signing parameters, header injection and malformed keys",
     async () => {
-    await expect(
-      presignR2Object(config, {
-        method: "GET",
-        key: "u/user/file",
-        expiresInSeconds: 120,
-        query: { "X-Amz-Signature": "attacker-value" },
-      }),
-    ).rejects.toThrow("Invalid R2 presign configuration");
-    await expect(
-      presignR2Object(config, {
-        method: "PUT",
-        key: "u/user/file",
-        contentType: "text/plain\r\nX-Injected: yes",
-        expiresInSeconds: 120,
-      }),
-    ).rejects.toThrow("Invalid R2 presign configuration");
-    await expect(
-      presignR2Object(config, {
-        method: "GET",
-        key: "u//file",
-        expiresInSeconds: 120,
-      }),
-    ).rejects.toThrow("Invalid R2 presign configuration");
-    await expect(
-      presignR2Object(config, {
-        method: "GET",
-        key: "u/user/file",
-        expiresInSeconds: 120,
-        query: { "response-content-type": "text/plain\nX-Injected: yes" },
-      }),
-    ).rejects.toThrow("Invalid R2 presign configuration");
-  });
+      await expect(
+        presignR2Object(config, {
+          method: "GET",
+          key: "u/user/file",
+          expiresInSeconds: 120,
+          query: { "X-Amz-Signature": "attacker-value" },
+        }),
+      ).rejects.toThrow("Invalid R2 presign configuration");
+      await expect(
+        presignR2Object(config, {
+          method: "PUT",
+          key: "u/user/file",
+          contentType: "text/plain\r\nX-Injected: yes",
+          expiresInSeconds: 120,
+        }),
+      ).rejects.toThrow("Invalid R2 presign configuration");
+      await expect(
+        presignR2Object(config, {
+          method: "GET",
+          key: "u//file",
+          expiresInSeconds: 120,
+        }),
+      ).rejects.toThrow("Invalid R2 presign configuration");
+      await expect(
+        presignR2Object(config, {
+          method: "GET",
+          key: "u/user/file",
+          expiresInSeconds: 120,
+          query: { "response-content-type": "text/plain\nX-Injected: yes" },
+        }),
+      ).rejects.toThrow("Invalid R2 presign configuration");
+    },
+  );
 
   it("rejects long-lived signatures and unsafe object keys", async () => {
     await expect(
