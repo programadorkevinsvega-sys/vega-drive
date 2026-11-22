@@ -94,7 +94,7 @@ export function FilePreviewContent({
         />
       ) : null}
       {!loading && !error && !tooLarge && kind === "text" ? (
-        /\.md(own)?$/i.test(file.name) ? (
+        /\.(?:md|markdown)$/i.test(file.name) ? (
           <MarkdownPreview source={text} />
         ) : (
           <pre className="vd-preview__text">{text}</pre>
