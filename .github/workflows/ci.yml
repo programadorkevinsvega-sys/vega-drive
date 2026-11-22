@@ -41,7 +41,6 @@ jobs:
       - name: Apply Prettier formatting
         id: format
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           BASE_REPOSITORY: ${{ github.repository }}
@@ -65,18 +64,17 @@ jobs:
           git push origin "HEAD:$HEAD_BRANCH"
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
-          gh workflow run .github/workflows/ci.yml --ref "$HEAD_BRANCH"
 
   verify:
     name: Verify
     needs: format
-    if: needs.format.outputs.changed != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
         with:
           version: 11.28.13
