@@ -82,7 +82,7 @@ export async function presignR2Object(
     /[\\r\\n\\u0000-\\u001f\\u007f]/.test(config.secretAccessKey) ||
     !input.key ||
     input.key.startsWith("/") ||
-    input.key.includes("\\\\") ||
+    input.key.includes("\\") ||
     input.key.split("/").some((segment) => !segment || segment === "." || segment === "..") ||
     /[\\u0000-\\u001f\\u007f]/.test(input.key) ||
     (input.contentType !== undefined &&
