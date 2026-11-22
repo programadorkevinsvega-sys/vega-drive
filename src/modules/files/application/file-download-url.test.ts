@@ -145,7 +145,6 @@ describe("file preview URL authorization", () => {
   });
 });
 
-
 describe("authenticated inline preview stream", () => {
   it("streams an owned text file with a server-selected preview MIME type", async () => {
     const deps = dependencies();
@@ -165,7 +164,10 @@ describe("authenticated inline preview stream", () => {
         status: 200,
       },
     });
-    expect(deps.storage.get).toHaveBeenCalledWith("private/server/key", undefined);
+    expect(deps.storage.get).toHaveBeenCalledWith(
+      "private/server/key",
+      undefined,
+    );
     expect(deps.storage.presignGetUrl).not.toHaveBeenCalled();
   });
 
