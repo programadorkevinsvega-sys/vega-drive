@@ -41,6 +41,7 @@ describe("integración de assets frontend/Cloudflare", () => {
       scripts: Record<string, string>;
     };
     const workflow = read(".github/workflows/ci.yml");
+    const deployWorkflow = read(".github/workflows/deploy-cloudflare.yml");
     expect(rootPackage.scripts["frontend:install"]).toContain(
       "--ignore-workspace --frozen-lockfile",
     );
@@ -83,6 +84,8 @@ describe("integración de assets frontend/Cloudflare", () => {
       "pnpm run typecheck && pnpm run test && pnpm run build",
     );
     expect(workflow).toContain("frontend/pnpm-lock.yaml");
-    expect(workflow).toContain("pnpm run cloudflare:build");
+    expect(workflow).not.toContain("pnpm run cloudflare:build");
+    expect(deployWorkflow).toContain("branches: [main]");
+    expect(deployWorkflow).toContain("run: pnpm run deploy");
   });
 });
