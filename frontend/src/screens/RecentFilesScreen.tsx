@@ -5,7 +5,6 @@ import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
 import { Spinner } from "../ui/Spinner";
 import {
-  FilesApiError,
   listRecent,
   downloadFileUrl,
   type FilesRecentItem,
@@ -17,22 +16,9 @@ import {
   fileVisualType,
 } from "../lib/file-type-icon";
 
+import { dateLabel, errorLabel } from "./recent-files-format";
+
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
-
-function dateLabel(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function errorLabel(cause: unknown): string {
-  return cause instanceof FilesApiError
-    ? cause.message
-    : "No se pudieron cargar los archivos recientes. Inténtalo de nuevo.";
-}
 
 export function RecentFilesScreen() {
   const [items, setItems] = useState<FilesRecentItem[]>([]);
