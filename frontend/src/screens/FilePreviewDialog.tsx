@@ -56,9 +56,7 @@ export function FilePreviewDialog({
           const buffer = await fetchPreviewBytes(result.url, controller.signal);
           if (cancelled) return;
           if (kind === "text") {
-            setText(
-              decodePreviewText(buffer),
-            );
+            setText(decodePreviewText(buffer));
           } else if (kind === "docx") {
             setText(await readDocx(buffer));
           } else if (kind === "xlsx") {

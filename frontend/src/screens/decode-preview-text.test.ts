@@ -19,7 +19,9 @@ describe("decodificación de archivos de texto", () => {
   });
 
   it("detecta UTF-16 sin BOM", () => {
-    expect(decodePreviewText(buffer([65, 0, 66, 0, 67, 0, 68, 0]))).toBe("ABCD");
+    expect(decodePreviewText(buffer([65, 0, 66, 0, 67, 0, 68, 0]))).toBe(
+      "ABCD",
+    );
   });
 
   it("usa Windows-1252 cuando el texto no es UTF-8 válido", () => {
