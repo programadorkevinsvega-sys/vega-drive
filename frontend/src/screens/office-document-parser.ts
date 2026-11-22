@@ -149,7 +149,9 @@ function columnIndex(reference: string): number {
 export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
   let sharedStrings: string[] = [];
   try {
-    const sharedXml = parseXml(await unzipEntry(buffer, "xl/sharedStrings.xml"));
+    const sharedXml = parseXml(
+      await unzipEntry(buffer, "xl/sharedStrings.xml"),
+    );
     sharedStrings = Array.from(
       sharedXml.getElementsByTagNameNS("*", "si"),
       (item) =>
