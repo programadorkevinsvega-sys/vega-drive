@@ -181,8 +181,7 @@ export async function readXlsx(buffer: ArrayBuffer): Promise<string[][]> {
       if (!cell) continue;
       const column = columnIndex(cell.getAttribute("r") ?? "A1");
       if (column < 0 || column >= 100) continue;
-      const value =
-        cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
+      const value = cell.getElementsByTagNameNS("*", "v")[0]?.textContent ?? "";
       cells[column] =
         cell.getAttribute("t") === "s"
           ? (sharedStrings[Number(value)] ?? "")
