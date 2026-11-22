@@ -328,13 +328,20 @@ filesTransferRoutes.get("/:id/preview", async (c) => {
   }
   const files = createCompositionRoot(c.env).files;
   await files.recordRecentActivity(actorFor(c), c.req.param("id"), "open");
-  return c.json({
-    url: "/api/files/" + encodeURIComponent(c.req.param("id")) + "/preview/content",
-    expiresInSeconds: 0,
-  }, 200, {
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-  });
+  return c.json(
+    {
+      url:
+        "/api/files/" +
+        encodeURIComponent(c.req.param("id")) +
+        "/preview/content",
+      expiresInSeconds: 0,
+    },
+    200,
+    {
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
+    },
+  );
 });
 
 filesTransferRoutes.get("/:id/preview/content", async (c) => {
