@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - .github/workflows/refresh-dependencies.yml
+      - package.json
+      - pnpm-workspace.yaml
+      - frontend/package.json
 
 permissions:
   contents: write
