@@ -56,7 +56,7 @@ describe("R2 SigV4 presigner", () => {
     expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("rejects reserved signing parameters, header injection and malformed keys", async () => {
+  it(\n    "rejects reserved signing parameters, header injection and malformed keys",\n    async () => {
     await expect(
       presignR2Object(config, {
         method: "GET",
