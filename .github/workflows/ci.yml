@@ -5,7 +5,7 @@ on:
     branches: [main]
   # Validate every branch commit, including commits made before opening a PR.
   push:
-    branches: ['**']
+    branches: ["**"]
   merge_group:
   workflow_dispatch:
 
