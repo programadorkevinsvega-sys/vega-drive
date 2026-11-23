@@ -1,6 +1,6 @@
 # Fase 5 — Seguimiento de Frontend y BFF
 
-**Fecha:** 2026-10-12  
+**Fecha:** 2026-11-22  
 **Estado:** EN CURSO. Este documento registra el estado observado en el código; no certifica producción ni sustituye la ejecución de CI.
 
 ## Estado comprobado en el repositorio
@@ -32,13 +32,32 @@
 
 ### Recientes, favoritos y búsqueda
 
-- [x] Recientes ya tiene contrato público en `files`: lista archivos por última apertura/descarga, con paginación por cursor y solo recursos activos visibles para el actor.
+**Recientes**
+
+- [x] Contrato público en `files` para listar archivos por última apertura/descarga, con paginación por cursor y solo recursos activos visibles para el actor.
 - [x] La migración `0005_files_recent_activity.sql` registra la última actividad por combinación de propietario y archivo; las escrituras usan el actor autenticado y la consulta D1 filtra por `owner_id`.
 - [x] El BFF expone `GET /api/files/recent` y `POST /api/files/items/:id/open`, detrás del middleware de sesión. Las descargas registran actividad al iniciar el flujo autorizado, tanto en la ruta de URL firmada como en el fallback del Worker.
 - [x] La pantalla Recientes consume el BFF y muestra carga, error, reintento, vacío, paginación y acción de descarga.
-- [ ] La migración aún no se ha aplicado ni desplegado desde esta tarea; requiere autorización operativa explícita y posterior verificación de D1.
-- [x] Favoritos y Búsqueda cuentan con contratos reales en Files, persistencia D1 y endpoints BFF protegidos. La búsqueda consulta únicamente el árbol activo del propietario autenticado; no introducir SQL desde el BFF ni desde otro módulo.
-- [ ] Se añadieron pruebas unitarias para aislamiento de actividad, pero todavía no se han ejecutado. Falta prueba de integración BFF y evidencia de acceso cruzado en el entorno de pruebas.
+- [ ] No hay evidencia en esta actualización de que `0005_files_recent_activity.sql` se haya aplicado en D1 de producción. Requiere autorización operativa explícita y verificación posterior.
+
+**Favoritos — PR #22 y corrección #23**
+
+- [x] Persistencia por propietario mediante `0006_files_favorites.sql`, repositorio D1 y contrato público del módulo Files.
+- [x] Endpoints protegidos para listar, agregar y quitar favoritos; el propietario se obtiene de la sesión autenticada y no del cliente.
+- [x] Pantalla conectada al BFF, acción desde el catálogo y estados de carga, vacío, error/reintento y paginación.
+- [x] Pruebas de API y frontend que cubren sesión, idempotencia, aislamiento entre usuarios, rechazo de archivos ajenos y eliminación.
+- [ ] No hay evidencia en esta actualización de que `0006_files_favorites.sql` se haya aplicado en D1 de producción.
+
+**Búsqueda — PR #24**
+
+- [x] Contrato público en Files y repositorio D1 con índices owner-scoped definidos en `0007_files_search_indexes.sql`.
+- [x] Búsqueda parcial por nombre de archivos y carpetas activas, filtro por tipo y paginación mediante cursor estable.
+- [x] Endpoint protegido `GET /api/files/search`; el actor/propietario procede de la sesión autenticada y el cliente no puede seleccionar `owner_id`.
+- [x] Pantalla de búsqueda conectada al backend y pruebas de repositorio, autenticación, aislamiento entre propietarios, recursos eliminados y paginación.
+- [x] CI posterior a la fusión de PR #24 en `main` completó correctamente.
+- [ ] No hay evidencia en esta actualización de que `0007_files_search_indexes.sql` se haya aplicado en D1 de producción.
+
+Las migraciones `0005`, `0006` y `0007` deben verificarse individualmente en D1 de producción. Un CI verde valida el código y las pruebas ejecutadas por el pipeline; no demuestra que las migraciones remotas hayan sido aplicadas.
 
 ### Composition root
 
@@ -52,8 +71,9 @@
 - [ ] Añadir pruebas automatizadas de componentes/servicios para carga, vacío, error, reintento, paginación, transferencia fallida, cancelación y finalización.
 - [ ] Probar assets y cabeceras en build/preview y en la URL desplegada: CSP compatible con React y Turnstile, nosniff, Referrer-Policy, frame protection, HSTS y `Cache-Control: no-store` en API; registrar respuestas observadas.
 - [x] Definir e implementar el contrato inicial de Recientes, su persistencia por propietario y su pantalla conectada.
-- [x] Favoritos implementados: migración `0006_files_favorites.sql`, contrato público, persistencia D1, endpoints protegidos, pantalla conectada y pruebas.
-- [x] Búsqueda implementada en el alcance del PR: búsqueda parcial por nombre de archivos/carpetas activos, filtro por tipo, paginación por cursor, endpoint protegido y pantalla conectada. La aplicación de `0007_files_search_indexes.sql` en D1 requiere el despliegue autorizado.
+- [x] Favoritos implementados en PR #22 (con corrección frontend en PR #23): migración `0006_files_favorites.sql`, contrato público, persistencia D1, endpoints protegidos, pantalla conectada y pruebas de aislamiento.
+- [x] Búsqueda implementada en PR #24: búsqueda parcial por nombre de archivos/carpetas activos, filtro por tipo, paginación por cursor, endpoint protegido, pantalla conectada y pruebas de aislamiento. CI post-merge en `main` aprobado.
+- [ ] Aplicar/verificar `0006_files_favorites.sql` y `0007_files_search_indexes.sql` en D1 de producción mediante una operación autorizada.
 - [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
 - [ ] Ejecutar la integración E2E de transferencia desde la UI hasta el resultado del catálogo, incluyendo archivos grandes, descarga, error, cancelación y acceso cruzado.
 - [ ] Añadir pruebas de composición/arquitectura para Identity, Files y los gateways futuros; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.
