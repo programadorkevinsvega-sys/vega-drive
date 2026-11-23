@@ -37,7 +37,7 @@
     "verify:authenticated-actor": "node scripts/architecture/verify-authenticated-actor.mjs",
     "verify:files-gateway-contract": "node scripts/architecture/verify-files-gateway-contract.mjs",
     "verify:composition-root": "node scripts/architecture/verify-composition-root.mjs",
-    "verify:architecture:all": "pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:module-ownership && pnpm run verify:sql-boundaries && pnpm run verify:r2-port-boundary && pnpm run verify:frontend-boundary && pnpm run verify:module-extraction && pnpm run verify:r2-privacy && pnpm run verify:bff-boundary && pnpm run verify:authenticated-actor && pnpm run verify:files-gateway-contract",
+    "verify:architecture:all": "pnpm run verify:module-migrations && pnpm run verify:architecture && pnpm run verify:module-ownership && pnpm run verify:sql-boundaries && pnpm run verify:r2-port-boundary && pnpm run verify:frontend-boundary && pnpm run verify:module-extraction && pnpm run verify:r2-privacy && pnpm run verify:bff-boundary && pnpm run verify:authenticated-actor && pnpm run verify:files-gateway-contract && pnpm run verify:composition-root",
     "frontend:install": "pnpm --dir frontend install --ignore-workspace --frozen-lockfile",
     "frontend:check": "pnpm --dir frontend run check",
     "frontend:audit": "pnpm --dir frontend --ignore-workspace audit --audit-level=high",
