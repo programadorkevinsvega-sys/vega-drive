@@ -197,7 +197,7 @@ Todos los puntos comienzan **pendientes**. Para marcar uno como completado se re
 
 Para cada punto certificado, registrar la prueba o comando, el resultado, el commit revisado y, para verificaciones productivas, la fecha y el entorno. No incluir tokens, datos privados ni secretos en la evidencia. Mantener los fallos como pendientes hasta corregirlos y volver a ejecutar las pruebas.
 
-La certificación global solo puede declararse completada cuando todos los controles aplicables hayan pasado, las excepciones estén justificadas y las pruebas se ejecuten contra el commit que se pretende desplegar. Los controles que aún no tengan funcionalidad asociada se mantienen como requisitos futuros, no como controles aprobados.
+El cierre de la Fase 8 se refiere a los controles automatizados y evidencias de seguridad incorporados en esa fase; no certifica configuraciones externas de Cloudflare ni la recuperación operativa de producción, que se siguen en la Fase 9. Para cualquier control nuevo, solo se marcará como aprobado cuando la prueba aplicable pase en el commit candidato. Los controles sin funcionalidad asociada permanecen como requisitos futuros, no como controles aprobados.
 
 ### 14.5 Evidencia incorporada en la Fase 8
 
