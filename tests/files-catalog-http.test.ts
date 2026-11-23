@@ -1001,4 +1001,54 @@ describe("files catalog HTTP routes", () => {
     );
     expect(responseText).not.toContain("PRIVATE SQL");
   });
+  it("bounds JSON payloads and rejects unknown fields on optional direct-transfer routes", async () => {
+    const directEnv = {
+      ...fixture.env,
+      DIRECT_R2_TRANSFERS_ENABLED: "true",
+    } as Env;
+    const oversized = JSON.stringify({
+      name: "oversized.bin",
+      folderId: null,
+      sizeBytes: 1,
+      contentType: "application/octet-stream",
+      padding: "x".repeat(64 * 1024),
+    });
+    const invalidShape = JSON.stringify({
+      name: "unexpected.bin",
+      folderId: null,
+      sizeBytes: 1,
+      contentType: "application/octet-stream",
+      ownerId: "attacker-controlled",
+    });
+    for (const path of [
+      "/api/files/direct",
+      "/api/files/multipart",
+      "/api/files/multipart/session-id/parts/1/confirm",
+    ]) {
+      const largeResponse = await send(
+        path,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: oversized,
+        },
+        fixture.tokenA,
+        directEnv,
+      );
+      expect(largeResponse.status).toBe(400);
+
+      const shapeResponse = await send(
+        path,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: invalidShape,
+        },
+        fixture.tokenA,
+        directEnv,
+      );
+      expect(shapeResponse.status).toBe(400);
+    }
+  });
+
 });
