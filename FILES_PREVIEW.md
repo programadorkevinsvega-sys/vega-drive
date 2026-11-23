@@ -61,7 +61,6 @@ soportado desde Mi unidad y Recientes, y comprobar en Network que la petición
 de contenido va a `drive.jnmtortas.com/api/files/.../preview/content` y no
 directamente al host R2.
 
-
 ## Criterios de aceptación de seguridad
 
 - El visor no requiere CORS de R2: no se debe añadir una regla de CORS público ni

@@ -22,17 +22,27 @@ async function createFixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0005_files_recent_activity.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0006_files_favorites.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0007_files_search_indexes.sql",
-  ]) database.exec(await readFile(resolve(path), "utf8"));
+  ])
+    database.exec(await readFile(resolve(path), "utf8"));
 
   const now = new Date().toISOString();
   const expiry = new Date(Date.now() + 60_000).toISOString();
-  for (const [id, token] of [["owner-a", tokenA], ["owner-b", tokenB]] as const) {
-    await database.db.prepare(
-      "INSERT INTO identity_users (id, email, password_hash, password_salt, created_at, updated_at, disabled_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
-    ).bind(id, id + "@example.test", "hash", "salt", now, now).run();
-    await database.db.prepare(
-      "INSERT INTO identity_sessions (id, user_id, token_hash, created_at, last_seen_at, expires_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
-    ).bind("session-" + id, id, await sha256Hex(token), now, now, expiry).run();
+  for (const [id, token] of [
+    ["owner-a", tokenA],
+    ["owner-b", tokenB],
+  ] as const) {
+    await database.db
+      .prepare(
+        "INSERT INTO identity_users (id, email, password_hash, password_salt, created_at, updated_at, disabled_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
+      )
+      .bind(id, id + "@example.test", "hash", "salt", now, now)
+      .run();
+    await database.db
+      .prepare(
+        "INSERT INTO identity_sessions (id, user_id, token_hash, created_at, last_seen_at, expires_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
+      )
+      .bind("session-" + id, id, await sha256Hex(token), now, now, expiry)
+      .run();
   }
 
   const env = {
@@ -49,14 +59,21 @@ async function createFixture() {
 
 let fixture: Awaited<ReturnType<typeof createFixture>>;
 
-async function send(path: string, init: RequestInit = {}, token: string | null = tokenA) {
+async function send(
+  path: string,
+  init: RequestInit = {},
+  token: string | null = tokenA,
+) {
   const headers = new Headers(init.headers);
   if (token === null) headers.delete("Cookie");
   else headers.set("Cookie", "__Host-session=" + token);
   const method = (init.method ?? "GET").toUpperCase();
   if (!["GET", "HEAD", "OPTIONS"].includes(method) && !headers.has("Origin"))
     headers.set("Origin", ORIGIN);
-  return app.fetch(new Request(new URL(path, ORIGIN), { ...init, headers }), fixture.env);
+  return app.fetch(
+    new Request(new URL(path, ORIGIN), { ...init, headers }),
+    fixture.env,
+  );
 }
 
 async function uploadPreviewFile() {
@@ -74,7 +91,9 @@ async function uploadPreviewFile() {
   return (await response.json()) as { id: string };
 }
 
-beforeEach(async () => { fixture = await createFixture(); });
+beforeEach(async () => {
+  fixture = await createFixture();
+});
 afterEach(() => fixture.close());
 
 describe("private preview authorization hardening", () => {
@@ -82,11 +101,12 @@ describe("private preview authorization hardening", () => {
     const file = await uploadPreviewFile();
     const metadata = await send("/api/files/" + file.id + "/preview");
     expect(metadata.status).toBe(200);
-    const { url } = await metadata.json() as { url: string };
+    const { url } = (await metadata.json()) as { url: string };
 
-    await fixture.db.prepare(
-      "UPDATE identity_sessions SET revoked_at = ? WHERE id = ?",
-    ).bind(new Date().toISOString(), "session-owner-a").run();
+    await fixture.db
+      .prepare("UPDATE identity_sessions SET revoked_at = ? WHERE id = ?")
+      .bind(new Date().toISOString(), "session-owner-a")
+      .run();
 
     expect((await send("/api/files/" + file.id + "/preview")).status).toBe(401);
     const content = await send(url);
@@ -96,16 +116,17 @@ describe("private preview authorization hardening", () => {
 
   it("rejects expired sessions before issuing preview metadata", async () => {
     const file = await uploadPreviewFile();
-    await fixture.db.prepare(
-      "UPDATE identity_sessions SET expires_at = ? WHERE id = ?",
-    ).bind(new Date(Date.now() - 1_000).toISOString(), "session-owner-a").run();
+    await fixture.db
+      .prepare("UPDATE identity_sessions SET expires_at = ? WHERE id = ?")
+      .bind(new Date(Date.now() - 1_000).toISOString(), "session-owner-a")
+      .run();
     expect((await send("/api/files/" + file.id + "/preview")).status).toBe(401);
   });
 
   it("supports suffix byte ranges without introducing browser-to-R2 CORS", async () => {
     const file = await uploadPreviewFile();
     const metadata = await send("/api/files/" + file.id + "/preview");
-    const { url } = await metadata.json() as { url: string };
+    const { url } = (await metadata.json()) as { url: string };
     const content = await send(url, { headers: { Range: "bytes=-4" } });
     expect(content.status).toBe(206);
     expect(content.headers.get("Content-Range")).toBe("bytes 12-15/16");
@@ -117,10 +138,14 @@ describe("private preview authorization hardening", () => {
 
   it("never exposes another owner's preview through metadata or content", async () => {
     const file = await uploadPreviewFile();
-    const metadata = await send("/api/files/" + file.id + "/preview", {}, tokenB);
+    const metadata = await send(
+      "/api/files/" + file.id + "/preview",
+      {},
+      tokenB,
+    );
     expect(metadata.status).toBe(404);
     const ownMetadata = await send("/api/files/" + file.id + "/preview");
-    const { url } = await ownMetadata.json() as { url: string };
+    const { url } = (await ownMetadata.json()) as { url: string };
     expect((await send(url, {}, tokenB)).status).toBe(404);
   });
 });
