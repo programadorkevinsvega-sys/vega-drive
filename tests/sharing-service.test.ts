@@ -80,7 +80,7 @@ describe("sharing service security", () => {
 
   it("does not create links for files that Files cannot resolve for the owner", async () => {
     const { service, repository, getFileMetadata } = fixture();
-    getFileMetadata.mockResolvedValue({ ok: false, reason: "not-found" });
+    getFileMetadata.mockResolvedValue({ ok: false, reason: "not-found" } as never);
     await expect(service.create({ userId: "owner-a" }, "foreign-file", 3600)).resolves.toMatchObject({ ok: false, reason: "not-found" });
     expect(repository.records.size).toBe(0);
   });
