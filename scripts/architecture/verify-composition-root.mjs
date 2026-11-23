@@ -6,9 +6,8 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
   const contents = new Map();
   for (const file of files) contents.set(relativePath(file), await readFile(file, "utf8"));
 
-  const rootPath = "src/worker/composition-root.ts";
-  const root = contents.get(rootPath) ?? "";
-  if (!root) failures.push("Debe existir un único composition root en src/worker/composition-root.ts.");
+  const root = contents.get("src/worker/composition-root.ts") ?? "";
+  if (!root) failures.push("Debe existir el composition root en src/worker/composition-root.ts.");
 
   for (const [name, api] of [["Identity", "IdentityPublicApi"], ["Files", "FilesPublicApi"]]) {
     if (!new RegExp("export\\s+interface\\s+" + name + "Gateway\\s+extends\\s+" + api).test(root))
@@ -24,7 +23,12 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
       failures.push("Falta el contrato explícito " + gateway + ".");
     if (!new RegExp("export\\s+class\\s+InProcess" + name + "Gateway\\s+implements\\s+" + gateway).test(root))
       failures.push("Falta el adaptador placeholder InProcess" + name + "Gateway.");
-    if (!new RegExp("const\\s+" + name.toLowerCase() + "Api\\s*:\\s*" + api + "\\s*=\\s*\\{\\s*status\\s*:\\s*\\(\\)\\s*=>\\s*\\(\\{\\s*module:\\s*[\"']" + name.toLowerCase() + "[\"'],\\s*ready:\\s*false").test(root))
+    const unavailable = new RegExp(
+      "const\\s+" + name.toLowerCase() + "Api\\s*:\\s*" + api +
+      "\\s*=\\s*\\{\\s*status\\s*:\\s*\\(\\)\\s*=>\\s*\\(\\{\\s*module:\\s*['\"]" +
+      name.toLowerCase() + "['\"],\\s*ready:\\s*false",
+    );
+    if (!unavailable.test(root))
       failures.push(name + " debe permanecer explícitamente ready: false y sin capacidades ficticias.");
   }
 
@@ -32,7 +36,7 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
   for (const file of bffFiles) {
     const rel = relativePath(file);
     const source = await readFile(file, "utf8");
-    if (/from\\s*[\"'][^\"']*\\/modules\\//.test(source))
+    if (/from\\s*['\"][^'\"]*\\/modules\\//.test(source))
       failures.push(rel + " importa módulos directamente en vez de consumir gateways.");
     if (/\\b(?:VEGA_DRIVE_DB|FILES_BUCKET|D1Database|R2Bucket)\\b/.test(source))
       failures.push(rel + " accede directamente a infraestructura.");
@@ -45,6 +49,6 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
   const previewDoc = await readFile(absolute("FILES_PREVIEW.md"), "utf8");
   if (!/same-origin/i.test(previewDoc) || !/no necesita.*CORS/i.test(previewDoc))
     failures.push("FILES_PREVIEW.md debe documentar que el preview same-origin no necesita CORS de R2.");
-  if (/Access-Control-Allow-Origin\\s*[:=]\\s*[\"']\\*[\"']/.test(previewDoc))
+  if (/Access-Control-Allow-Origin\\s*[:=]\\s*['\"]\\*['\"]/.test(previewDoc))
     failures.push("La documentación de preview no debe recomendar CORS wildcard.");
 });
