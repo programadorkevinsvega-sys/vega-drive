@@ -14,4 +14,5 @@ export interface SharingRepository {
   findByTokenHash(tokenHash: string): Promise<ShareRecord | null>;
   listByOwner(ownerId: string, limit: number): Promise<ShareRecord[]>;
   revoke(id: string, ownerId: string, revokedAt: string): Promise<boolean>;
+  consumePasswordAttempt(tokenHash: string, occurredAt: string, windowStart: string): Promise<boolean>;
 }
