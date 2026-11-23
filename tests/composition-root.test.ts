@@ -36,9 +36,11 @@ describe("composition root and module gateways", () => {
     });
 
     for (const gateway of [gateways.quota, gateways.sharing]) {
-      expect(
-        Object.getOwnPropertyNames(Object.getPrototypeOf(gateway)),
-      ).toEqual(gateway === gateways.sharing ? ["constructor", "status", "create", "list", "revoke", "download"] : ["constructor", "status"]);
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(gateway))).toEqual(
+        gateway === gateways.sharing
+          ? ["constructor", "status", "create", "list", "revoke", "download"]
+          : ["constructor", "status"],
+      );
       expect(gateway.status().ready).toBe(false);
     }
   });
