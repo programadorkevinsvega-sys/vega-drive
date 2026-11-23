@@ -72,12 +72,11 @@ Los dos primeros permiten comprobar versión del almacenamiento y bookmark actua
 
 ## Fases
 
-| Fase | Alcance | Estado |
-|---|---|---|
-| 0–5 | Fundamentos, módulos base, transferencias e integración frontend/BFF | Cerradas |
-| 6 | Cuotas | Pendiente; se abordará al final |
-| 7 | Compartición segura | Cerrada |
-| 8 | Endurecimiento y certificación de seguridad | Cerrada según evidencias del proyecto |
-| 9 | Operación, postchecks y recuperación sin staging | Implementación cerrada; certificación operativa pendiente |
-| 10 | Mejoras futuras y posible extracción | Futuro, sin alcance comprometido |
-
+| Fase | Alcance                                                              | Estado                                                    |
+| ---- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| 0–5  | Fundamentos, módulos base, transferencias e integración frontend/BFF | Cerradas                                                  |
+| 6    | Cuotas                                                               | Pendiente; se abordará al final                           |
+| 7    | Compartición segura                                                  | Cerrada                                                   |
+| 8    | Endurecimiento y certificación de seguridad                          | Cerrada según evidencias del proyecto                     |
+| 9    | Operación, postchecks y recuperación sin staging                     | Implementación cerrada; certificación operativa pendiente |
+| 10   | Mejoras futuras y posible extracción                                 | Futuro, sin alcance comprometido                          |
