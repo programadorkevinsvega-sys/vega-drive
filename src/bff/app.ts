@@ -13,7 +13,7 @@ export const app = new Hono<AuthenticatedEnv>();
 app.use("*", async (c, next) => {
   await next();
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
-    c.header(name, value);
+    if (!c.res.headers.has(name)) c.header(name, value);
   }
   if (c.req.path.startsWith("/api/")) c.header("Cache-Control", "no-store");
 });

@@ -784,6 +784,7 @@ describe("files catalog HTTP routes", () => {
     expect(content.status).toBe(200);
     expect(content.headers.get("Content-Disposition")).toContain("inline");
     expect(content.headers.get("Cache-Control")).toContain("no-store");
+    expect(content.headers.get("Referrer-Policy")).toBe("no-referrer");
     expect(content.headers.get("Accept-Ranges")).toBe("bytes");
     expect(content.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(content.headers.get("Access-Control-Allow-Origin")).toBeNull();

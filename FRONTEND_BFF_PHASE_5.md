@@ -25,10 +25,10 @@
 
 ### Vista previa segura de archivos
 
-- [x] El BFF autoriza URLs GET firmadas de corta duración; los bytes se sirven directamente desde R2.
+- [x] La vista previa usa rutas same-origin protegidas; el Worker vuelve a validar la sesión y el propietario y transmite los bytes privados desde R2. El navegador no recibe una URL firmada de R2.
 - [x] Visor nativo de imágenes, audio/vídeo y PDF, lectura de texto y extracción local limitada de DOCX/XLSX.
-- [ ] Configurar y verificar CORS del bucket R2; instrucciones en FILES_PREVIEW.md.
-- [ ] Verificar acceso cruzado, caducidad, Range y host R2 en producción.
+- [x] CORS de R2 no es requisito del visor actual: el navegador no lee R2 directamente. Se documentó la distinción respecto a futuras transferencias directas en FILES_PREVIEW.md.
+- [x] Pruebas HTTP con D1/R2 aislados para sesión ausente/expirada, aislamiento entre propietarios, respuestas Range 206/416, ausencia de host R2 en el contrato y cabeceras no-store/no-referrer. No se presenta esta suite como una prueba contra el bucket de producción.
 
 ### Recientes, favoritos y búsqueda
 
@@ -62,8 +62,8 @@ Las migraciones `0005`, `0006` y `0007` deben verificarse individualmente en D1 
 ### Composition root
 
 - [x] `src/worker/composition-root.ts` expone gateways in-process para Identity y Files y gateways tipados para Quota y Sharing.
-- [ ] Quota y Sharing son placeholders con `ready: false`; no deben tratarse como capacidades implementadas.
-- [ ] Añadir/confirmar pruebas que garanticen que controllers consumen gateways y que las nuevas funcionalidades solo dependan de APIs públicas. No crear una segunda composición ni importar repositorios D1/R2 directamente desde rutas.
+- [x] Quota y Sharing son placeholders con `ready: false`; sus gateways solo exponen `status()` y no ofrecen operaciones funcionales.
+- [x] Pruebas de composition root y delegación de IdentityGateway/FilesGateway a sus APIs públicas; se verifica que Quota/Sharing permanecen sin capacidades operativas. No se crea una segunda composición ni se importan repositorios D1/R2 desde rutas.
 
 ## Trabajo pendiente para cerrar la Fase 5
 
@@ -76,7 +76,7 @@ Las migraciones `0005`, `0006` y `0007` deben verificarse individualmente en D1 
 - [ ] Aplicar/verificar `0006_files_favorites.sql` y `0007_files_search_indexes.sql` en D1 de producción mediante una operación autorizada.
 - [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
 - [ ] Ejecutar la integración E2E de transferencia desde la UI hasta el resultado del catálogo, incluyendo archivos grandes, descarga, error, cancelación y acceso cruzado.
-- [ ] Añadir pruebas de composición/arquitectura para Identity, Files y los gateways futuros; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.
+- [x] Añadir pruebas de composición y gateways para Identity y Files; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.
 - [ ] Ejecutar `pnpm run cloudflare:build` y el conjunto de pruebas del commit candidato. No declarar éxito sin resultados observados.
 
 ## Criterio de cierre
