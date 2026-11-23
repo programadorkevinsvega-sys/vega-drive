@@ -24,10 +24,18 @@ describe("integración de assets frontend/Cloudflare", () => {
     expect(headers).toContain("base-uri 'self'");
     expect(headers).toContain("form-action 'self'");
     expect(headers).toContain("frame-ancestors 'self'");
-    expect(headers).toContain("frame-src 'self' https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com");
-    expect(headers).toContain("connect-src 'self' https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com");
-    expect(headers).toContain("img-src 'self' data: blob: https://*.r2.cloudflarestorage.com");
-    expect(headers).toContain("media-src 'self' blob: https://*.r2.cloudflarestorage.com");
+    expect(headers).toContain(
+      "frame-src 'self' https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com",
+    );
+    expect(headers).toContain(
+      "connect-src 'self' https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com",
+    );
+    expect(headers).toContain(
+      "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com",
+    );
+    expect(headers).toContain(
+      "media-src 'self' blob: https://*.r2.cloudflarestorage.com",
+    );
     expect(headers).toContain("X-Content-Type-Options: nosniff");
     expect(headers).toContain(
       "Referrer-Policy: strict-origin-when-cross-origin",
