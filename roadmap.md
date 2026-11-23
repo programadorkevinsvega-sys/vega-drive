@@ -17,19 +17,19 @@ La arquitectura obligatoria está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md]
 
 ## Resumen de fases
 
-| Fase | Alcance | Estado actual |
-|---|---|---|
-| 0 | Fundamentos y contrato del Worker | Cerrada |
-| 1 | D1 única y límites por módulo | Cerrada |
-| 2 | Identity y autenticación | Cerrada |
-| 3 | Catálogo de archivos y carpetas | Cerrada |
-| 4 | Transferencias privadas con R2 | Cerrada; validación operativa registrada |
-| 5 | Frontend/BFF, recientes, favoritos, búsqueda y vistas | Cerrada |
-| 6 | Cuotas | Pendiente; se aborda al final |
-| 7 | Compartición segura | Cerrada |
-| 8 | Endurecimiento y pruebas de seguridad | Cerrada |
-| 9 | Operación, recuperación y rollback sin staging | Implementación cerrada; certificación operativa pendiente |
-| 10 | Mejoras futuras/extracción | Futuro, sin alcance comprometido |
+| Fase | Alcance                                               | Estado actual                                             |
+| ---- | ----------------------------------------------------- | --------------------------------------------------------- |
+| 0    | Fundamentos y contrato del Worker                     | Cerrada                                                   |
+| 1    | D1 única y límites por módulo                         | Cerrada                                                   |
+| 2    | Identity y autenticación                              | Cerrada                                                   |
+| 3    | Catálogo de archivos y carpetas                       | Cerrada                                                   |
+| 4    | Transferencias privadas con R2                        | Cerrada; validación operativa registrada                  |
+| 5    | Frontend/BFF, recientes, favoritos, búsqueda y vistas | Cerrada                                                   |
+| 6    | Cuotas                                                | Pendiente; se aborda al final                             |
+| 7    | Compartición segura                                   | Cerrada                                                   |
+| 8    | Endurecimiento y pruebas de seguridad                 | Cerrada                                                   |
+| 9    | Operación, recuperación y rollback sin staging        | Implementación cerrada; certificación operativa pendiente |
+| 10   | Mejoras futuras/extracción                            | Futuro, sin alcance comprometido                          |
 
 ---
 
