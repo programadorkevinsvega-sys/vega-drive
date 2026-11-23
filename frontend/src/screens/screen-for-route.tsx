@@ -5,7 +5,8 @@ import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 import { FilesCatalogScreen } from "./FilesCatalogScreen";
 import { RecentFilesScreen } from "./RecentFilesScreen";
 import { FavoritesScreen } from "./FavoritesScreen";
-import { SearchScreen } from "./SearchScreen";\nimport { ShareAccessScreen } from "./ShareAccessScreen";
+import { SearchScreen } from "./SearchScreen";
+import { ShareAccessScreen } from "./ShareAccessScreen";
 
 /** Tabla ruta -> pantalla, con el catálogo real conectado al BFF. */
 export function renderScreen(route: Route): ReactNode {
