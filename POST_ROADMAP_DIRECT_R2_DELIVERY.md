@@ -1,10 +1,10 @@
 # Propuesta futura: API S3 externa y distribución pública de objetos
 
- > **ESTADO: PROPUESTA HISTÓRICA NO ACTIVA.** La transferencia directa de bytes navegador↔R2 para la aplicación Vega Drive ya fue aprobada e implementada mediante [ADR-001](./ADR-001-direct-r2-transfers.md) y la Fase 4. Este documento ya no es una especificación para volver a implementar esa transferencia. Su contenido sobre una API S3 compatible para terceros, publicación/CDN de objetos y dominios públicos describe ideas futuras no implementadas ni aprobadas. No agrega una fase al roadmap ni autoriza cambios en Cloudflare o producción. El estado vigente está en [roadmap.md](./roadmap.md).
+> **ESTADO: PROPUESTA HISTÓRICA NO ACTIVA.** La transferencia directa de bytes navegador↔R2 para la aplicación Vega Drive ya fue aprobada e implementada mediante [ADR-001](./ADR-001-direct-r2-transfers.md) y la Fase 4. Este documento ya no es una especificación para volver a implementar esa transferencia. Su contenido sobre una API S3 compatible para terceros, publicación/CDN de objetos y dominios públicos describe ideas futuras no implementadas ni aprobadas. No agrega una fase al roadmap ni autoriza cambios en Cloudflare o producción. El estado vigente está en [roadmap.md](./roadmap.md).
 
 ## 1. Objetivo
 
-Evitar que el Worker de Vega Drive reciba y retransmita cada byte de las transferencias cuando Cloudflare R2 pueda servir o recibir el objeto directamente.
+El objetivo original —evitar que el Worker retransmita los bytes de la aplicación— ya está implementado mediante ADR-001 y la Fase 4. Esta propuesta se conserva solo para estudiar una posible API S3 de terceros y distribución pública/CDN, que no forman parte del producto actual.
 
 La solución debe beneficiar a **ambos productos**:
 
