@@ -79,9 +79,7 @@ describe("composition root and module gateways", () => {
       const gateway = new InProcessFilesGateway(api);
       const actor = { userId: "owner-a" };
 
-      await expect(
-        gateway.listFolder(actor, { folderId: null }),
-      ).resolves.toBe(listing);
+      await expect(gateway.listFolder(actor, { folderId: null })).resolves.toBe(listing);
       await expect(
         gateway.downloadFile(actor, "file-a", "bytes=0-1", "preview"),
       ).resolves.toMatchObject({ ok: true });

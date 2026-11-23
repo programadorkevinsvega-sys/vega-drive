@@ -772,9 +772,7 @@ describe("files catalog HTTP routes", () => {
       expect(metadata.status).toBe(200);
       expect(metadata.headers.get("Cache-Control")).toContain("no-store");
       expect(metadata.headers.get("Referrer-Policy")).toBe("no-referrer");
-      const preview = await json<{ url: string; expiresInSeconds: number }>(
-        metadata,
-      );
+      const preview = await json<{ url: string; expiresInSeconds: number }>(metadata);
       expect(preview).toEqual({
         url: "/api/files/" + file.id + "/preview/content",
         expiresInSeconds: 0,
@@ -791,25 +789,17 @@ describe("files catalog HTTP routes", () => {
       expect(content.headers.get("Access-Control-Allow-Origin")).toBeNull();
       expect(await content.text()).toBe("0123456789abcdef");
 
-      const partial = await send(preview.url, {
-        headers: { Range: "bytes=3-7" },
-      });
+      const partial = await send(preview.url, { headers: { Range: "bytes=3-7" } });
       expect(partial.status).toBe(206);
       expect(partial.headers.get("Content-Range")).toBe("bytes 3-7/16");
       expect(partial.headers.get("Content-Length")).toBe("5");
       expect(await partial.text()).toBe("34567");
 
-      const invalidRange = await send(preview.url, {
-        headers: { Range: "bytes=99-100" },
-      });
+      const invalidRange = await send(preview.url, { headers: { Range: "bytes=99-100" } });
       expect(invalidRange.status).toBe(416);
       expect(invalidRange.headers.get("Content-Range")).toBe("bytes */16");
 
-      const foreignMetadata = await send(
-        "/api/files/" + file.id + "/preview",
-        {},
-        fixture.tokenB,
-      );
+      const foreignMetadata = await send("/api/files/" + file.id + "/preview", {}, fixture.tokenB);
       expect(foreignMetadata.status).toBe(404);
       const foreignContent = await send(preview.url, {}, fixture.tokenB);
       expect(foreignContent.status).toBe(404);
