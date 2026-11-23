@@ -198,3 +198,37 @@ Todos los puntos comienzan **pendientes**. Para marcar uno como completado se re
 Para cada punto certificado, registrar la prueba o comando, el resultado, el commit revisado y, para verificaciones productivas, la fecha y el entorno. No incluir tokens, datos privados ni secretos en la evidencia. Mantener los fallos como pendientes hasta corregirlos y volver a ejecutar las pruebas.
 
 La certificación global solo puede declararse completada cuando todos los controles aplicables hayan pasado, las excepciones estén justificadas y las pruebas se ejecuten contra el commit que se pretende desplegar. Los controles que aún no tengan funcionalidad asociada se mantienen como requisitos futuros, no como controles aprobados.
+
+### 14.5 Evidencia incorporada en la Fase 8
+
+La Fase 8 añade controles reproducibles al repositorio. Estos controles no sustituyen las verificaciones de producción ni permiten declarar certificada una configuración externa que no se haya inspeccionado.
+
+| Control | Implementación y evidencia automatizada |
+| --- | --- |
+| Cabeceras en frontend y API | El Worker aplica las cabeceras de seguridad tanto a respuestas de Hono como a assets estáticos y respuestas 404. Pruebas en `src/bff/security-headers.test.ts` y `tests/worker-routing.test.ts`. |
+| CSP | Política por defecto same-origin, sin `unsafe-inline` ni `unsafe-eval`; permite únicamente los recursos de Turnstile necesarios y el iframe same-origin de vista previa PDF. |
+| Enmarcado | `SAMEORIGIN` es una excepción deliberada y limitada para la vista previa PDF dentro de Vega Drive. El CSP `frame-ancestors 'self'` impide el enmarcado desde otros orígenes. |
+| Sesiones concurrentes | La renovación de actividad es una actualización condicional en D1. Revalida propietario, revocación, expiración absoluta, ventana de inactividad y estado habilitado del usuario; si la actualización no afecta exactamente a una sesión activa, la autenticación falla cerrada. Pruebas en `tests/identity-sessions.test.ts`, `tests/identity-d1-repositories.test.ts` y `tests/authenticated-actor.test.ts`. |
+| Entradas de transferencias multipart/directas | Los cuerpos JSON se limitan a 64 KiB, requieren JSON UTF-8 válido y rechazan campos desconocidos antes de ejecutar el caso de uso. Pruebas en `tests/files-catalog-http.test.ts`. |
+| Aislamiento de archivos y compartición | Se mantienen las pruebas de aislamiento por propietario, vista previa privada y revocación/expiración/contraseña de enlaces: `tests/files-catalog-isolation.test.ts`, `tests/files-preview-security.test.ts`, `tests/sharing-http.test.ts` y `tests/sharing-service.test.ts`. |
+| Cadena de suministro | CI limita el permiso de escritura al job de formato; verificación y escaneo de secretos no reciben permisos de escritura. Dependabot revisa semanalmente dependencias raíz, frontend y GitHub Actions en `.github/dependabot.yml`. |
+
+Comprobaciones automáticas requeridas para el commit de esta fase:
+
+- `pnpm run check`
+- `pnpm run verify:architecture:all`
+- `pnpm --dir frontend run typecheck`
+- `pnpm --dir frontend run test`
+- `pnpm audit --audit-level=high`
+- `pnpm run frontend:audit`
+- escaneo Gitleaks del workflow CI
+- migraciones y verificación de esquema D1 local
+
+**Pendiente de verificación externa antes de declarar la certificación global:**
+
+- Confirmar en Cloudflare que las reglas WAF/rate limiting están activas para el dominio de producción y cubren autenticación, registro y solicitudes costosas. La aplicación ya aplica límites por cuenta en autenticación y por usuario en transferencias; este repositorio no puede demostrar por sí solo la configuración WAF.
+- Verificar en el entorno de producción las cabeceras efectivas de HTML, JS, CSS, respuestas API y errores, además de los flujos de autenticación, aislamiento, preview, descarga y compartición.
+- Confirmar la protección de la rama `main` y los requisitos de aprobación/checks desde la configuración del repositorio. La conexión de GitHub utilizada para esta implementación no concede acceso de lectura a branch protection.
+- Repetir las verificaciones productivas de D1 y despliegue después de una publicación autorizada. Esta fase no ejecuta migraciones remotas ni despliega.
+
+No marcar estos puntos externos como aprobados a partir de pruebas locales o de CI. La certificación global permanece **PENDIENTE** hasta disponer de esa evidencia.
