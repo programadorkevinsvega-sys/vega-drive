@@ -1,8 +1,6 @@
-# Diseño post-roadmap: transferencias directas con R2 y API S3
+# Propuesta futura: API S3 externa y distribución pública de objetos
 
-> **ESTADO: DOCUMENTO DE DISEÑO; NO IMPLEMENTAR TODAVÍA.**
->
-> Este documento define una evolución futura para Vega Drive. **No agrega una fase activa ni autoriza cambios de código, configuración de Cloudflare o producción mientras quede pendiente cualquier fase del roadmap principal.** La implementación solo podrá comenzar cuando las fases 0 a 10 de `roadmap.md` estén cerradas con sus criterios de aceptación y evidencias, y se haya aprobado un ADR que reconcilie las reglas arquitectónicas y de seguridad afectadas.
+ > **ESTADO: PROPUESTA HISTÓRICA NO ACTIVA.** La transferencia directa de bytes navegador↔R2 para la aplicación Vega Drive ya fue aprobada e implementada mediante [ADR-001](./ADR-001-direct-r2-transfers.md) y la Fase 4. Este documento ya no es una especificación para volver a implementar esa transferencia. Su contenido sobre una API S3 compatible para terceros, publicación/CDN de objetos y dominios públicos describe ideas futuras no implementadas ni aprobadas. No agrega una fase al roadmap ni autoriza cambios en Cloudflare o producción. El estado vigente está en [roadmap.md](./roadmap.md).
 
 ## 1. Objetivo
 
@@ -21,20 +19,19 @@ Objetivo arquitectónico:
 - **Data plane:** navegador o cliente compatible → endpoint de objeto autorizado de R2.
 - El Worker no debe leer el cuerpo completo de una descarga para luego retransmitirlo, ni actuar como proxy del cuerpo de una subida, salvo una excepción documentada y necesaria.
 
-## 2. Puerta de entrada obligatoria: completar todo el roadmap
+## 2. Alcance futuro y condiciones de reactivación
 
-Antes de iniciar cualquier implementación, comprobar y registrar que:
+La transferencia directa para las vistas y operaciones de la aplicación ya está cubierta por ADR-001. Esta propuesta solo podría reactivarse para un alcance adicional, como una API S3 compatible para clientes externos o distribución pública/CDN de objetos.
 
-- [ ] Todas las fases 0–10 de `roadmap.md` están cerradas y cada criterio de aceptación tiene evidencia reproducible.
-- [ ] La Fase 4 tiene transferencia real validada en el Worker desplegado y configuración de privacidad/permisos de R2 verificada.
-- [ ] Las Fases 5–9 están cerradas, incluida integración de la app, cuotas, compartición, certificación de seguridad, staging y rollback ensayado.
-- [ ] La Fase 10 está cerrada conforme a su alcance acordado; cualquier mejora opcional que se haya descartado está documentada explícitamente, no marcada como realizada.
-- [ ] El estado real de README, `roadmap.md`, `Security.md`, `Rollback.md` y este diseño es coherente.
-- [ ] Existe una decisión arquitectónica aprobada (ADR) que autoriza excepciones o cambios a las reglas actuales que prohíben URLs firmadas y acceso directo del navegador a R2.
-- [ ] Se define una estrategia de despliegue gradual, métricas, reversión y compatibilidad de clientes.
-- [ ] Se ejecutan los gates del repositorio y las pruebas pertinentes en staging antes de habilitar la función en producción.
+Antes de iniciar ese alcance futuro:
+- [ ] El propietario debe aprobar explícitamente el producto, los clientes, los casos de uso y los límites de la API externa o de publicación pública.
+- [ ] Crear un ADR nuevo que defina autenticación de desarrolladores, aislamiento multiusuario, scopes, buckets/objetos, revocación, CORS, caché, auditoría y límites.
+- [ ] Añadir el trabajo al roadmap principal y definir criterios de aceptación medibles.
+- [ ] Revisar las reglas de seguridad y arquitectura; no reutilizar credenciales compartidas de servicio ni exponer secretos R2.
+- [ ] Definir pruebas automatizadas y una estrategia de despliegue/rollback compatible con el entorno actual de producción.
+- [ ] No crear ni presuponer staging: el proyecto actualmente opera solo en producción. Cualquier cambio de entorno requeriría una decisión separada y explícita del propietario.
 
-**No se debe adelantar esta tarea para desbloquear una fase anterior.** Hasta cumplir todas las condiciones, el flujo actual por `/api` y el Worker permanece como comportamiento de referencia.
+Hasta que se apruebe ese alcance, esta propuesta permanece como referencia histórica. No modificar el flujo directo existente de la aplicación como parte de este documento.
 
 ## 3. Modelo combinado de entrega
 
@@ -179,7 +176,7 @@ Conservar el monolito modular y las fronteras existentes:
 
 R2 seguirá accesible solo a través de adaptadores de infraestructura autorizados y contratos públicos. No introducir SQL, JOINs, claves foráneas o imports internos entre módulos. El frontend no incluirá SDK, endpoint, bucket ni credenciales internas de R2.
 
-Como la arquitectura vigente prohíbe URLs firmadas y acceso directo desde el navegador, **esta propuesta necesita un ADR aprobado y la actualización coordinada de los documentos canónicos antes de escribir código**. No modificar esas reglas silenciosamente ni tratarlas como derogadas por este archivo.
+ADR-001 ya permite URLs prefirmadas temporales y transferencias directas para la aplicación Vega Drive. Esa autorización no cubre automáticamente una API S3 para terceros, publicación pública, CDN ni dominios públicos. Cualquier ampliación requiere un ADR específico y actualización coordinada de los documentos canónicos.
 
 ## 6. Seguridad, cuotas y abuso
 
@@ -219,7 +216,7 @@ El objetivo de la métrica de bytes es demostrar que las transferencias habitual
 Solo después de cumplir la puerta de entrada de la sección 2:
 
 1. **ADR y contrato:** decidir el modelo de público/privado, endpoint S3, aislamiento de credenciales, CORS, caché y excepciones de proxy.
-2. **Infraestructura aislada:** configurar dominios/buckets/credenciales y políticas en staging, sin exponer el bucket privado actual.
+2. **Infraestructura:** si se aprueba una API externa o publicación pública, diseñar por separado dominios, buckets, credenciales y políticas; no exponer el bucket privado actual ni crear staging como parte de esta propuesta.
 3. **API de permisos temporales:** implementar casos de uso y contratos públicos para iniciar/confirmar subida y autorizar descarga.
 4. **App Vega Drive:** adaptar subidas, descargas, previews y compartición; conservar el fallback por Worker mientras dure la migración.
 5. **API de desarrolladores/S3:** implementar scopes y matriz de compatibilidad; verificar que el modo elegido realmente evita retransmitir bytes en las operaciones anunciadas como directas.
@@ -244,7 +241,7 @@ La futura implementación solo se considerará completa cuando:
 - [ ] Ninguna credencial compartida de R2 se expone a usuarios ni permite acceso cruzado.
 - [ ] CORS, caché, headers, logs y secretos pasan revisión de seguridad.
 - [ ] Las métricas demuestran la reducción esperada de bytes que atraviesan el Worker.
-- [ ] Staging, despliegue gradual, observabilidad y rollback están probados y documentados.
+- [ ] Despliegue, observabilidad y rollback del nuevo alcance están aprobados y documentados para el entorno operativo autorizado; no se presupone staging.
 - [ ] Los gates del repositorio y las pruebas E2E pertinentes pasan en el commit que se despliega.
 
 ## 10. Documentos canónicos que habrá que revisar
@@ -252,11 +249,11 @@ La futura implementación solo se considerará completa cuando:
 Cuando se cumpla la puerta de entrada, actualizar en una misma iniciativa y sin contradicciones:
 
 - `roadmap.md`: registrar esta iniciativa post-roadmap sin marcarla como completada antes de tiempo.
-- `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`: reemplazar las prohibiciones actuales de acceso directo/URLs firmadas solo mediante ADR aprobado y con límites explícitos.
+- `ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md`: documentar cualquier contrato adicional de API externa/CDN sin alterar los límites de ADR-001 para las transferencias de la aplicación.
 - `Security.md`: añadir amenazas, pruebas y controles de URL firmada, CORS, caché, cargas directas y credenciales S3.
 - `Rollback.md`: documentar feature flags, compatibilidad del flujo antiguo y reversión de configuración de dominios/transferencias.
 - `README.md`: actualizar la descripción de los flujos únicamente después de su implementación y certificación real.
 
 ---
 
-**Recordatorio final:** este documento es una especificación futura. No cambiar el flujo actual, no habilitar dominios públicos, no crear claves S3, no generar URLs firmadas y no desplegar esta arquitectura hasta cerrar todo el roadmap principal y aprobar el ADR correspondiente.
+**Recordatorio final:** la transferencia directa de la aplicación ya está implementada bajo ADR-001. Este documento no autoriza una API S3 externa, objetos públicos, CDN, dominios públicos, credenciales adicionales, cambios de feature flags ni despliegues. Cualquier ampliación requiere aprobación explícita y un ADR propio.
