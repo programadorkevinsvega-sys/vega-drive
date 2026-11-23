@@ -38,7 +38,7 @@ async function strictJson(
   const contentLength = request.headers.get("Content-Length");
   if (
     contentLength !== null &&
-    (!/^\\d+$/.test(contentLength) ||
+    (!/^\d+$/.test(contentLength) ||
       Number(contentLength) > MAX_JSON_BODY_BYTES)
   ) {
     return null;
