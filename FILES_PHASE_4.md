@@ -87,8 +87,9 @@ La confirmación de cierre procede del propietario. El SHA Git exacto no se vuel
 - Tanto la subida directa simple como la finalización multipart comparan el
   tamaño y el `Content-Type` devueltos por `HEAD` con la sesión autorizada
   antes de publicar el catálogo. Una discrepancia rechaza la finalización y
-  activa la limpieza/reconciliación existente; si falla la limpieza, el cierre
-  operativo de la fase sigue pendiente.
+  activa la limpieza/reconciliación existente. Si la limpieza falla, conservar
+  la sesión/reserva para reintento y registrar el incidente; no borrar metadatos
+  de forma que se pierda la posibilidad de reconciliar.
 - La cancelación de un PUT directo conserva una reserva fallida y su sesión D1
   hasta la limpieza posterior a la expiración: una URL ya emitida no se puede
   revocar instantáneamente. La reserva puede seguir computando para la cuota
@@ -97,16 +98,19 @@ La confirmación de cierre procede del propietario. El SHA Git exacto no se vuel
   firmadas por parte; el navegador envía cada parte a R2 y confirma el ETag al
   Worker. El Worker conserva la autoridad sobre la lista de partes y completa
   el multipart. La compatibilidad de IDs/ETags entre la API de bindings y la
-  API S3 debe probarse en E2E antes de habilitar el flag.
+  API S3 requiere pruebas E2E específicas para la ruta multipart; la evidencia
+  operativa resumida al inicio no debe extenderse a escenarios que no se hayan
+  registrado explícitamente.
 - Las descargas pueden redirigir a una URL GET firmada de 120 segundos, emitida
   después de validar propiedad, carpeta activa, cuota de frecuencia y tamaño
   real. La URL es una credencial portadora hasta expirar; no hay revocación
   instantánea garantizada.
 - Configuración requerida fuera del repositorio: secretos del Worker
   `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`;
-  `DIRECT_R2_TRANSFERS_ENABLED` permanece `false` hasta que CORS permita solo
-  orígenes conocidos, métodos PUT/GET y cabeceras mínimas, exponiendo `ETag`
-  para multipart.
+  el valor efectivo de `DIRECT_R2_TRANSFERS_ENABLED` no se puede deducir del
+  repositorio; consultarlo en el entorno Worker antes de afirmar qué ruta está
+  activa. No modificar el flag sin autorización. CORS debe limitarse a orígenes
+  conocidos, métodos PUT/GET y cabeceras mínimas, exponiendo `ETag` para multipart.
 - Las URLs no se guardan en almacenamiento local ni se escriben en logs. Las
   credenciales S3 deben tener permisos mínimos limitados al bucket
   `vega-drive-files`.
