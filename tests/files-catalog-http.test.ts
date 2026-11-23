@@ -761,53 +761,60 @@ describe("files catalog HTTP routes", () => {
     expect(trash.nodes.map((node) => node.id)).not.toContain(foreignItem.id);
   });
 
-  it(
-    "sirve vistas previas same-origin con sesión vigente, Range y aislamiento por propietario",
-    async () => {
-      const upload = await sendFile("preview-private.txt", "0123456789abcdef");
-      expect(upload.status).toBe(201);
-      const file = await json<{ id: string }>(upload);
+  it("sirve vistas previas same-origin con sesión vigente, Range y aislamiento por propietario", async () => {
+    const upload = await sendFile("preview-private.txt", "0123456789abcdef");
+    expect(upload.status).toBe(201);
+    const file = await json<{ id: string }>(upload);
 
-      const metadata = await send("/api/files/" + file.id + "/preview");
-      expect(metadata.status).toBe(200);
-      expect(metadata.headers.get("Cache-Control")).toContain("no-store");
-      expect(metadata.headers.get("Referrer-Policy")).toBe("no-referrer");
-      const preview = await json<{ url: string; expiresInSeconds: number }>(metadata);
-      expect(preview).toEqual({
-        url: "/api/files/" + file.id + "/preview/content",
-        expiresInSeconds: 0,
-      });
-      expect(preview.url).not.toMatch(/^https?:\/\//);
-      expect(preview.url).not.toContain("r2.cloudflarestorage.com");
+    const metadata = await send("/api/files/" + file.id + "/preview");
+    expect(metadata.status).toBe(200);
+    expect(metadata.headers.get("Cache-Control")).toContain("no-store");
+    expect(metadata.headers.get("Referrer-Policy")).toBe("no-referrer");
+    const preview = await json<{ url: string; expiresInSeconds: number }>(
+      metadata,
+    );
+    expect(preview).toEqual({
+      url: "/api/files/" + file.id + "/preview/content",
+      expiresInSeconds: 0,
+    });
+    expect(preview.url).not.toMatch(/^https?:\/\//);
+    expect(preview.url).not.toContain("r2.cloudflarestorage.com");
 
-      const content = await send(preview.url);
-      expect(content.status).toBe(200);
-      expect(content.headers.get("Content-Disposition")).toContain("inline");
-      expect(content.headers.get("Cache-Control")).toContain("no-store");
-      expect(content.headers.get("Accept-Ranges")).toBe("bytes");
-      expect(content.headers.get("X-Content-Type-Options")).toBe("nosniff");
-      expect(content.headers.get("Access-Control-Allow-Origin")).toBeNull();
-      expect(await content.text()).toBe("0123456789abcdef");
+    const content = await send(preview.url);
+    expect(content.status).toBe(200);
+    expect(content.headers.get("Content-Disposition")).toContain("inline");
+    expect(content.headers.get("Cache-Control")).toContain("no-store");
+    expect(content.headers.get("Accept-Ranges")).toBe("bytes");
+    expect(content.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(content.headers.get("Access-Control-Allow-Origin")).toBeNull();
+    expect(await content.text()).toBe("0123456789abcdef");
 
-      const partial = await send(preview.url, { headers: { Range: "bytes=3-7" } });
-      expect(partial.status).toBe(206);
-      expect(partial.headers.get("Content-Range")).toBe("bytes 3-7/16");
-      expect(partial.headers.get("Content-Length")).toBe("5");
-      expect(await partial.text()).toBe("34567");
+    const partial = await send(preview.url, {
+      headers: { Range: "bytes=3-7" },
+    });
+    expect(partial.status).toBe(206);
+    expect(partial.headers.get("Content-Range")).toBe("bytes 3-7/16");
+    expect(partial.headers.get("Content-Length")).toBe("5");
+    expect(await partial.text()).toBe("34567");
 
-      const invalidRange = await send(preview.url, { headers: { Range: "bytes=99-100" } });
-      expect(invalidRange.status).toBe(416);
-      expect(invalidRange.headers.get("Content-Range")).toBe("bytes */16");
+    const invalidRange = await send(preview.url, {
+      headers: { Range: "bytes=99-100" },
+    });
+    expect(invalidRange.status).toBe(416);
+    expect(invalidRange.headers.get("Content-Range")).toBe("bytes */16");
 
-      const foreignMetadata = await send("/api/files/" + file.id + "/preview", {}, fixture.tokenB);
-      expect(foreignMetadata.status).toBe(404);
-      const foreignContent = await send(preview.url, {}, fixture.tokenB);
-      expect(foreignContent.status).toBe(404);
+    const foreignMetadata = await send(
+      "/api/files/" + file.id + "/preview",
+      {},
+      fixture.tokenB,
+    );
+    expect(foreignMetadata.status).toBe(404);
+    const foreignContent = await send(preview.url, {}, fixture.tokenB);
+    expect(foreignContent.status).toBe(404);
 
-      const unauthenticated = await send(preview.url, {}, null);
-      expect(unauthenticated.status).toBe(401);
-    },
-  );
+    const unauthenticated = await send(preview.url, {}, null);
+    expect(unauthenticated.status).toBe(401);
+  });
 
   it("revalida la sesión al consumir el contenido de la vista previa", async () => {
     const upload = await sendFile("preview-expired.txt", "private bytes");
