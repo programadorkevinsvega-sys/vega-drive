@@ -21,7 +21,7 @@ describe("cabeceras de seguridad para documentos privados", () => {
     expect(policy).toContain("form-action 'self'");
     expect(policy).not.toContain("unsafe-inline");
     expect(policy).not.toContain("unsafe-eval");
-    expect(policy).not.toMatch(/(?:^|\\s)https:(?:\\s|;)/);
+    expect(policy).not.toMatch(/(?:^|\s)https:(?:\s|;)/);
   });
 
   it("desactiva capacidades del navegador que Vega Drive no utiliza", () => {
