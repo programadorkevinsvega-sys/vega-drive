@@ -7,7 +7,8 @@ export type Route =
   | { name: "favorites" }
   | { name: "trash" }
   | { name: "search"; query: string }
-  | { name: "settings" }\n  | { name: "share"; token: string }
+  | { name: "settings" }
+  | { name: "share"; token: string }
   | { name: "not-found" };
 
 export type RouteName = Route["name"];
@@ -45,7 +46,10 @@ export function parseHash(hash: string): Route {
     }
     return { name: "not-found" };
   }
-  if (first === "share" && segments.length === 2 && second !== undefined) {\n    return /^[A-Za-z0-9_-]{43}$/.test(second) ? { name: "share", token: second } : { name: "not-found" };\n  }\n  if (first === "search" && segments.length === 1) {
+  if (first === "share" && segments.length === 2 && second !== undefined) {
+    return /^[A-Za-z0-9_-]{43}$/.test(second) ? { name: "share", token: second } : { name: "not-found" };
+  }
+  if (first === "search" && segments.length === 1) {
     const q = new URLSearchParams(query).get("q") ?? "";
     return { name: "search", query: q.trim().slice(0, MAX_QUERY_LENGTH) };
   }
