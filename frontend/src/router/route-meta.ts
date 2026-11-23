@@ -1,6 +1,6 @@
 import type { Route } from "./routes";
 
-export type Layout = "shell" | "auth";
+export type Layout = "shell" | "auth" | "public";
 
 export interface RouteMeta {
   title: string;
