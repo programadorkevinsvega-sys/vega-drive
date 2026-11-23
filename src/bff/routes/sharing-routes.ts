@@ -27,21 +27,20 @@ function failure(c: Context<AuthenticatedEnv>, reason: string) {
   if (reason === "rate-limited") return c.json({ error: "Share creation limit reached" }, 429);
   return c.json({ error: "Sharing temporarily unavailable" }, 503);
 }
-sharingRoutes.use("/", requireAuthenticatedActor);
-sharingRoutes.get("/", async (c) => {
+sharingRoutes.get("/", requireAuthenticatedActor, async (c) => {
   if (new URL(c.req.url).search) return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.list(actor(c));
   return result.ok ? c.json(result.value) : failure(c, result.reason);
 });
-sharingRoutes.post("/", async (c) => {
+sharingRoutes.post("/", requireAuthenticatedActor, async (c) => {
   if (!originAllowed(c.req.raw) || new URL(c.req.url).search) return c.json(INVALID, 403);
   const body = await strictBody(c.req.raw, ["itemId", "expiresInSeconds"]);
   if (!body || !Object.hasOwn(body, "itemId")) return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.create(actor(c), body.itemId, body.expiresInSeconds);
   return result.ok ? c.json(result.value, 201) : failure(c, result.reason);
 });
-sharingRoutes.delete("/:id", async (c) => {
-  if (!originAllowed(c.req.raw) || new URL(c.req.url).search || c.req.header("Content-Length") === "0" || c.req.raw.body) return c.json(INVALID, 400);
+sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
+  if (!originAllowed(c.req.raw) || new URL(c.req.url).search) return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.revoke(actor(c), c.req.param("id"));
   return result.ok ? c.json(result.value) : failure(c, result.reason);
 });
