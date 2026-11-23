@@ -205,10 +205,11 @@ export interface ShareEntry {
   createdAt: string;
   expiresAt: string;
   revokedAt: string | null;
+  passwordProtected: boolean;
 }
 export interface CreatedShare extends ShareEntry { token: string; permission: "read"; }
-export function createShare(itemId: string, expiresInSeconds: number): Promise<CreatedShare> {
-  return sendJson<CreatedShare>("/api/shares", "POST", { itemId, expiresInSeconds });
+export function createShare(itemId: string, expiresInSeconds: number, password?: string): Promise<CreatedShare> {
+  return sendJson<CreatedShare>("/api/shares", "POST", { itemId, expiresInSeconds, ...(password ? { password } : {}) });
 }
 export function listShares(): Promise<{ shares: ShareEntry[] }> {
   return requestJson<{ shares: ShareEntry[] }>("/api/shares");
