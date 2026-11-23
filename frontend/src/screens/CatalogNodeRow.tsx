@@ -48,6 +48,7 @@ export function CatalogNodeRow({
   onPermanentDelete,
   onRestore,
   onFavorite,
+  onShare,
 }: CatalogNodeRowProps) {
   const isFolder = node.type === "folder";
   const size = trashed
@@ -90,6 +91,12 @@ export function CatalogNodeRow({
           : []),
         ...(!isFolder
           ? [
+              {
+                id: "share",
+                label: "Compartir",
+                icon: "file",
+                onSelect: () => onShare(node as Extract<FilesCatalogNode, { type: "file" }>),
+              } satisfies MenuItem,
               {
                 id: "favorite",
                 label: "Agregar a Favoritos",
