@@ -95,7 +95,8 @@ export function CatalogNodeRow({
                 id: "share",
                 label: "Compartir",
                 icon: "file",
-                onSelect: () => onShare(node as Extract<FilesCatalogNode, { type: "file" }>),
+                onSelect: () =>
+                  onShare(node as Extract<FilesCatalogNode, { type: "file" }>),
               } satisfies MenuItem,
               {
                 id: "favorite",

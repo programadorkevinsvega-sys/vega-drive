@@ -183,7 +183,9 @@ export function FilesCatalogScreen({
         </section>
       ) : null}
 
-      {shareFile ? <ShareDialog file={shareFile} onClose={() => setShareFile(null)} /> : null}
+      {shareFile ? (
+        <ShareDialog file={shareFile} onClose={() => setShareFile(null)} />
+      ) : null}
 
       {previewFile ? (
         <FilePreviewDialog

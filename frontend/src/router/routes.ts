@@ -47,7 +47,9 @@ export function parseHash(hash: string): Route {
     return { name: "not-found" };
   }
   if (first === "share" && segments.length === 2 && second !== undefined) {
-    return /^[A-Za-z0-9_-]{43}$/.test(second) ? { name: "share", token: second } : { name: "not-found" };
+    return /^[A-Za-z0-9_-]{43}$/.test(second)
+      ? { name: "share", token: second }
+      : { name: "not-found" };
   }
   if (first === "search" && segments.length === 1) {
     const q = new URLSearchParams(query).get("q") ?? "";

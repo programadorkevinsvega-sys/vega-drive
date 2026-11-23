@@ -56,7 +56,10 @@ import type {
 
 export interface FilesPublicApi {
   status(): ModuleStatus;
-  getFileMetadata(actor: FilesActor, id: unknown): Promise<CatalogResult<{ id: string; name: string }>>;
+  getFileMetadata(
+    actor: FilesActor,
+    id: unknown,
+  ): Promise<CatalogResult<{ id: string; name: string }>>;
   createFolder(
     actor: FilesActor,
     input: unknown,

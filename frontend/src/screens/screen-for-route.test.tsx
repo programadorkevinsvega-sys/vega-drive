@@ -37,7 +37,12 @@ describe("pantalla de favoritos", () => {
 
 describe("pantalla pública de compartición", () => {
   it("muestra la pantalla pública para el token del enlace", () => {
-    expect(renderScreen({ name: "share", token: "a".repeat(43) })).toMatchObject({ type: ShareAccessScreen, props: { token: "a".repeat(43) } });
+    expect(
+      renderScreen({ name: "share", token: "a".repeat(43) }),
+    ).toMatchObject({
+      type: ShareAccessScreen,
+      props: { token: "a".repeat(43) },
+    });
   });
 });
 

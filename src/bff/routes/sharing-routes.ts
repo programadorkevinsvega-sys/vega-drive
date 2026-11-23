@@ -1,6 +1,9 @@
 import { Hono, type Context } from "hono";
 import { createCompositionRoot } from "../../worker/composition-root.js";
-import { requireAuthenticatedActor, type AuthenticatedEnv } from "../authentication-middleware.js";
+import {
+  requireAuthenticatedActor,
+  type AuthenticatedEnv,
+} from "../authentication-middleware.js";
 
 export const sharingRoutes = new Hono<AuthenticatedEnv>();
 const INVALID = { error: "Invalid request" } as const;
@@ -24,7 +27,8 @@ async function strictBody(
   if (
     request.headers.get("Content-Type")?.split(";")[0]?.trim().toLowerCase() !==
     "application/json"
-  ) return null;
+  )
+    return null;
   const length = request.headers.get("Content-Length");
   if (length !== null && (!/^\d+$/.test(length) || Number(length) > 4096)) {
     return null;
@@ -105,7 +109,8 @@ sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
     !originAllowed(c.req.raw) ||
     new URL(c.req.url).search ||
     c.req.raw.body !== null
-  ) return c.json(INVALID, 400);
+  )
+    return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.revoke(
     actor(c),
     c.req.param("id"),
@@ -146,7 +151,8 @@ sharingRoutes.post("/access", async (c) => {
     );
   }
   const value = result.value;
-  const safeName = value.name.replace(/[\r\n"]/g, "_").slice(0, 180) || "download";
+  const safeName =
+    value.name.replace(/[\r\n"]/g, "_").slice(0, 180) || "download";
   const headers = new Headers({
     "Content-Type": value.contentType,
     "Content-Length": String(value.contentLength),

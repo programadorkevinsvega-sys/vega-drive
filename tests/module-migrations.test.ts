@@ -132,7 +132,9 @@ describe("module-owned D1 migrations", () => {
     expect(allActiveDefinitions.has("table:files_catalog_names")).toBe(true);
     expect(allActiveDefinitions.has("table:identity_auth_attempts")).toBe(true);
     expect(allActiveDefinitions.has("table:sharing_links")).toBe(true);
-    expect(allActiveDefinitions.has("table:sharing_password_attempts")).toBe(true);
+    expect(allActiveDefinitions.has("table:sharing_password_attempts")).toBe(
+      true,
+    );
     expect(
       allActiveDefinitions.has("index:identity_auth_attempts_locked_until_idx"),
     ).toBe(true);
@@ -158,7 +160,9 @@ describe("module-owned D1 migrations", () => {
     expect(manifest).toContain(
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
     );
-    expect(manifest).toContain("sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql");
+    expect(manifest).toContain(
+      "sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql",
+    );
     expect(manifest).toContain("migrations/0001_initial_schema.sql");
   });
 });

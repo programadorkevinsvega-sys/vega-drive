@@ -46,8 +46,9 @@ Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
    - Tabla e índice: `identity_auth_attempts` e `identity_auth_attempts_locked_until_idx`; las claves de limitación se guardan como hashes.
 
 10. **Propietario: `sharing`**
-   - Migración: `sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql`.
-   - Tablas e índices: `sharing_links`, `sharing_links_owner_created_idx`, `sharing_links_expiry_idx` y `sharing_password_attempts`; guardan hashes de tokens, vencimiento, revocación y contadores de intentos de contraseña. No almacenan tokens en claro ni crean claves foráneas hacia `files`.
+
+- Migración: `sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql`.
+- Tablas e índices: `sharing_links`, `sharing_links_owner_created_idx`, `sharing_links_expiry_idx` y `sharing_password_attempts`; guardan hashes de tokens, vencimiento, revocación y contadores de intentos de contraseña. No almacenan tokens en claro ni crean claves foráneas hacia `files`.
 
 El orden no establece dependencias entre módulos. Los IDs entre módulos son valores, nunca claves foráneas; no hay tablas genéricas compartidas, JOIN ni SQL cruzado. Los índices se definen en la migración del mismo propietario que la tabla indexada. El catálogo reserva el nombre en `files_catalog_names` antes de crear o restaurar y actualiza la reserva antes de renombrar o mover. La clave única cubre ambos tipos de nodo. Las modificaciones de reserva y metadatos son escrituras separadas, por lo que el código compensa reservas si falla la segunda operación; no se usa `db.batch()` para coordinarlas. `quota_usage` queda pendiente para la Fase 6; la Fase 7 incorpora `sharing_links` y `sharing_password_attempts`.
 

@@ -24,17 +24,41 @@ async function createFixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0006_files_favorites.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0007_files_search_indexes.sql",
     "src/modules/sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql",
-  ]) dbFixture.exec(await readFile(resolve(path), "utf8"));
+  ])
+    dbFixture.exec(await readFile(resolve(path), "utf8"));
 
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + 3600000).toISOString();
-  for (const [userId, token] of [["owner-a", tokenA], ["owner-b", tokenB]] as const) {
-    await dbFixture.db.prepare(
-      "INSERT INTO identity_users (id, email, password_hash, password_salt, created_at, updated_at, disabled_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
-    ).bind(userId, userId + "@example.test", "test-hash", "test-salt", now, now).run();
-    await dbFixture.db.prepare(
-      "INSERT INTO identity_sessions (id, user_id, token_hash, created_at, last_seen_at, expires_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
-    ).bind("session-" + userId, userId, await sha256Hex(token), now, now, expiresAt).run();
+  for (const [userId, token] of [
+    ["owner-a", tokenA],
+    ["owner-b", tokenB],
+  ] as const) {
+    await dbFixture.db
+      .prepare(
+        "INSERT INTO identity_users (id, email, password_hash, password_salt, created_at, updated_at, disabled_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
+      )
+      .bind(
+        userId,
+        userId + "@example.test",
+        "test-hash",
+        "test-salt",
+        now,
+        now,
+      )
+      .run();
+    await dbFixture.db
+      .prepare(
+        "INSERT INTO identity_sessions (id, user_id, token_hash, created_at, last_seen_at, expires_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, NULL)",
+      )
+      .bind(
+        "session-" + userId,
+        userId,
+        await sha256Hex(token),
+        now,
+        now,
+        expiresAt,
+      )
+      .run();
   }
   const env = {
     ASSETS: { fetch: async () => new Response("asset") },
@@ -48,17 +72,39 @@ async function createFixture() {
   return { ...dbFixture, env };
 }
 let fixture: Awaited<ReturnType<typeof createFixture>>;
-async function send(path: string, init: RequestInit = {}, token: string | null = tokenA) {
+async function send(
+  path: string,
+  init: RequestInit = {},
+  token: string | null = tokenA,
+) {
   const headers = new Headers(init.headers);
   if (token === null) headers.delete("Cookie");
   else headers.set("Cookie", "__Host-session=" + token);
   const method = (init.method ?? "GET").toUpperCase();
-  if (!["GET", "HEAD", "OPTIONS"].includes(method) && !headers.has("Origin")) headers.set("Origin", ORIGIN);
-  if (typeof init.body === "string" && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  return app.fetch(new Request(new URL(path, ORIGIN), { ...init, headers }), fixture.env);
+  if (!["GET", "HEAD", "OPTIONS"].includes(method) && !headers.has("Origin"))
+    headers.set("Origin", ORIGIN);
+  if (typeof init.body === "string" && !headers.has("Content-Type"))
+    headers.set("Content-Type", "application/json");
+  return app.fetch(
+    new Request(new URL(path, ORIGIN), { ...init, headers }),
+    fixture.env,
+  );
 }
-async function sendJson(path: string, method: string, body: unknown, token: string | null = tokenA) {
-  return send(path, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, token);
+async function sendJson(
+  path: string,
+  method: string,
+  body: unknown,
+  token: string | null = tokenA,
+) {
+  return send(
+    path,
+    {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+    token,
+  );
 }
 async function uploadFile() {
   return send("/api/files", {
@@ -71,8 +117,12 @@ async function uploadFile() {
     body: "shared-content!",
   });
 }
-async function json<T>(response: Response): Promise<T> { return await response.json() as T; }
-beforeEach(async () => { fixture = await createFixture(); });
+async function json<T>(response: Response): Promise<T> {
+  return (await response.json()) as T;
+}
+beforeEach(async () => {
+  fixture = await createFixture();
+});
 afterEach(() => fixture.close());
 
 describe("sharing HTTP routes", () => {
@@ -80,59 +130,115 @@ describe("sharing HTTP routes", () => {
     const uploaded = await uploadFile();
     expect(uploaded.status).toBe(201);
     const file = await json<{ id: string }>(uploaded);
-    const created = await sendJson("/api/shares", "POST", { itemId: file.id, expiresInSeconds: 3600 });
+    const created = await sendJson("/api/shares", "POST", {
+      itemId: file.id,
+      expiresInSeconds: 3600,
+    });
     expect(created.status).toBe(201);
-    const share = await json<{ id: string; token: string; permission: string }>(created);
+    const share = await json<{ id: string; token: string; permission: string }>(
+      created,
+    );
     expect(share.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(share.permission).toBe("read");
 
-    const stored = await fixture.db.prepare("SELECT token_hash AS tokenHash FROM sharing_links WHERE id = ?").bind(share.id).first<{ tokenHash: string }>();
+    const stored = await fixture.db
+      .prepare("SELECT token_hash AS tokenHash FROM sharing_links WHERE id = ?")
+      .bind(share.id)
+      .first<{ tokenHash: string }>();
     expect(stored?.tokenHash).toBe(await sha256Hex(share.token));
     expect(stored?.tokenHash).not.toBe(share.token);
 
     expect((await send("/api/shares")).status).toBe(200);
     expect((await send("/api/shares", {}, null)).status).toBe(401);
-    const access = await sendJson("/api/shares/access", "POST", { token: share.token }, null);
+    const access = await sendJson(
+      "/api/shares/access",
+      "POST",
+      { token: share.token },
+      null,
+    );
     expect(access.status).toBe(200);
     expect(access.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(access.headers.get("Cache-Control")).toContain("no-store");
     expect(await access.text()).toBe("shared-content!");
 
-    const range = await send("/api/shares/access", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Range: "bytes=0-5" },
-      body: JSON.stringify({ token: share.token }),
-    }, null);
+    const range = await send(
+      "/api/shares/access",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Range: "bytes=0-5" },
+        body: JSON.stringify({ token: share.token }),
+      },
+      null,
+    );
     expect(range.status).toBe(206);
     expect(range.headers.get("Content-Range")).toBe("bytes 0-5/15");
     expect(await range.text()).toBe("shared");
 
-    const foreignRevoke = await send("/api/shares/" + share.id, { method: "DELETE" }, tokenB);
+    const foreignRevoke = await send(
+      "/api/shares/" + share.id,
+      { method: "DELETE" },
+      tokenB,
+    );
     expect(foreignRevoke.status).toBe(404);
     const revoked = await send("/api/shares/" + share.id, { method: "DELETE" });
     expect(revoked.status).toBe(200);
-    const afterRevoke = await sendJson("/api/shares/access", "POST", { token: share.token }, null);
+    const afterRevoke = await sendJson(
+      "/api/shares/access",
+      "POST",
+      { token: share.token },
+      null,
+    );
     expect(afterRevoke.status).toBe(404);
   });
 
   it("requires the optional password and expires links at the server", async () => {
     const uploaded = await uploadFile();
     const file = await json<{ id: string }>(uploaded);
-    const created = await sendJson("/api/shares", "POST", { itemId: file.id, expiresInSeconds: 3600, password: "strong-password" });
+    const created = await sendJson("/api/shares", "POST", {
+      itemId: file.id,
+      expiresInSeconds: 3600,
+      password: "strong-password",
+    });
     expect(created.status).toBe(201);
-    const share = await json<{ id: string; token: string; passwordProtected: boolean }>(created);
+    const share = await json<{
+      id: string;
+      token: string;
+      passwordProtected: boolean;
+    }>(created);
     expect(share.passwordProtected).toBe(true);
 
-    const missingPassword = await sendJson("/api/shares/access", "POST", { token: share.token }, null);
+    const missingPassword = await sendJson(
+      "/api/shares/access",
+      "POST",
+      { token: share.token },
+      null,
+    );
     expect(missingPassword.status).toBe(401);
-    const wrongPassword = await sendJson("/api/shares/access", "POST", { token: share.token, password: "incorrect-password" }, null);
+    const wrongPassword = await sendJson(
+      "/api/shares/access",
+      "POST",
+      { token: share.token, password: "incorrect-password" },
+      null,
+    );
     expect(wrongPassword.status).toBe(401);
-    const correctPassword = await sendJson("/api/shares/access", "POST", { token: share.token, password: "strong-password" }, null);
+    const correctPassword = await sendJson(
+      "/api/shares/access",
+      "POST",
+      { token: share.token, password: "strong-password" },
+      null,
+    );
     expect(correctPassword.status).toBe(200);
 
-    await fixture.db.prepare("UPDATE sharing_links SET expires_at = ? WHERE id = ?")
-      .bind(new Date(Date.now() - 1000).toISOString(), share.id).run();
-    const expired = await sendJson("/api/shares/access", "POST", { token: share.token, password: "strong-password" }, null);
+    await fixture.db
+      .prepare("UPDATE sharing_links SET expires_at = ? WHERE id = ?")
+      .bind(new Date(Date.now() - 1000).toISOString(), share.id)
+      .run();
+    const expired = await sendJson(
+      "/api/shares/access",
+      "POST",
+      { token: share.token, password: "strong-password" },
+      null,
+    );
     expect(expired.status).toBe(404);
   });
 
@@ -141,11 +247,17 @@ describe("sharing HTTP routes", () => {
     const file = await json<{ id: string }>(uploaded);
     const badOrigin = await send("/api/shares", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Origin: "https://attacker.test" },
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://attacker.test",
+      },
       body: JSON.stringify({ itemId: file.id, expiresInSeconds: 3600 }),
     });
     expect(badOrigin.status).toBe(403);
-    const unknownField = await sendJson("/api/shares", "POST", { itemId: file.id, ownerId: "owner-b" });
+    const unknownField = await sendJson("/api/shares", "POST", {
+      itemId: file.id,
+      ownerId: "owner-b",
+    });
     expect(unknownField.status).toBe(400);
   });
 });

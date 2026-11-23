@@ -61,7 +61,9 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.status();
   }
 
-  getFileMetadata(...args: Parameters<FilesPublicApi["getFileMetadata"]>) { return this.api.getFileMetadata(...args); }
+  getFileMetadata(...args: Parameters<FilesPublicApi["getFileMetadata"]>) {
+    return this.api.getFileMetadata(...args);
+  }
 
   createFolder(...args: Parameters<FilesPublicApi["createFolder"]>) {
     return this.api.createFolder(...args);
@@ -230,11 +232,21 @@ export class InProcessQuotaGateway implements QuotaGateway {
 
 export class InProcessSharingGateway implements SharingGateway {
   constructor(private readonly api: SharingPublicApi) {}
-  status() { return this.api.status(); }
-  create(...args: Parameters<SharingPublicApi["create"]>) { return this.api.create(...args); }
-  list(...args: Parameters<SharingPublicApi["list"]>) { return this.api.list(...args); }
-  revoke(...args: Parameters<SharingPublicApi["revoke"]>) { return this.api.revoke(...args); }
-  download(...args: Parameters<SharingPublicApi["download"]>) { return this.api.download(...args); }
+  status() {
+    return this.api.status();
+  }
+  create(...args: Parameters<SharingPublicApi["create"]>) {
+    return this.api.create(...args);
+  }
+  list(...args: Parameters<SharingPublicApi["list"]>) {
+    return this.api.list(...args);
+  }
+  revoke(...args: Parameters<SharingPublicApi["revoke"]>) {
+    return this.api.revoke(...args);
+  }
+  download(...args: Parameters<SharingPublicApi["download"]>) {
+    return this.api.download(...args);
+  }
 }
 
 export function createCompositionRoot(env: Env) {
@@ -244,10 +256,15 @@ export function createCompositionRoot(env: Env) {
     status: () => ({ module: "quota", ready: false }),
   };
   const filesGateway = new InProcessFilesGateway(filesApi);
-  const sharingApi = createSharingModuleFromD1(env, {
-    getFileMetadata: (actor, id) => filesGateway.getFileMetadata(actor, id),
-    downloadFile: (actor, id, range, purpose) => filesGateway.downloadFile(actor, id, range, purpose),
-  }, filesGateway.status().ready);
+  const sharingApi = createSharingModuleFromD1(
+    env,
+    {
+      getFileMetadata: (actor, id) => filesGateway.getFileMetadata(actor, id),
+      downloadFile: (actor, id, range, purpose) =>
+        filesGateway.downloadFile(actor, id, range, purpose),
+    },
+    filesGateway.status().ready,
+  );
   return {
     identity: new InProcessIdentityGateway(identityApi),
     files: filesGateway,
