@@ -87,4 +87,30 @@ describe("identity D1 repositories", () => {
       null,
     ]);
   });
+  it("refreshes a session only if it remains active, unexpired, idle-valid and owned by an enabled user", async () => {
+    const fake = createFakeD1({ changes: 1 });
+    const repository = new D1IdentitySessionRepository(fake.db);
+    const current = "2026-10-10T12:00:00.000Z";
+    const idleCutoff = "2026-10-09T12:00:00.000Z";
+
+    await expect(
+      repository.touch("session-a", "user-a", current, idleCutoff),
+    ).resolves.toBe(true);
+
+    expect(fake.calls[0]?.sql).toContain("user_id = ?");
+    expect(fake.calls[0]?.sql).toContain("revoked_at IS NULL");
+    expect(fake.calls[0]?.sql).toContain("expires_at > ?");
+    expect(fake.calls[0]?.sql).toContain("last_seen_at > ?");
+    expect(fake.calls[0]?.sql).toContain("last_seen_at <= ?");
+    expect(fake.calls[0]?.sql).toContain("disabled_at IS NULL");
+    expect(fake.calls[0]?.bindings).toEqual([
+      current,
+      "session-a",
+      "user-a",
+      current,
+      idleCutoff,
+      current,
+    ]);
+  });
+
 });
