@@ -43,7 +43,7 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
       failures.push("Falta el adaptador InProcess" + name + "Gateway.");
   }
 
-  for (const name of ["Quota", "Sharing"]) {
+  for (const name of ["Quota"]) {
     const api = name + "PublicApi";
     const gateway = name + "Gateway";
     if (!new RegExp("export\\s+interface\\s+" + gateway).test(root))
@@ -73,6 +73,10 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
         name +
           " debe permanecer explícitamente ready: false y sin capacidades ficticias.",
       );
+  }
+
+  if (!/createSharingModuleFromD1\\s*\\(env,/.test(root) || !/new InProcessSharingGateway\\(sharingApi\\)/.test(root)) {
+    failures.push("Sharing debe construirse desde D1 e inyectar FilesPublicApi mediante el composition root.");
   }
 
   const bffFiles = await walk(absolute("src/bff"), /[.](?:ts|tsx|js|mjs)$/i);
