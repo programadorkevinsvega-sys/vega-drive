@@ -68,29 +68,29 @@ describe("composition root and module gateways", () => {
       const listing = { ok: true, value: { files: [], folders: [] } };
       const listFolder = vi.fn().mockResolvedValue(listing);
       const downloadFile = vi.fn().mockResolvedValue({
-      ok: true,
-      value: { body: new ReadableStream(), contentLength: 0 },
+        ok: true,
+        value: { body: new ReadableStream(), contentLength: 0 },
       });
       const api = {
-      status: () => ({ module: "files", ready: true }),
-      listFolder,
-      downloadFile,
+        status: () => ({ module: "files", ready: true }),
+        listFolder,
+        downloadFile,
       } as unknown as FilesPublicApi;
       const gateway = new InProcessFilesGateway(api);
       const actor = { userId: "owner-a" };
 
       await expect(
-      gateway.listFolder(actor, { folderId: null }),
+        gateway.listFolder(actor, { folderId: null }),
       ).resolves.toBe(listing);
       await expect(
-      gateway.downloadFile(actor, "file-a", "bytes=0-1", "preview"),
+        gateway.downloadFile(actor, "file-a", "bytes=0-1", "preview"),
       ).resolves.toMatchObject({ ok: true });
       expect(listFolder).toHaveBeenCalledWith(actor, { folderId: null });
       expect(downloadFile).toHaveBeenCalledWith(
-      actor,
-      "file-a",
-      "bytes=0-1",
-      "preview",
+        actor,
+        "file-a",
+        "bytes=0-1",
+        "preview",
       );
     },
   );

@@ -773,11 +773,11 @@ describe("files catalog HTTP routes", () => {
       expect(metadata.headers.get("Cache-Control")).toContain("no-store");
       expect(metadata.headers.get("Referrer-Policy")).toBe("no-referrer");
       const preview = await json<{ url: string; expiresInSeconds: number }>(
-      metadata,
+        metadata,
       );
       expect(preview).toEqual({
-      url: "/api/files/" + file.id + "/preview/content",
-      expiresInSeconds: 0,
+        url: "/api/files/" + file.id + "/preview/content",
+        expiresInSeconds: 0,
       });
       expect(preview.url).not.toMatch(/^https?:\/\//);
       expect(preview.url).not.toContain("r2.cloudflarestorage.com");
@@ -792,7 +792,7 @@ describe("files catalog HTTP routes", () => {
       expect(await content.text()).toBe("0123456789abcdef");
 
       const partial = await send(preview.url, {
-      headers: { Range: "bytes=3-7" },
+        headers: { Range: "bytes=3-7" },
       });
       expect(partial.status).toBe(206);
       expect(partial.headers.get("Content-Range")).toBe("bytes 3-7/16");
@@ -800,15 +800,15 @@ describe("files catalog HTTP routes", () => {
       expect(await partial.text()).toBe("34567");
 
       const invalidRange = await send(preview.url, {
-      headers: { Range: "bytes=99-100" },
+        headers: { Range: "bytes=99-100" },
       });
       expect(invalidRange.status).toBe(416);
       expect(invalidRange.headers.get("Content-Range")).toBe("bytes */16");
 
       const foreignMetadata = await send(
-      "/api/files/" + file.id + "/preview",
-      {},
-      fixture.tokenB,
+        "/api/files/" + file.id + "/preview",
+        {},
+        fixture.tokenB,
       );
       expect(foreignMetadata.status).toBe(404);
       const foreignContent = await send(preview.url, {}, fixture.tokenB);
@@ -819,29 +819,26 @@ describe("files catalog HTTP routes", () => {
     },
   );
 
-  it(
-    "revalida la sesión al consumir el contenido de la vista previa",
-    async () => {
-      const upload = await sendFile("preview-expired.txt", "private bytes");
-      const file = await json<{ id: string }>(upload);
-      const metadata = await send("/api/files/" + file.id + "/preview");
-      expect(metadata.status).toBe(200);
-      const preview = await json<{ url: string }>(metadata);
+  it("revalida la sesión al consumir el contenido de la vista previa", async () => {
+    const upload = await sendFile("preview-expired.txt", "private bytes");
+    const file = await json<{ id: string }>(upload);
+    const metadata = await send("/api/files/" + file.id + "/preview");
+    expect(metadata.status).toBe(200);
+    const preview = await json<{ url: string }>(metadata);
 
-      const expiredAt = new Date(Date.now() - 60_000).toISOString();
-      await runSql(
+    const expiredAt = new Date(Date.now() - 60_000).toISOString();
+    await runSql(
       fixture.db,
       "UPDATE identity_sessions SET expires_at = ? WHERE id = ?",
       [expiredAt, "session-owner-a"],
-      );
+    );
 
-      const response = await send(preview.url);
-      expect(response.status).toBe(401);
-      expect(await json(response)).toEqual({
+    const response = await send(preview.url);
+    expect(response.status).toBe(401);
+    expect(await json(response)).toEqual({
       error: "Authentication required",
-      });
-    },
-  );
+    });
+  });
 
   it("streams private uploads and downloads with ranges and owner isolation", async () => {
     const upload = await sendFile("private report.txt", "abcdefghijklmnop");
