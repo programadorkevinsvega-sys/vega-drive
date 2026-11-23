@@ -27,8 +27,9 @@
 
 - [x] El BFF autoriza URLs GET firmadas de corta duración; los bytes se sirven directamente desde R2.
 - [x] Visor nativo de imágenes, audio/vídeo y PDF, lectura de texto y extracción local limitada de DOCX/XLSX.
-- [ ] Configurar y verificar CORS del bucket R2; instrucciones en FILES_PREVIEW.md.
-- [ ] Verificar acceso cruzado, caducidad, Range y host R2 en producción.
+- [x] Confirmado que la vista previa same-origin no requiere CORS de R2: el Worker lee el bucket privado y el navegador nunca consume una URL R2. No añadir CORS público ni wildcard; ver `FILES_PREVIEW.md`.
+- [x] Pruebas HTTP automatizadas de sesión ausente, expirada y revocada; acceso cruzado en metadatos/contenido; respuestas `206`/`416`; ausencia de URL/host R2 y de cabeceras CORS públicas.
+- [ ] Verificación manual autenticada en producción con dos cuentas y Network para confirmar el comportamiento desplegado; las pruebas locales usan D1/R2 simulados.
 
 ### Recientes, favoritos y búsqueda
 
@@ -76,7 +77,9 @@ Las migraciones `0005`, `0006` y `0007` deben verificarse individualmente en D1 
 - [ ] Aplicar/verificar `0006_files_favorites.sql` y `0007_files_search_indexes.sql` en D1 de producción mediante una operación autorizada.
 - [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
 - [ ] Ejecutar la integración E2E de transferencia desde la UI hasta el resultado del catálogo, incluyendo archivos grandes, descarga, error, cancelación y acceso cruzado.
-- [ ] Añadir pruebas de composición/arquitectura para Identity, Files y los gateways futuros; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.
+- [x] Pruebas de delegación de IdentityGateway y FilesGateway y guardia arquitectónica de composition root; el BFF no puede importar módulos ni acceder a D1/R2 directamente.
+- [x] Guardias y pruebas garantizan que Quota/Sharing solo exponen `status()` y permanecen `ready: false` hasta implementar sus módulos.
+- [ ] Verificación manual autenticada de producción pendiente; no se declara validado el despliegue por el resultado de pruebas simuladas.
 - [ ] Ejecutar `pnpm run cloudflare:build` y el conjunto de pruebas del commit candidato. No declarar éxito sin resultados observados.
 
 ## Criterio de cierre
