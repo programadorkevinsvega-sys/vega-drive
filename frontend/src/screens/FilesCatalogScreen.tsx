@@ -14,6 +14,7 @@ import { CatalogDialogs } from "./CatalogDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import type { FilesFileView } from "../services/files-contract";
 import { addFavorite } from "../services/files-service";
+import { CatalogFavoriteError } from "./CatalogFavoriteError";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -74,11 +75,7 @@ export function FilesCatalogScreen({
         ) : null}
       </header>
 
-      {favoriteError ? (
-        <div className="vd-catalog__error" role="alert">
-          {favoriteError}
-        </div>
-      ) : null}
+      <CatalogFavoriteError message={favoriteError} />
 
       {data.error ? (
         <div className="vd-catalog__error" role="alert">
