@@ -8,6 +8,7 @@ import { D1FilesMultipartUploadRepository } from "./d1-files-multipart-upload.re
 import { D1FilesTransferEventRepository } from "./d1-files-transfer-event.repository.js";
 import { D1FilesRecentActivityRepository } from "./d1-files-recent-activity.repository.js";
 import { D1FilesFavoritesRepository } from "./d1-files-favorites.repository.js";
+import { D1FilesSearchRepository } from "./d1-files-search.repository.js";
 import { createR2FileStorage } from "../../storage/r2/r2-file-storage.js";
 
 export function createFilesModuleFromD1(env: Env) {
@@ -21,6 +22,7 @@ export function createFilesModuleFromD1(env: Env) {
     transferEvents: new D1FilesTransferEventRepository(env.VEGA_DRIVE_DB),
     recentActivity: new D1FilesRecentActivityRepository(env.VEGA_DRIVE_DB),
     favorites: new D1FilesFavoritesRepository(env.VEGA_DRIVE_DB),
+    search: new D1FilesSearchRepository(env.VEGA_DRIVE_DB),
     ...(storage ? { storage } : {}),
     ready: Boolean(env.VEGA_DRIVE_DB && storage),
   });

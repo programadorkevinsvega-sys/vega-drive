@@ -5,6 +5,7 @@ import type {
   FilesTrashListing,
   FilesRecentListing,
   FilesFavoritesListing,
+  FilesSearchListing,
 } from "./files-contract";
 export type {
   FilesCatalogNode,
@@ -15,6 +16,7 @@ export type {
   FilesRecentListing,
   FilesRecentItem,
   FilesFavoriteItem,
+  FilesSearchListing,
 } from "./files-contract";
 
 export { FilesApiError } from "./files-api-error";
@@ -45,6 +47,16 @@ export function listTrash(cursor?: string): Promise<FilesTrashListing> {
 export function listRecent(cursor?: string): Promise<FilesRecentListing> {
   return requestJson<FilesRecentListing>(
     "/api/files/recent" + queryString({ limit: "50", cursor }),
+  );
+}
+
+export function searchFiles(
+  query: string,
+  type: "all" | "files" | "folders" = "all",
+  cursor?: string,
+): Promise<FilesSearchListing> {
+  return requestJson<FilesSearchListing>(
+    "/api/files/search" + queryString({ q: query, type, limit: "50", cursor }),
   );
 }
 

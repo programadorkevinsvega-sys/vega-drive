@@ -215,6 +215,9 @@ export class InProcessFilesGateway implements FilesGateway {
   listFavorites(...args: Parameters<FilesPublicApi["listFavorites"]>) {
     return this.api.listFavorites(...args);
   }
+  search(...args: Parameters<FilesPublicApi["search"]>) {
+    return this.api.search(...args);
+  }
 }
 
 export class InProcessQuotaGateway implements QuotaGateway {

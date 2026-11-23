@@ -32,6 +32,7 @@ async function createHttpFixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0006_files_favorites.sql",
+    "src/modules/files/infrastructure/persistence/d1/migrations/0007_files_search_indexes.sql",
   ]) {
     dbFixture.exec(await readFile(resolve(path), "utf8"));
   }
@@ -812,6 +813,92 @@ describe("files catalog HTTP routes", () => {
     expect(response.status).toBe(400);
     const root = await send("/api/files");
     expect(await json(root)).toMatchObject({ files: [] });
+  });
+
+  it("searches active catalog entries within the authenticated owner and paginates", async () => {
+    const folderResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Search Alpha folder",
+    });
+    const folder = await json<{ id: string }>(folderResponse);
+    const fileResponse = await sendFile("Search Alpha notes.txt", "notes");
+    const file = await json<{ id: string }>(fileResponse);
+    const foreignResponse = await sendFile(
+      "Search Alpha secret.txt",
+      "secret",
+      fixture.tokenB,
+    );
+    const foreign = await json<{ id: string }>(foreignResponse);
+    const unauthenticated = await send("/api/files/search?q=Alpha", {}, null);
+    expect(unauthenticated.status).toBe(401);
+    const first = await send("/api/files/search?q=Alpha&type=all&limit=1");
+    expect(first.status).toBe(200);
+    const page = await json<{
+      nodes: Array<{ id: string; type: string }>;
+      nextCursor: string | null;
+    }>(first);
+    expect(page.nodes).toHaveLength(1);
+    expect(page.nextCursor).toBeTruthy();
+    const second = await send(
+      "/api/files/search?q=Alpha&type=all&limit=1&cursor=" +
+        encodeURIComponent(page.nextCursor!),
+    );
+    const next = await json<{ nodes: Array<{ id: string }> }>(second);
+    expect(next.nodes).toHaveLength(1);
+    expect([page.nodes[0]?.id, next.nodes[0]?.id]).toEqual(
+      expect.arrayContaining([folder.id, file.id]),
+    );
+    const foreignSearch = await send(
+      "/api/files/search?q=Alpha",
+      {},
+      fixture.tokenB,
+    );
+    expect(await json(foreignSearch)).toMatchObject({
+      nodes: [{ id: foreign.id }],
+    });
+    expect(JSON.stringify(page) + JSON.stringify(next)).not.toContain(
+      foreign.id,
+    );
+    const filesOnly = await send("/api/files/search?q=Alpha&type=files");
+    expect(await json(filesOnly)).toMatchObject({
+      nodes: [{ type: "file", id: file.id }],
+    });
+    expect((await send("/api/files/search?q=%20%20")).status).toBe(400);
+    expect(
+      (await send("/api/files/search?q=Alpha&ownerId=owner-b")).status,
+    ).toBe(400);
+  });
+
+  it("hides active descendants whose ancestor folder has been deleted", async () => {
+    const folderResponse = await sendJson("/api/files/folders", "POST", {
+      name: "Private ancestor",
+    });
+    const folder = await json<{ id: string }>(folderResponse);
+    const hiddenResponse = await sendFile(
+      "Private hidden document.txt",
+      "hidden",
+      fixture.tokenA,
+      folder.id,
+    );
+    const hidden = await json<{ id: string }>(hiddenResponse);
+    const visibleResponse = await sendFile(
+      "Private visible document.txt",
+      "visible",
+    );
+    const visible = await json<{ id: string }>(visibleResponse);
+
+    const deletedAt = new Date().toISOString();
+    await runSql(
+      fixture.db,
+      "UPDATE files_folders SET deleted_at = ?, updated_at = ? WHERE id = ?",
+      [deletedAt, deletedAt, folder.id],
+    );
+
+    const response = await send("/api/files/search?q=Private");
+    expect(response.status).toBe(200);
+    const result = await json<{ nodes: Array<{ id: string }> }>(response);
+    expect(result.nodes.map((node) => node.id)).toContain(visible.id);
+    expect(result.nodes.map((node) => node.id)).not.toContain(hidden.id);
+    expect(result.nodes.map((node) => node.id)).not.toContain(folder.id);
   });
 
   it("maps catalog infrastructure failures to safe HTTP 503 responses", async () => {
