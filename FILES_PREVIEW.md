@@ -51,10 +51,29 @@ La suite HTTP de Files verifica el flujo completo con dos usuarios:
 metadatos same-origin, contenido inline, ausencia de URL/host R2 en el
 contrato, ausencia de dependencia de CORS del navegador, sesión ausente o
 expirada, rango parcial, rango inválido y rechazo de acceso cruzado (404).
-Las pruebas usan R2 simulado y D1 aislado; no sustituyen una comprobación
-operativa del bucket ni una prueba con cuentas reales en producción.
+Las pruebas usan R2 simulado y D1 aislado. `tests/files-catalog-http.test.ts`
+cubre `200`, `206`, `416`, sesión ausente/expirada y acceso cruzado; `tests/files-preview-security.test.ts`
+añade revocación de sesión, expiración antes de emitir metadatos y rangos de sufijo.
+No sustituyen una prueba operativa con cuentas reales en producción.
 
 Para una verificación manual adicional, abrir un archivo de cada formato
 soportado desde Mi unidad y Recientes, y comprobar en Network que la petición
 de contenido va a `drive.jnmtortas.com/api/files/.../preview/content` y no
 directamente al host R2.
+
+## Criterios de aceptación de seguridad
+
+- El visor no requiere CORS de R2: no se debe añadir una regla de CORS público ni
+  permitir `*` para el flujo de preview. El navegador solo habla con el BFF same-origin.
+- La ruta relativa no es una credencial: no concede acceso por sí sola y no tiene
+  una ventana de expiración independiente. La sesión se comprueba en cada petición.
+- Una sesión vencida o revocada debe recibir `401`, incluso si ya obtuvo metadatos.
+- El propietario distinto debe recibir `404` tanto en metadatos como en contenido.
+- Los rangos válidos deben responder `206`; los no satisfacibles, `416` con el
+  tamaño total en `Content-Range`.
+- El bucket permanece privado y las respuestas de contenido no son cacheables.
+
+La suite de arquitectura comprueba además que el BFF no importa módulos ni
+accede directamente a D1/R2 y que el Worker mantiene un único composition root.
+Identity y Files se consumen mediante sus gateways públicos; Quota y Sharing
+siguen siendo placeholders limitados a `status()` con `ready: false`.
