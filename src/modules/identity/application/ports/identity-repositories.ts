@@ -44,7 +44,12 @@ export interface IdentitySessionRepository {
     exceptSessionId: string,
     revokedAt: string,
   ): Promise<void>;
-  touch(sessionId: string, lastSeenAt: string): Promise<void>;
+  touch(
+    sessionId: string,
+    userId: string,
+    lastSeenAt: string,
+    idleCutoff: string,
+  ): Promise<boolean>;
 }
 export interface IdentityInviteRecord {
   id: string;

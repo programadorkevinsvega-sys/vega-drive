@@ -52,7 +52,7 @@ describe("identity change-password use case", () => {
         return true;
       }),
       revokeOtherSessions: vi.fn(async () => undefined),
-      touch: vi.fn(async () => undefined),
+      touch: vi.fn(async () => true),
     };
     const appendOutbox = vi.fn(async () => undefined);
     const outbox: IdentityOutboxRepository = {
@@ -124,7 +124,7 @@ describe("identity change-password use case", () => {
       insert: vi.fn(async () => undefined),
       revokeForUser: vi.fn(async () => true),
       revokeOtherSessions: vi.fn(async () => undefined),
-      touch: vi.fn(async () => undefined),
+      touch: vi.fn(async () => true),
     };
     const outbox: IdentityOutboxRepository = {
       append: vi.fn(async () => undefined),

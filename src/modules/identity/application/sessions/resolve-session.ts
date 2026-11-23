@@ -49,7 +49,14 @@ export function createSessionResolver(deps: {
       );
       return null;
     }
-    await deps.sessions.touch(session.id, current.toISOString());
+    const currentIso = current.toISOString();
+    const touched = await deps.sessions.touch(
+      session.id,
+      session.userId,
+      currentIso,
+      new Date(current.getTime() - IDLE_TIMEOUT_MS).toISOString(),
+    );
+    if (!touched) return null;
     return { sessionId: session.id, userId: user.id, email: user.email };
   };
 }

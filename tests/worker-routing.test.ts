@@ -16,7 +16,7 @@ function makeEnv(assetFetch: (request: Request) => Promise<Response>) {
 const executionContext = {} as unknown as ExecutionContext;
 
 describe("Worker: enrutamiento de frontend y API", () => {
-  it("delega los assets estáticos sin alterarlos", async () => {
+  it("aplica cabeceras de seguridad a HTML, JS, CSS e imágenes estáticas", async () => {
     const assets = vi.fn(async (request: Request) => {
       const path = new URL(request.url).pathname;
       if (path === "/") {
@@ -57,11 +57,20 @@ describe("Worker: enrutamiento de frontend y API", () => {
       );
       expect(response.status).toBe(200);
       expect(response.headers.get("content-type")).toContain(contentType);
+      expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(response.headers.get("x-frame-options")).toBe("SAMEORIGIN");
+      expect(response.headers.get("content-security-policy")).toContain(
+        "default-src 'self'",
+      );
+      expect(response.headers.get("permissions-policy")).toContain("camera=()");
+      expect(response.headers.get("cross-origin-resource-policy")).toBe(
+        "same-origin",
+      );
     }
     expect(assets).toHaveBeenCalledTimes(cases.length);
   });
 
-  it("no convierte un asset inexistente en index.html", async () => {
+  it("no convierte un asset inexistente en index.html y conserva sus cabeceras", async () => {
     const assets = vi.fn(
       async () => new Response("Not Found", { status: 404 }),
     );
@@ -72,9 +81,13 @@ describe("Worker: enrutamiento de frontend y API", () => {
     );
     expect(response.status).toBe(404);
     expect(await response.text()).toBe("Not Found");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("content-security-policy")).toContain(
+      "frame-ancestors 'self'",
+    );
   });
 
-  it("mantiene /api/health en Hono sin pedir el asset", async () => {
+  it("mantiene /api/health en Hono con cabeceras y sin cache", async () => {
     const assets = vi.fn(async () => new Response("asset"));
     const response = await worker.fetch(
       new Request("https://vega-drive.test/api/health"),
@@ -90,6 +103,7 @@ describe("Worker: enrutamiento de frontend y API", () => {
     expect(response.headers.get("content-security-policy")).toContain(
       "default-src 'self'",
     );
+    expect(response.headers.get("permissions-policy")).toContain("camera=()");
     expect(assets).not.toHaveBeenCalled();
   });
 
@@ -102,6 +116,7 @@ describe("Worker: enrutamiento de frontend y API", () => {
     );
     expect(response.status).toBe(404);
     expect(response.headers.get("content-type")).toContain("application/json");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(await response.json()).toEqual({ error: "Not found" });
     expect(assets).not.toHaveBeenCalled();
   });

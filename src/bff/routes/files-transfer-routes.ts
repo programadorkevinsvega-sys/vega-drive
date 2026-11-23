@@ -23,6 +23,64 @@ function actorFor(c: Context<AuthenticatedEnv>) {
   return { userId: c.get("actor").userId };
 }
 
+const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+async function strictJson(
+  request: Request,
+  allowedKeys: string[],
+): Promise<Record<string, unknown> | null> {
+  if (
+    request.headers.get("Content-Type")?.split(";")[0]?.trim().toLowerCase() !==
+    "application/json"
+  ) {
+    return null;
+  }
+  const contentLength = request.headers.get("Content-Length");
+  if (
+    contentLength !== null &&
+    (!/^\d+$/.test(contentLength) ||
+      Number(contentLength) > MAX_JSON_BODY_BYTES)
+  ) {
+    return null;
+  }
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  let total = 0;
+  const chunks: Uint8Array[] = [];
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_JSON_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const parsed: unknown = JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+    );
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const body = parsed as Record<string, unknown>;
+    return Object.keys(body).every((key) => allowedKeys.includes(key))
+      ? body
+      : null;
+  } catch {
+    return null;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 function transferError(reason: string, totalSizeBytes?: number): Response {
   switch (reason) {
     case "unsupported-preview":
@@ -153,7 +211,13 @@ filesTransferRoutes.post("/direct", async (c) => {
     return c.json(REQUEST_ERROR, 400);
   }
   if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
-  const input = await c.req.json().catch(() => null);
+  const input = await strictJson(c.req.raw, [
+    "name",
+    "folderId",
+    "sizeBytes",
+    "contentType",
+  ]);
+  if (!input) return c.json(REQUEST_ERROR, 400);
   const result = await createCompositionRoot(c.env).files.beginDirectUpload(
     actorFor(c),
     input,
@@ -200,7 +264,13 @@ filesTransferRoutes.post("/multipart", async (c) => {
     return c.json(REQUEST_ERROR, 400);
   }
   if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
-  const input = await c.req.json().catch(() => null);
+  const input = await strictJson(c.req.raw, [
+    "name",
+    "folderId",
+    "sizeBytes",
+    "contentType",
+  ]);
+  if (!input) return c.json(REQUEST_ERROR, 400);
   const result = await createCompositionRoot(c.env).files.beginMultipartUpload(
     actorFor(c),
     input,
@@ -241,10 +311,7 @@ filesTransferRoutes.post(
       return c.json(REQUEST_ERROR, 400);
     }
     if (!originAllowed(c.req.raw)) return c.json(ORIGIN_ERROR, 403);
-    const input = (await c.req.json().catch(() => null)) as {
-      etag?: unknown;
-      sizeBytes?: unknown;
-    } | null;
+    const input = await strictJson(c.req.raw, ["etag", "sizeBytes"]);
     if (
       !input ||
       typeof input.etag !== "string" ||

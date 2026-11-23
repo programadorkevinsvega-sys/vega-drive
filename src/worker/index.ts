@@ -1,6 +1,20 @@
 import { app } from "../bff/app.js";
+import { SECURITY_HEADERS } from "../bff/security-headers.js";
 import type { Env } from "./env.js";
 import { createCompositionRoot } from "./composition-root.js";
+
+function secureResponse(response: Response, api: boolean): Response {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!headers.has(name)) headers.set(name, value);
+  }
+  if (api) headers.set("Cache-Control", "no-store");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 export default {
   async fetch(
@@ -9,10 +23,11 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
-      return app.fetch(request, env, ctx);
-    }
-    return env.ASSETS.fetch(request);
+    const api = url.pathname === "/api" || url.pathname.startsWith("/api/");
+    const response = api
+      ? await app.fetch(request, env, ctx)
+      : await env.ASSETS.fetch(request);
+    return secureResponse(response, api);
   },
 
   async scheduled(

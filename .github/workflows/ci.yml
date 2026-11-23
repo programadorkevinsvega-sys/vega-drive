@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: write
-  contents: write
-  pull-requests: read
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -19,6 +17,8 @@ concurrency:
 jobs:
   format:
     name: Format
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.format.outputs.changed }}
@@ -36,8 +36,8 @@ jobs:
           node-version: 22.23.5
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - name: Install formatter dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install formatter dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Apply Prettier formatting
         id: format
         env:
@@ -72,6 +72,8 @@ jobs:
   verify:
     name: Verify
     needs: format
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

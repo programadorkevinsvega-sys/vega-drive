@@ -16,6 +16,7 @@ function envWithSession(
     revokedAt?: string | null;
     expiresAt?: string;
     lastSeenAt?: string;
+    touchChanges?: number;
   } = {},
 ) {
   const session = {
@@ -54,7 +55,10 @@ function envWithSession(
           return null;
         },
         async run() {
-          return { success: true, meta: { changes: 1 } };
+          const changes = sql.includes("SET last_seen_at")
+            ? (options.touchChanges ?? 1)
+            : 1;
+          return { success: true, meta: { changes } };
         },
       };
     },
@@ -106,5 +110,22 @@ describe("AuthenticatedActor middleware", () => {
     );
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "Authentication required" });
+  });
+  it("rejects a session revoked or invalidated between lookup and atomic refresh", async () => {
+    const env = envWithSession({ touchChanges: 0 });
+    const app = new Hono<AuthenticatedEnv>();
+    app.get("/protected", requireAuthenticatedActor, (c) =>
+      c.json(c.get("actor")),
+    );
+    const response = await app.fetch(
+      new Request("https://vega-drive.test/protected", {
+        headers: { Cookie: "__Host-session=" + token },
+      }),
+      env,
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({
+      error: "Authentication required",
+    });
   });
 });
