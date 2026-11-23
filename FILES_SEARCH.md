@@ -1,5 +1,7 @@
 # Files catalog search
 
+**Estado: IMPLEMENTADO Y CONECTADO.** La búsqueda está integrada en el módulo Files, protegida por sesión, con filtros por nombre/tipo, paginación y aislamiento por propietario. Se incorporó en PR #24; el estado general se mantiene en [roadmap.md](./roadmap.md).
+
 ## Endpoint
 
 `GET /api/files/search` is available only to an authenticated session. The BFF derives the owner from the validated session actor. The request cannot select or override an owner.
