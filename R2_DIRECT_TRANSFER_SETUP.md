@@ -13,6 +13,7 @@ El código contiene la variable `DIRECT_R2_TRANSFERS_ENABLED`. **El valor efecti
 Mantener el bucket privado, sin acceso público, sin dominio público y con `r2.dev` desactivado. CORS no es autorización y nunca debe usarse para hacer público el bucket.
 
 La política operativa confirmada para transferencias directas contempla los orígenes exactos:
+
 - `https://vega-drive.programadorkevinsvega.workers.dev`
 - `https://drive.jnmtortas.com`
 
@@ -39,6 +40,7 @@ pnpm exec wrangler secret put R2_SECRET_ACCESS_KEY
 ## 3. Flag y selección de flujo
 
 `DIRECT_R2_TRANSFERS_ENABLED` controla la selección del flujo directo. La evidencia operativa de Fase 4 confirma que las transferencias se probaron en producción, pero no determina el valor actual del flag. Antes de diagnosticar una transferencia:
+
 1. Consultar el valor efectivo en el entorno Worker, sin revelar secretos.
 2. Confirmar que los secretos R2 necesarios existen y corresponden al bucket.
 3. Confirmar privacidad/CORS/permisos en Cloudflare.
