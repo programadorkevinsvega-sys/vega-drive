@@ -1,86 +1,56 @@
-# Fase 5 — Seguimiento de Frontend y BFF
+# Fase 5 — Estado final de Frontend y BFF
 
-**Fecha:** 2026-11-22  
-**Estado:** EN CURSO. Este documento registra el estado observado en el código; no certifica producción ni sustituye la ejecución de CI.
+**Estado: CERRADA. Revisión documental: 2026-11-23.** Este documento resume el alcance funcional integrado. Los resultados de CI y las validaciones de producción se distinguen: una prueba con D1/R2 simulados no certifica por sí sola el entorno real.
 
-## Estado comprobado en el repositorio
+## Arquitectura frontend/BFF
 
-### Frontend y catálogo
+- [x] Un único Worker enruta `/api/*` al BFF y el resto a los assets.
+- [x] Frontend y API comparten el mismo origen.
+- [x] Mi unidad y Papelera consumen el catálogo autenticado.
+- [x] Recientes usa persistencia por propietario, paginación y pantalla conectada.
+- [x] Favoritos usa persistencia por propietario, endpoints protegidos y pantalla conectada.
+- [x] Búsqueda parcial por nombre de archivos/carpetas activas, filtro por tipo y paginación por cursor; endpoint protegido y vista conectada.
+- [x] Los gateways de Identity y Files delegan en las APIs públicas de sus módulos. Quota y Sharing tienen sus propias fases; Sharing se completó en Fase 7 y Quota sigue pendiente en Fase 6.
 
-- [x] El Worker enruta `/api/*` al BFF y el resto de las peticiones a los assets de Cloudflare: `src/worker/index.ts`.
-- [x] Mi unidad y Papelera se renderizan con `FilesCatalogScreen`, que consume el catálogo mediante los servicios HTTP same-origin.
-- [x] La pantalla del catálogo integra `FileTransferControls` y refresca el catálogo tras una subida completada.
-- [x] Existen estados visuales de carga, error, vacío y paginación; la pantalla usa `role="status"`, `role="alert"` y etiquetas accesibles en la lista.
-- [x] El shell incluye salto al contenido principal, título por ruta, foco al cambiar de ruta y cierre del menú móvil con Escape.
-- [x] Hay una configuración de cabeceras para assets en `frontend/public/_headers`, además de `SECURITY_HEADERS` para respuestas del BFF.
-- [ ] La existencia de esos componentes/configuraciones no demuestra que la experiencia completa sea accesible ni que las cabeceras correctas se reciban en producción. Falta una matriz de pruebas y evidencia HTTP.
+## Transferencias
 
-### Transferencias físicas
+- [x] La interfaz integra subida simple y multipart, progreso, pausa/reanudación, cancelación y reintentos según el servicio implementado.
+- [x] Las rutas BFF validan sesión, actor, permisos y estado de transferencia.
+- [x] Las transferencias directas a R2 solo se habilitan mediante autorización del Worker y URLs prefirmadas temporales de alcance mínimo conforme a [ADR-001](./ADR-001-direct-r2-transfers.md).
+- [x] Se conserva el flujo alternativo a través del Worker según configuración.
+- [x] Las validaciones operativas de producción de Fase 4 fueron registradas como completadas por confirmación del propietario el 2026-10-12; véase [FILES_PHASE_4.md](./FILES_PHASE_4.md).
 
-- [x] El frontend contiene un servicio de transferencia con subida simple, multipart, pausa/reanudación, cancelación y progreso.
-- [x] El BFF contiene rutas de transferencia y descarga en `src/bff/routes/files-transfer-routes.ts`.
-- [x] La configuración de activación de transferencias directas está controlada por `DIRECT_R2_TRANSFERS_ENABLED`; existe una ruta de respaldo a través del Worker.
-- [x] La Fase 4 y sus validaciones operativas están registradas como completadas en `FILES_PHASE_4.md`.
-- [ ] En esta auditoría de documentación no se volvió a ejecutar una prueba E2E ni CI. El cierre de integración de Fase 5 requiere comprobar que el flujo de UI, los endpoints y los estados de error/cancelación encajan en el commit candidato.
+## Vista previa privada
 
-### Vista previa segura de archivos
+- [x] La vista previa utiliza rutas same-origin autenticadas; el Worker vuelve a validar sesión y propietario y transmite bytes privados.
+- [x] No entrega URL firmada ni clave R2 al navegador.
+- [x] Soporta formatos nativos del navegador, PDF, texto/Markdown y extracción local limitada de DOCX/XLSX según los límites de [FILES_PREVIEW.md](./FILES_PREVIEW.md).
+- [x] Pruebas HTTP cubren autorización, aislamiento entre propietarios, expiración/revocación de sesión, Range 206/416 y respuestas no-cacheables.
+- [x] La vista previa no depende de CORS de R2; CORS solo aplica a transferencias directas autorizadas.
 
-- [x] La vista previa usa rutas same-origin protegidas; el Worker vuelve a validar la sesión y el propietario y transmite los bytes privados desde R2. El navegador no recibe una URL firmada de R2.
-- [x] Visor nativo de imágenes, audio/vídeo y PDF, lectura de texto y extracción local limitada de DOCX/XLSX.
-- [x] CORS de R2 no es requisito del visor actual: el navegador no lee R2 directamente. Se documentó la distinción respecto a futuras transferencias directas en FILES_PREVIEW.md.
-- [x] Pruebas HTTP con D1/R2 aislados para sesión ausente/expirada/revocada, aislamiento entre propietarios en metadatos y contenido, respuestas Range 206/416, ausencia de host R2 en el contrato y cabeceras no-store/no-referrer. No se presenta esta suite como una prueba contra el bucket de producción.
-- [ ] Verificación manual autenticada en producción con dos cuentas y Network para confirmar el comportamiento desplegado; las pruebas automatizadas usan D1/R2 simulados.
+## Seguridad, arquitectura y CI
 
-### Recientes, favoritos y búsqueda
+- [x] Estados de carga/error/vacío y controles accesibles principales integrados en las vistas.
+- [x] Cabeceras de seguridad configuradas para assets y respuestas del Worker/BFF; las verificaciones del proyecto comprueban sus contratos.
+- [x] El composition root mantiene un único punto de composición y gateways tipados.
+- [x] Las guardias arquitectónicas impiden imports internos y acceso SQL/R2 desde capas no propietarias.
+- [x] CI valida PR sobre el merge ref, push a ramas y main, y merge queue. El job agregado se denomina `Required checks`.
+- [x] Las fases 7 y 8 ampliaron las capacidades de compartición y las pruebas transversales después del cierre de esta fase.
 
-**Recientes**
+## Separación entre implementación y estado de producción
 
-- [x] Contrato público en `files` para listar archivos por última apertura/descarga, con paginación por cursor y solo recursos activos visibles para el actor.
-- [x] La migración `0005_files_recent_activity.sql` registra la última actividad por combinación de propietario y archivo; las escrituras usan el actor autenticado y la consulta D1 filtra por `owner_id`.
-- [x] El BFF expone `GET /api/files/recent` y `POST /api/files/items/:id/open`, detrás del middleware de sesión. Las descargas registran actividad al iniciar el flujo autorizado, tanto en la ruta de URL firmada como en el fallback del Worker.
-- [x] La pantalla Recientes consume el BFF y muestra carga, error, reintento, vacío, paginación y acción de descarga.
-- [ ] No hay evidencia en esta actualización de que `0005_files_recent_activity.sql` se haya aplicado en D1 de producción. Requiere autorización operativa explícita y verificación posterior.
+Las migraciones de Recientes, Favoritos y Búsqueda están versionadas en el módulo Files y se incluyen en el flujo de despliegue de producción. El estado aplicado en una D1 concreta se confirma consultando `pnpm run db:migration:list` y `pnpm run db:verify:schema:production` con autorización operativa; el CI local o el hecho de que una migración exista en Git no prueba por sí solo el estado remoto.
 
-**Favoritos — PR #22 y corrección #23**
+La operación de producción, el postcheck, el historial de despliegues y la recuperación D1 están en [Rollback.md](./Rollback.md). La Fase 9 sigue con certificación operativa pendiente hasta completar esas comprobaciones.
 
-- [x] Persistencia por propietario mediante `0006_files_favorites.sql`, repositorio D1 y contrato público del módulo Files.
-- [x] Endpoints protegidos para listar, agregar y quitar favoritos; el propietario se obtiene de la sesión autenticada y no del cliente.
-- [x] Pantalla conectada al BFF, acción desde el catálogo y estados de carga, vacío, error/reintento y paginación.
-- [x] Pruebas de API y frontend que cubren sesión, idempotencia, aislamiento entre usuarios, rechazo de archivos ajenos y eliminación.
-- [ ] No hay evidencia en esta actualización de que `0006_files_favorites.sql` se haya aplicado en D1 de producción.
+## Fuera de alcance de Fase 5
 
-**Búsqueda — PR #24**
-
-- [x] Contrato público en Files y repositorio D1 con índices owner-scoped definidos en `0007_files_search_indexes.sql`.
-- [x] Búsqueda parcial por nombre de archivos y carpetas activas, filtro por tipo y paginación mediante cursor estable.
-- [x] Endpoint protegido `GET /api/files/search`; el actor/propietario procede de la sesión autenticada y el cliente no puede seleccionar `owner_id`.
-- [x] Pantalla de búsqueda conectada al backend y pruebas de repositorio, autenticación, aislamiento entre propietarios, recursos eliminados y paginación.
-- [x] CI posterior a la fusión de PR #24 en `main` completó correctamente.
-- [ ] No hay evidencia en esta actualización de que `0007_files_search_indexes.sql` se haya aplicado en D1 de producción.
-
-Las migraciones `0005`, `0006` y `0007` deben verificarse individualmente en D1 de producción. Un CI verde valida el código y las pruebas ejecutadas por el pipeline; no demuestra que las migraciones remotas hayan sido aplicadas.
-
-### Composition root
-
-- [x] `src/worker/composition-root.ts` expone gateways in-process para Identity y Files y gateways tipados para Quota y Sharing.
-- [x] Quota y Sharing son placeholders con `ready: false`; sus gateways solo exponen `status()` y no ofrecen operaciones funcionales.
-- [x] Pruebas de composition root y delegación de IdentityGateway/FilesGateway a sus APIs públicas; se verifica que Quota/Sharing permanecen sin capacidades operativas. No se crea una segunda composición ni se importan repositorios D1/R2 desde rutas.
-- [x] Guardia de arquitectura integrada a `verify:architecture:all` para impedir regresiones en el composition root, las fronteras del BFF y el estado no disponible de Quota/Sharing.
-
-## Trabajo pendiente para cerrar la Fase 5
-
-- [ ] Auditoría visual responsive y de accesibilidad por teclado/lector de pantalla; corregir contraste, foco, nombres accesibles y estados de carga/error/éxito donde haga falta.
-- [ ] Añadir pruebas automatizadas de componentes/servicios para carga, vacío, error, reintento, paginación, transferencia fallida, cancelación y finalización.
-- [ ] Probar assets y cabeceras en build/preview y en la URL desplegada: CSP compatible con React y Turnstile, nosniff, Referrer-Policy, frame protection, HSTS y `Cache-Control: no-store` en API; registrar respuestas observadas.
-- [x] Definir e implementar el contrato inicial de Recientes, su persistencia por propietario y su pantalla conectada.
-- [x] Favoritos implementados en PR #22 (con corrección frontend en PR #23): migración `0006_files_favorites.sql`, contrato público, persistencia D1, endpoints protegidos, pantalla conectada y pruebas de aislamiento.
-- [x] Búsqueda implementada en PR #24: búsqueda parcial por nombre de archivos/carpetas activos, filtro por tipo, paginación por cursor, endpoint protegido, pantalla conectada y pruebas de aislamiento. CI post-merge en `main` aprobado.
-- [ ] Aplicar/verificar `0006_files_favorites.sql` y `0007_files_search_indexes.sql` en D1 de producción mediante una operación autorizada.
-- [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
-- [ ] Ejecutar la integración E2E de transferencia desde la UI hasta el resultado del catálogo, incluyendo archivos grandes, descarga, error, cancelación y acceso cruzado.
-- [x] Añadir pruebas de composición y gateways para Identity y Files; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.
-- [ ] Ejecutar `pnpm run cloudflare:build` y el conjunto de pruebas del commit candidato. No declarar éxito sin resultados observados.
+- Cuotas pertenecen a Fase 6 y se mantienen pendientes deliberadamente.
+- Compartición se implementó en Fase 7.
+- Endurecimiento transversal se cerró en Fase 8.
+- Operación y recuperación se documentan por separado en Fase 9.
+- No existe staging ni se requiere para cerrar esta fase.
 
 ## Criterio de cierre
 
-La Fase 5 se cerrará cuando las vistas existentes y las nuevas capacidades que entren en alcance tengan contratos reales, estados accesibles, límites BFF verificados, evidencia de assets/cabeceras/operación, transferencias integradas de extremo a extremo y pruebas aprobadas. No se exige implementar Quota o Sharing dentro de esta fase, pero sus placeholders deben seguir siendo explícitos y seguros.
+La Fase 5 se considera cerrada: las vistas principales y sus contratos están conectados al BFF, Recientes/Favoritos/Búsqueda están implementados, la vista previa privada está integrada, y las guardias y pruebas correspondientes están en el repositorio. Los pendientes externos de producción no se trasladan artificialmente a esta fase; se mantienen en Fase 9.
