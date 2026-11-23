@@ -44,8 +44,10 @@ sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
   const result = await createCompositionRoot(c.env).sharing.revoke(actor(c), c.req.param("id"));
   return result.ok ? c.json(result.value) : failure(c, result.reason);
 });
-sharingRoutes.get("/:token", async (c) => {
-  const result = await createCompositionRoot(c.env).sharing.download(c.req.param("token"), c.req.header("Range") ?? null);
+sharingRoutes.post("/access", async (c) => {
+  const body = await strictBody(c.req.raw, ["token"]);
+  if (!body || typeof body.token !== "string") return c.json(INVALID, 400);
+  const result = await createCompositionRoot(c.env).sharing.download(body.token, c.req.header("Range") ?? null);
   if (!result.ok) {
     if (result.reason === "range-not-satisfiable") return c.body(null, 416, { "Content-Range": "bytes */" + (result.totalSizeBytes ?? 0), "Cache-Control": "no-store" });
     return c.json({ error: "This share link is invalid, expired, or revoked" }, 404);
