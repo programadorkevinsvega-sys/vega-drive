@@ -20,7 +20,7 @@ export function ShareAccessScreen({ token }: Extract<Route, { name: "share" }>) 
         body: JSON.stringify({ token, ...(password ? { password } : {}) }),
       });
       if (!response.ok) {
-        setError(response.status === 404 ? "Este enlace no existe, venció o fue revocado." : "No se pudo acceder al archivo. Inténtalo de nuevo.");
+        setError(response.status === 404 ? "Este enlace no existe, venció o fue revocado." : response.status === 401 ? "La contraseña es obligatoria o no es correcta." : "No se pudo acceder al archivo. Inténtalo de nuevo.");
         return;
       }
       const blob = await response.blob();
