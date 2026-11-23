@@ -31,6 +31,7 @@ async function createHttpFixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
+    "src/modules/files/infrastructure/persistence/d1/migrations/0006_files_favorites.sql",
   ]) {
     dbFixture.exec(await readFile(resolve(path), "utf8"));
   }
