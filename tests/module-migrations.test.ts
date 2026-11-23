@@ -82,7 +82,7 @@ describe("module-owned D1 migrations", () => {
         relativePath: relative(modulesRoot, path).split(sep).join("/"),
       }))
       .filter(({ relativePath }) =>
-        /^(identity|files)\/infrastructure\/persistence\/d1\/migrations\/\d+.*\.sql$/i.test(
+        /^(identity|files|sharing)\/infrastructure\/persistence\/d1\/migrations\/\d+.*\.sql$/i.test(
           relativePath,
         ),
       );
@@ -102,7 +102,7 @@ describe("module-owned D1 migrations", () => {
 
         // The initial module migrations must reproduce the legacy schema
         // exactly. Later migrations are additive and may define new objects.
-        if (/\/0001_[^/]+\.sql$/i.test(relativePath)) {
+        if (/\/0001_[^/]+\.sql$/i.test(relativePath) && owner !== "sharing") {
           initialDefinitions.set(key, value);
         }
       }
