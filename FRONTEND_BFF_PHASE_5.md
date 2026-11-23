@@ -33,6 +33,7 @@
 ### Recientes, favoritos y búsqueda
 
 **Recientes**
+
 - [x] Contrato público en `files` para listar archivos por última apertura/descarga, con paginación por cursor y solo recursos activos visibles para el actor.
 - [x] La migración `0005_files_recent_activity.sql` registra la última actividad por combinación de propietario y archivo; las escrituras usan el actor autenticado y la consulta D1 filtra por `owner_id`.
 - [x] El BFF expone `GET /api/files/recent` y `POST /api/files/items/:id/open`, detrás del middleware de sesión. Las descargas registran actividad al iniciar el flujo autorizado, tanto en la ruta de URL firmada como en el fallback del Worker.
@@ -40,6 +41,7 @@
 - [ ] No hay evidencia en esta actualización de que `0005_files_recent_activity.sql` se haya aplicado en D1 de producción. Requiere autorización operativa explícita y verificación posterior.
 
 **Favoritos — PR #22 y corrección #23**
+
 - [x] Persistencia por propietario mediante `0006_files_favorites.sql`, repositorio D1 y contrato público del módulo Files.
 - [x] Endpoints protegidos para listar, agregar y quitar favoritos; el propietario se obtiene de la sesión autenticada y no del cliente.
 - [x] Pantalla conectada al BFF, acción desde el catálogo y estados de carga, vacío, error/reintento y paginación.
@@ -47,6 +49,7 @@
 - [ ] No hay evidencia en esta actualización de que `0006_files_favorites.sql` se haya aplicado en D1 de producción.
 
 **Búsqueda — PR #24**
+
 - [x] Contrato público en Files y repositorio D1 con índices owner-scoped definidos en `0007_files_search_indexes.sql`.
 - [x] Búsqueda parcial por nombre de archivos y carpetas activas, filtro por tipo y paginación mediante cursor estable.
 - [x] Endpoint protegido `GET /api/files/search`; el actor/propietario procede de la sesión autenticada y el cliente no puede seleccionar `owner_id`.
