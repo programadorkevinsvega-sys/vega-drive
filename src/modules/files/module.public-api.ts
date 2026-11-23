@@ -1,7 +1,6 @@
 import type { ModuleStatus } from "../../worker/env.js";
 import { createCatalogListing } from "./application/catalog-listing.js";
 import { createFavorites, type FilesFavoritesListing } from "./application/favorites.js";
-import { createFavorites, type FilesFavoritesListing } from "./application/favorites.js";
 import {
   createRecentActivity,
   type FilesRecentListing,
