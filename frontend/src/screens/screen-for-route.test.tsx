@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 import { FilesCatalogScreen } from "./FilesCatalogScreen";
 import { FavoritesScreen } from "./FavoritesScreen";
+import { ShareAccessScreen } from "./ShareAccessScreen";
 import { renderScreen } from "./screen-for-route";
 
 describe("pantallas conectadas al Worker", () => {
@@ -31,6 +32,12 @@ describe("pantalla de favoritos", () => {
     expect(renderScreen({ name: "favorites" })).toMatchObject({
       type: FavoritesScreen,
     });
+  });
+});
+
+describe("pantalla pública de compartición", () => {
+  it("muestra la pantalla pública para el token del enlace", () => {
+    expect(renderScreen({ name: "share", token: "a".repeat(43) })).toMatchObject({ type: ShareAccessScreen, props: { token: "a".repeat(43) } });
   });
 });
 
