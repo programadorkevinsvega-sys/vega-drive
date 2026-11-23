@@ -17,4 +17,5 @@
 @import "./catalog-transfer.css";
 @import "./preview.css";
 @import "./preview-markdown.css";
-\n@import "../screens/sharing.css";\n
+
+@import "../screens/sharing.css";
