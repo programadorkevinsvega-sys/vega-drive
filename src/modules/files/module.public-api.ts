@@ -1,5 +1,5 @@
 import type { ModuleStatus } from "../../worker/env.js";
-import { createCatalogListing } from "./application/catalog-listing.js";
+import { createCatalogListing } from "./application/catalog-listing.js";\nimport { createFavorites, type FilesFavoritesListing } from "./application/favorites.js";
 import {
   createRecentActivity,
   type FilesRecentListing,
@@ -174,7 +174,7 @@ export interface FilesModuleDependencies {
   names: FilesCatalogNameRepository;
   uploads?: FilesUploadRepository;
   transferEvents?: FilesTransferEventRepository;
-  recentActivity?: FilesRecentActivityRepository;
+  recentActivity?: FilesRecentActivityRepository;\n  favorites?: FilesFavoritesRepository;
   multipartUploads?: FilesMultipartUploadRepository;
   storage?: IFileStoragePort;
   ready?: boolean;
@@ -198,7 +198,7 @@ export function createFilesModule(
         ...(deps.now ? { now: deps.now } : {}),
       })
     : null;
-  const trash = deps.storage
+  const favorites = deps.favorites ? createFavorites({ folders: deps.folders, items: deps.items, favorites: deps.favorites, ...(deps.now ? { now: deps.now } : {}) }) : null;\n  const trash = deps.storage
     ? createTrashMutations({
         folders: deps.folders,
         items: deps.items,
