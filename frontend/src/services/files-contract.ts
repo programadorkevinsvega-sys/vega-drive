@@ -46,7 +46,6 @@ export interface FilesRecentListing {
   nextCursor: string | null;
 }
 
-
 export interface FilesFavoriteItem {
   file: FilesFileView;
   favoritedAt: string;

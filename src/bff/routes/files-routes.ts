@@ -211,7 +211,10 @@ filesRoutes.post("/items/:id/favorite", async (c) => {
   if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
   return catalogResponse(
     c,
-    await createCompositionRoot(c.env).files.addFavorite(actorFor(c), c.req.param("id")),
+    await createCompositionRoot(c.env).files.addFavorite(
+      actorFor(c),
+      c.req.param("id"),
+    ),
   );
 });
 
@@ -221,7 +224,10 @@ filesRoutes.delete("/items/:id/favorite", async (c) => {
   if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
   return catalogResponse(
     c,
-    await createCompositionRoot(c.env).files.removeFavorite(actorFor(c), c.req.param("id")),
+    await createCompositionRoot(c.env).files.removeFavorite(
+      actorFor(c),
+      c.req.param("id"),
+    ),
   );
 });
 

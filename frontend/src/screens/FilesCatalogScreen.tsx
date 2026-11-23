@@ -74,7 +74,11 @@ export function FilesCatalogScreen({
         ) : null}
       </header>
 
-      {favoriteError ? <div className="vd-catalog__error" role="alert">{favoriteError}</div> : null}
+      {favoriteError ? (
+        <div className="vd-catalog__error" role="alert">
+          {favoriteError}
+        </div>
+      ) : null}
 
       {data.error ? (
         <div className="vd-catalog__error" role="alert">
@@ -156,7 +160,17 @@ export function FilesCatalogScreen({
                 onDelete={(item) => actions.requestDelete(item, false)}
                 onPermanentDelete={(item) => actions.requestDelete(item, true)}
                 onRestore={(item) => void actions.restoreNode(item)}
-                onFavorite={(file) => { void addFavorite(file.id).then(() => { setFavoriteError(""); }).catch(() => setFavoriteError("No se pudo agregar el archivo a Favoritos. Inténtalo de nuevo.")); }}
+                onFavorite={(file) => {
+                  void addFavorite(file.id)
+                    .then(() => {
+                      setFavoriteError("");
+                    })
+                    .catch(() =>
+                      setFavoriteError(
+                        "No se pudo agregar el archivo a Favoritos. Inténtalo de nuevo.",
+                      ),
+                    );
+                }}
               />
             ))}
           </div>

@@ -206,9 +206,15 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.listRecent(...args);
   }
 
-  addFavorite(...args: Parameters<FilesPublicApi["addFavorite"]>) { return this.api.addFavorite(...args); }
-  removeFavorite(...args: Parameters<FilesPublicApi["removeFavorite"]>) { return this.api.removeFavorite(...args); }
-  listFavorites(...args: Parameters<FilesPublicApi["listFavorites"]>) { return this.api.listFavorites(...args); }
+  addFavorite(...args: Parameters<FilesPublicApi["addFavorite"]>) {
+    return this.api.addFavorite(...args);
+  }
+  removeFavorite(...args: Parameters<FilesPublicApi["removeFavorite"]>) {
+    return this.api.removeFavorite(...args);
+  }
+  listFavorites(...args: Parameters<FilesPublicApi["listFavorites"]>) {
+    return this.api.listFavorites(...args);
+  }
 }
 
 export class InProcessQuotaGateway implements QuotaGateway {

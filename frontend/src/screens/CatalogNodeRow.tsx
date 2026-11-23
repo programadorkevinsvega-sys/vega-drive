@@ -93,7 +93,10 @@ export function CatalogNodeRow({
                 id: "favorite",
                 label: "Agregar a Favoritos",
                 icon: "star",
-                onSelect: () => onFavorite(node as Extract<FilesCatalogNode, { type: "file" }>),
+                onSelect: () =>
+                  onFavorite(
+                    node as Extract<FilesCatalogNode, { type: "file" }>,
+                  ),
               } satisfies MenuItem,
               {
                 id: "download",

@@ -12,7 +12,11 @@ function boundedLimit(limit: number): number {
 export class D1FilesFavoritesRepository implements FilesFavoritesRepository {
   constructor(private readonly db: D1Database) {}
 
-  async add(ownerId: string, itemId: string, favoritedAt: string): Promise<void> {
+  async add(
+    ownerId: string,
+    itemId: string,
+    favoritedAt: string,
+  ): Promise<void> {
     await this.db
       .prepare(
         "INSERT INTO files_favorites (owner_id, item_id, favorited_at) " +
@@ -40,11 +44,18 @@ export class D1FilesFavoritesRepository implements FilesFavoritesRepository {
       : "";
     const statement = this.db.prepare(
       "SELECT item_id AS itemId, favorited_at AS favoritedAt " +
-        "FROM files_favorites WHERE owner_id = ?" + after +
+        "FROM files_favorites WHERE owner_id = ?" +
+        after +
         " ORDER BY favorited_at DESC, item_id DESC LIMIT ?",
     );
     const query = cursor
-      ? statement.bind(ownerId, cursor.favoritedAt, cursor.favoritedAt, cursor.itemId, boundedLimit(limit))
+      ? statement.bind(
+          ownerId,
+          cursor.favoritedAt,
+          cursor.favoritedAt,
+          cursor.itemId,
+          boundedLimit(limit),
+        )
       : statement.bind(ownerId, boundedLimit(limit));
     const result = await query.all<FilesFavoritesRecord>();
     return result.results;

@@ -1,6 +1,9 @@
 import type { ModuleStatus } from "../../worker/env.js";
 import { createCatalogListing } from "./application/catalog-listing.js";
-import { createFavorites, type FilesFavoritesListing } from "./application/favorites.js";
+import {
+  createFavorites,
+  type FilesFavoritesListing,
+} from "./application/favorites.js";
 import {
   createRecentActivity,
   type FilesRecentListing,
@@ -168,9 +171,18 @@ export interface FilesPublicApi {
     actor: FilesActor,
     input: unknown,
   ): Promise<CatalogResult<FilesRecentListing>>;
-  addFavorite(actor: FilesActor, itemId: unknown): Promise<CatalogResult<{ favorited: true }>>;
-  removeFavorite(actor: FilesActor, itemId: unknown): Promise<CatalogResult<{ favorited: false }>>;
-  listFavorites(actor: FilesActor, input: unknown): Promise<CatalogResult<FilesFavoritesListing>>;
+  addFavorite(
+    actor: FilesActor,
+    itemId: unknown,
+  ): Promise<CatalogResult<{ favorited: true }>>;
+  removeFavorite(
+    actor: FilesActor,
+    itemId: unknown,
+  ): Promise<CatalogResult<{ favorited: false }>>;
+  listFavorites(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesFavoritesListing>>;
 }
 
 export interface FilesModuleDependencies {
@@ -205,8 +217,22 @@ export function createFilesModule(
         ...(deps.now ? { now: deps.now } : {}),
       })
     : null;
-  const favorites = deps.favorites ? createFavorites({ folders: deps.folders, items: deps.items, favorites: deps.favorites, ...(deps.now ? { now: deps.now } : {}) }) : null;
-  const favorites = deps.favorites ? createFavorites({ folders: deps.folders, items: deps.items, favorites: deps.favorites, ...(deps.now ? { now: deps.now } : {}) }) : null;
+  const favorites = deps.favorites
+    ? createFavorites({
+        folders: deps.folders,
+        items: deps.items,
+        favorites: deps.favorites,
+        ...(deps.now ? { now: deps.now } : {}),
+      })
+    : null;
+  const favorites = deps.favorites
+    ? createFavorites({
+        folders: deps.folders,
+        items: deps.items,
+        favorites: deps.favorites,
+        ...(deps.now ? { now: deps.now } : {}),
+      })
+    : null;
   const trash = deps.storage
     ? createTrashMutations({
         folders: deps.folders,

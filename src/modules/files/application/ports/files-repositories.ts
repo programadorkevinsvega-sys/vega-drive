@@ -239,7 +239,6 @@ export interface FilesRecentActivityRepository {
   ): Promise<FilesRecentActivityRecord[]>;
 }
 
-
 export interface FilesFavoritesRecord {
   itemId: string;
   favoritedAt: string;
@@ -252,5 +251,9 @@ export interface FilesFavoritesCursor {
 export interface FilesFavoritesRepository {
   add(ownerId: string, itemId: string, favoritedAt: string): Promise<void>;
   remove(ownerId: string, itemId: string): Promise<boolean>;
-  listByOwner(ownerId: string, limit: number, cursor?: FilesFavoritesCursor | null): Promise<FilesFavoritesRecord[]>;
+  listByOwner(
+    ownerId: string,
+    limit: number,
+    cursor?: FilesFavoritesCursor | null,
+  ): Promise<FilesFavoritesRecord[]>;
 }
