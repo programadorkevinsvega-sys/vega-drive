@@ -64,6 +64,7 @@ Documentación técnica: [FRONTEND_BFF_PHASE_5.md](./FRONTEND_BFF_PHASE_5.md) y 
 **Estado: PENDIENTE; deliberadamente reservada para el final.** No implementar ni marcar como funcional el módulo de cuotas antes de que el propietario decida iniciar esta fase.
 
 Alcance previsto:
+
 - Crear tablas, migraciones y repositorios propios de quota.
 - Exponer una API pública para consultar y reservar capacidad.
 - Coordinar con Files mediante contratos/eventos, nunca leyendo tablas `files_*` directamente.
