@@ -47,7 +47,9 @@ Estos valores son límites iniciales implementados en Files; el módulo independ
 
 - [x] El navegador sube archivos de hasta 95 MiB a `POST /api/files` usando `X-File-Name`, `X-File-Size`, el MIME declarativo y, cuando corresponde, `X-File-Folder-Id`.
 - [x] Los archivos mayores usan sesiones multipart autenticadas y fragmentos de 50 MiB a través del mismo origen; el Worker conserva el ID R2 y los ETags en estado privado del módulo files.
-- [x] La interfaz envía archivos de más de 95 MiB mediante multipart; el backend valida tamaño real, sesión y propiedad de cada fragmento.\n- [x] La cola permite pausar/reanudar transferencias, cancelar archivos y lotes de carpeta, retirar archivos pendientes y distinguir estados pausado/cancelado/error/completado.\n- [x] Los fragmentos multipart reintentan errores de red y HTTP 5xx hasta tres veces antes de marcar error; el backend registra fallos de escritura de fragmentos para facilitar diagnóstico.
+- [x] La interfaz envía archivos de más de 95 MiB mediante multipart; el backend valida tamaño real, sesión y propiedad de cada fragmento.
+- [x] La cola permite pausar/reanudar transferencias, cancelar archivos y lotes de carpeta, retirar archivos pendientes y distinguir estados pausado/cancelado/error/completado.
+- [x] Los fragmentos multipart reintentan errores de red y HTTP 5xx hasta tres veces antes de marcar error; el backend registra fallos de escritura de fragmentos para facilitar diagnóstico.
 - [x] Las filas de archivos ofrecen descarga a través de `GET /api/files/:id/download`, que conserva la autorización y el streaming privado del Worker.
 - [x] El plano de control usa rutas same-origin y cookies same-origin. Cuando `DIRECT_R2_TRANSFERS_ENABLED` está habilitado, el navegador intercambia bytes con R2 únicamente mediante URLs prefirmadas temporales autorizadas por el Worker; no recibe credenciales ni claves internas. El modo de vista previa continúa same-origin.
 - [x] La integración de interfaz y las transferencias cuentan con la validación operativa de producción descrita al final de este documento.
