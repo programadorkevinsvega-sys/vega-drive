@@ -30,10 +30,8 @@ export interface ItemCatalogDependencies {
   now?: () => Date;
   createId?: () => string;
 }
-
 export function createItemCatalog(deps: ItemCatalogDependencies) {
   const now = deps.now ?? (() => new Date());
-
   async function findActive(
     actor: FilesActor,
     id: string,
@@ -43,20 +41,29 @@ export function createItemCatalog(deps: ItemCatalogDependencies) {
     if (
       item.folderId !== null &&
       !(await activeFolderPath(deps.folders, actor.userId, item.folderId))
-    ) {
+    )
       return null;
-    }
     return item;
   }
-
+  async function getFileMetadata(actor: FilesActor, id: unknown) {
+    if (!hasValidActor(actor) || !isValidCatalogId(id))
+      return failure<{ id: string; name: string }>("invalid-input");
+    try {
+      const item = await findActive(actor, id);
+      return item
+        ? success({ id: item.id, name: item.name })
+        : failure<{ id: string; name: string }>("not-found");
+    } catch {
+      return failure<{ id: string; name: string }>("unavailable");
+    }
+  }
   async function renameFile(
     actor: FilesActor,
     id: unknown,
     rawName: unknown,
   ): Promise<CatalogResult<FilesFileView>> {
-    if (!hasValidActor(actor) || !isValidCatalogId(id)) {
+    if (!hasValidActor(actor) || !isValidCatalogId(id))
       return failure("invalid-input");
-    }
     const name = normalizeNodeName(rawName);
     if (!name) return failure("invalid-input");
     try {
@@ -72,9 +79,8 @@ export function createItemCatalog(deps: ItemCatalogDependencies) {
           undefined,
           item.id,
         ))
-      ) {
+      )
         return failure("duplicate-name");
-      }
       const updatedAt = now().toISOString();
       const claim = {
         ownerId: actor.userId,
@@ -106,6 +112,5 @@ export function createItemCatalog(deps: ItemCatalogDependencies) {
       return failure("unavailable");
     }
   }
-
-  return { renameFile };
+  return { getFileMetadata, renameFile };
 }

@@ -8,6 +8,7 @@ export type Route =
   | { name: "trash" }
   | { name: "search"; query: string }
   | { name: "settings" }
+  | { name: "share"; token: string }
   | { name: "not-found" };
 
 export type RouteName = Route["name"];
@@ -45,6 +46,11 @@ export function parseHash(hash: string): Route {
     }
     return { name: "not-found" };
   }
+  if (first === "share" && segments.length === 2 && second !== undefined) {
+    return /^[A-Za-z0-9_-]{43}$/.test(second)
+      ? { name: "share", token: second }
+      : { name: "not-found" };
+  }
   if (first === "search" && segments.length === 1) {
     const q = new URLSearchParams(query).get("q") ?? "";
     return { name: "search", query: q.trim().slice(0, MAX_QUERY_LENGTH) };
@@ -59,6 +65,8 @@ export function buildHash(route: Route): string {
   switch (route.name) {
     case "drive":
       return route.folderId ? `#/drive/folder/${route.folderId}` : DEFAULT_HASH;
+    case "share":
+      return "#/share/" + route.token;
     case "search":
       return route.query
         ? `#/search?q=${encodeURIComponent(route.query)}`

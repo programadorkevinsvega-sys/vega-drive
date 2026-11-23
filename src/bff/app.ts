@@ -3,6 +3,7 @@ import { SECURITY_HEADERS } from "./security-headers.js";
 import { identityRoutes } from "./identity-routes.js";
 import { filesRoutes } from "./routes/files-routes.js";
 import { filesTransferRoutes } from "./routes/files-transfer-routes.js";
+import { sharingRoutes } from "./routes/sharing-routes.js";
 import {
   requireAuthenticatedActor,
   type AuthenticatedEnv,
@@ -24,5 +25,6 @@ app.get("/api/health", (c) =>
 app.route("/api/auth", identityRoutes);
 app.route("/api/files", filesTransferRoutes);
 app.route("/api/files", filesRoutes);
+app.route("/api/shares", sharingRoutes);
 app.use("/api/protected/*", requireAuthenticatedActor);
 app.notFound((c) => c.json({ error: "Not found" }, 404));

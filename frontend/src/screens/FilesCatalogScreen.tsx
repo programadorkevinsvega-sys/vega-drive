@@ -15,6 +15,7 @@ import { addFavorite } from "../services/files-service";
 import { CatalogFavoriteError } from "./CatalogFavoriteError";
 import { CatalogDescription } from "./CatalogDescription";
 import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";
+import { ShareDialog } from "./ShareDialog";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -30,6 +31,7 @@ export function FilesCatalogScreen({
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
   const [favoriteError, setFavoriteError] = useState("");
+  const [shareFile, setShareFile] = useState<FilesFileView | null>(null);
   return (
     <div className="vd-page vd-catalog">
       <CatalogBreadcrumbs
@@ -151,6 +153,7 @@ export function FilesCatalogScreen({
                 onDelete={(item) => actions.requestDelete(item, false)}
                 onPermanentDelete={(item) => actions.requestDelete(item, true)}
                 onRestore={(item) => void actions.restoreNode(item)}
+                onShare={(file) => setShareFile(file)}
                 onFavorite={(file) => {
                   void addFavorite(file.id)
                     .then(() => {
@@ -178,6 +181,10 @@ export function FilesCatalogScreen({
             </div>
           ) : null}
         </section>
+      ) : null}
+
+      {shareFile ? (
+        <ShareDialog file={shareFile} onClose={() => setShareFile(null)} />
       ) : null}
 
       {previewFile ? (

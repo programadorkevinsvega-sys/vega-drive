@@ -4,6 +4,7 @@ import type { IdentityPublicApi } from "../modules/identity/module.public-api.js
 import { createFilesModuleFromD1 } from "../modules/files/infrastructure/persistence/d1/create-files-module.js";
 import type { FilesPublicApi } from "../modules/files/module.public-api.js";
 import type { QuotaPublicApi } from "../modules/quota/module.public-api.js";
+import { createSharingModuleFromD1 } from "../modules/sharing/infrastructure/persistence/d1/create-sharing-module.js";
 import type { SharingPublicApi } from "../modules/sharing/module.public-api.js";
 
 export interface IdentityGateway extends IdentityPublicApi {}
@@ -14,9 +15,7 @@ export interface QuotaGateway {
   status(): ModuleStatus;
 }
 
-export interface SharingGateway {
-  status(): ModuleStatus;
-}
+export interface SharingGateway extends SharingPublicApi {}
 
 export class InProcessIdentityGateway implements IdentityGateway {
   constructor(private readonly api: IdentityPublicApi) {}
@@ -60,6 +59,10 @@ export class InProcessFilesGateway implements FilesGateway {
 
   status() {
     return this.api.status();
+  }
+
+  getFileMetadata(...args: Parameters<FilesPublicApi["getFileMetadata"]>) {
+    return this.api.getFileMetadata(...args);
   }
 
   createFolder(...args: Parameters<FilesPublicApi["createFolder"]>) {
@@ -232,6 +235,18 @@ export class InProcessSharingGateway implements SharingGateway {
   status() {
     return this.api.status();
   }
+  create(...args: Parameters<SharingPublicApi["create"]>) {
+    return this.api.create(...args);
+  }
+  list(...args: Parameters<SharingPublicApi["list"]>) {
+    return this.api.list(...args);
+  }
+  revoke(...args: Parameters<SharingPublicApi["revoke"]>) {
+    return this.api.revoke(...args);
+  }
+  download(...args: Parameters<SharingPublicApi["download"]>) {
+    return this.api.download(...args);
+  }
 }
 
 export function createCompositionRoot(env: Env) {
@@ -240,12 +255,19 @@ export function createCompositionRoot(env: Env) {
   const quotaApi: QuotaPublicApi = {
     status: () => ({ module: "quota", ready: false }),
   };
-  const sharingApi: SharingPublicApi = {
-    status: () => ({ module: "sharing", ready: false }),
-  };
+  const filesGateway = new InProcessFilesGateway(filesApi);
+  const sharingApi = createSharingModuleFromD1(
+    env,
+    {
+      getFileMetadata: (actor, id) => filesGateway.getFileMetadata(actor, id),
+      downloadFile: (actor, id, range, purpose) =>
+        filesGateway.downloadFile(actor, id, range, purpose),
+    },
+    filesGateway.status().ready,
+  );
   return {
     identity: new InProcessIdentityGateway(identityApi),
-    files: new InProcessFilesGateway(filesApi),
+    files: filesGateway,
     quota: new InProcessQuotaGateway(quotaApi),
     sharing: new InProcessSharingGateway(sharingApi),
   };

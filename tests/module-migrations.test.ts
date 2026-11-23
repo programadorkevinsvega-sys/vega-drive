@@ -71,6 +71,7 @@ describe("module-owned D1 migrations", () => {
       "files/infrastructure/persistence/d1/migrations/0007_files_search_indexes.sql",
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
       "identity/infrastructure/persistence/d1/migrations/0002_identity_auth_attempts.sql",
+      "sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql",
     ]);
   });
 
@@ -81,7 +82,7 @@ describe("module-owned D1 migrations", () => {
         relativePath: relative(modulesRoot, path).split(sep).join("/"),
       }))
       .filter(({ relativePath }) =>
-        /^(identity|files)\/infrastructure\/persistence\/d1\/migrations\/\d+.*\.sql$/i.test(
+        /^(identity|files|sharing)\/infrastructure\/persistence\/d1\/migrations\/\d+.*\.sql$/i.test(
           relativePath,
         ),
       );
@@ -101,7 +102,7 @@ describe("module-owned D1 migrations", () => {
 
         // The initial module migrations must reproduce the legacy schema
         // exactly. Later migrations are additive and may define new objects.
-        if (/\/0001_[^/]+\.sql$/i.test(relativePath)) {
+        if (/\/0001_[^/]+\.sql$/i.test(relativePath) && owner !== "sharing") {
           initialDefinitions.set(key, value);
         }
       }
@@ -130,6 +131,10 @@ describe("module-owned D1 migrations", () => {
     ).toBe(true);
     expect(allActiveDefinitions.has("table:files_catalog_names")).toBe(true);
     expect(allActiveDefinitions.has("table:identity_auth_attempts")).toBe(true);
+    expect(allActiveDefinitions.has("table:sharing_links")).toBe(true);
+    expect(allActiveDefinitions.has("table:sharing_password_attempts")).toBe(
+      true,
+    );
     expect(
       allActiveDefinitions.has("index:identity_auth_attempts_locked_until_idx"),
     ).toBe(true);
@@ -154,6 +159,9 @@ describe("module-owned D1 migrations", () => {
     );
     expect(manifest).toContain(
       "identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql",
+    );
+    expect(manifest).toContain(
+      "sharing/infrastructure/persistence/d1/migrations/0001_sharing_initial.sql",
     );
     expect(manifest).toContain("migrations/0001_initial_schema.sql");
   });
