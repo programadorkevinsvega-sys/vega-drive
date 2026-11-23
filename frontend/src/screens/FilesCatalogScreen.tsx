@@ -9,18 +9,14 @@ import { useCatalogData, type CatalogView } from "./useCatalogData";
 import { navigate } from "../router/use-route";
 import { FileTransferControls } from "./FileTransferControls";
 import { CatalogDialogs } from "./CatalogDialogs";
-import { FilePreviewDialog } from "./FilePreviewDialog";
 import type { FilesFileView } from "../services/files-contract";
 import { addFavorite } from "../services/files-service";
 import { CatalogFavoriteError } from "./CatalogFavoriteError";
 import { CatalogDescription } from "./CatalogDescription";
 import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";
-import { ShareDialog } from "./ShareDialog";
+import { CatalogFileOverlays } from "./CatalogFileOverlays";
 
-export interface FilesCatalogScreenProps {
-  view: CatalogView;
-  folderId: string | null;
-}
+type FilesCatalogScreenProps = { view: CatalogView; folderId: string | null };
 
 export function FilesCatalogScreen({
   view,
@@ -183,16 +179,12 @@ export function FilesCatalogScreen({
         </section>
       ) : null}
 
-      {shareFile ? (
-        <ShareDialog file={shareFile} onClose={() => setShareFile(null)} />
-      ) : null}
-
-      {previewFile ? (
-        <FilePreviewDialog
-          file={previewFile}
-          onClose={() => setPreviewFile(null)}
-        />
-      ) : null}
+      <CatalogFileOverlays
+        shareFile={shareFile}
+        setShareFile={setShareFile}
+        previewFile={previewFile}
+        setPreviewFile={setPreviewFile}
+      />
 
       <CatalogDialogs
         actions={actions}

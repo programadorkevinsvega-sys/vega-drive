@@ -31,8 +31,9 @@ const STORAGE_TERMS = [
   part("amazon", "aws"),
 ].join("|");
 
-// Las llamadas de red solo se permiten en los clientes HTTP de identidad y
-// catálogo. El script remoto solo se permite en el widget oficial de Turnstile.
+// Las llamadas de red solo se permiten en los clientes HTTP autenticados de
+// identidad, catálogo, vista previa y acceso a enlaces compartidos. El script
+// remoto solo se permite en el widget oficial de Turnstile.
 const FORBIDDEN: ReadonlyArray<[string, RegExp]> = [
   ["sockets / eventos de servidor", new RegExp("\\b(" + SOCKETS + ")\\b")],
   ["sendBeacon", /sendBeacon/],
@@ -98,11 +99,14 @@ describe("politica del frontend", () => {
       .filter(NOT_TESTS)
       .filter((file) => /\bfetch\s*\(/.test(file.text))
       .map((file) => file.path);
-    expect(callers.sort()).toEqual([
-      "services/files-http-client.ts",
-      "services/identity-service.ts",
-      "services/preview-http-client.ts",
-    ]);
+    expect(callers.sort()).toEqual(
+      [
+        "services/files-http-client.ts",
+        "services/identity-service.ts",
+        "services/preview-http-client.ts",
+        "screens/ShareAccessScreen.tsx",
+      ].sort(),
+    );
 
     for (const path of callers) {
       const client = readFileSync(join(SRC, path), "utf8");
