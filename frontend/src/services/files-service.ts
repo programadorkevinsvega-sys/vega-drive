@@ -197,3 +197,22 @@ export function restoreFile(id: string): Promise<FilesFileView> {
     "POST",
   );
 }
+
+export interface ShareEntry {
+  id: string;
+  itemId: string;
+  fileName: string;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+}
+export interface CreatedShare extends ShareEntry { token: string; permission: "read"; }
+export function createShare(itemId: string, expiresInSeconds: number): Promise<CreatedShare> {
+  return sendJson<CreatedShare>("/api/shares", "POST", { itemId, expiresInSeconds });
+}
+export function listShares(): Promise<{ shares: ShareEntry[] }> {
+  return requestJson<{ shares: ShareEntry[] }>("/api/shares");
+}
+export function revokeShare(id: string): Promise<{ revoked: true }> {
+  return sendNoBody<{ revoked: true }>("/api/shares/" + encodeURIComponent(id), "DELETE");
+}
