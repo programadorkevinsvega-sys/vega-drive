@@ -1,147 +1,125 @@
-# Rollback y recuperación de Vega Drive
+# Operación y rollback de Vega Drive
 
-## Estado
+## Alcance y estado real
 
-**Estado de preparación: PENDIENTE.** Este documento define el procedimiento objetivo. No afirma que staging, backups/restauración de D1, Queues, DLQ, métricas avanzadas ni endpoints `/api/health/live` y `/api/health/ready` estén configurados o probados. El estado actual del despliegue y los comandos existentes se describen en [README.md](./README.md) y [migrations/manifest.md](./migrations/manifest.md).
+**Entorno operativo: producción únicamente.** Vega Drive no tiene un entorno staging separado; esta guía no presupone ni exige uno. Las pruebas automatizadas se ejecutan en CI con D1 local/efímera y servicios simulados. No equivalen a un ensayo destructivo en producción.
 
-## Objetivo
+La preparación del procedimiento queda documentada y automatizada parcialmente. **No se declara certificado un rollback real ni una restauración de D1** hasta que el propietario ejecute y registre esas operaciones en Cloudflare. No se han creado backups, no se ha restaurado D1 y no se ha ejecutado rollback como parte de esta fase.
 
-Recuperar una versión estable del Worker sin crear incompatibilidades con D1 ni perder o corromper objetos R2. Si se incorporan Queues, la recuperación también debe mantener la compatibilidad de mensajes y consumidores.
+## Arquitectura de recuperación
 
-## Principios obligatorios
+- **Worker:** se puede volver a publicar una versión anterior del Worker si sigue siendo compatible con los bindings, secretos y esquema D1 actuales.
+- **D1:** las migraciones remotas no se revierten al hacer rollback del Worker. La recuperación de datos desde backup es una operación separada, con posible pérdida de escrituras posteriores al punto restaurado.
+- **R2:** no se eliminan objetos como parte de un rollback de Worker. Los objetos nuevos pueden ser válidos y necesarios; no se hace limpieza masiva automática.
+- **Queues/DLQ:** no hay binding de Queue declarado actualmente; no aplica.
+- **Staging:** no existe y no se crea como parte de esta fase.
 
-1. El rollback de aplicación debe ser reversible y tener un responsable y un deployment estable identificado.
-2. Las migraciones D1 deben ser backward-compatible durante la ventana en que la versión anterior podría volver a activarse.
-3. Una migración destructiva no se ejecuta en el mismo release que necesita poder volver al código anterior.
-4. D1 no se considera automáticamente reversible: restaurar backup o reconstruir datos es una operación independiente, con análisis de pérdida de escrituras.
-5. Staging debe validar el procedimiento antes de habilitarlo para producción.
-6. R2 no se revierte borrando objetos nuevos por defecto. Los objetos pueden ser necesarios para la versión estable o haberse escrito después del despliegue.
-7. No declarar rollback probado hasta conservar evidencia del ensayo y verificar salud y flujos críticos.
+## Despliegue normal
 
-## Estrategia de release
+1. Confirmar que main contiene el commit aprobado y que CI está verde para ese SHA.
+2. Revisar el diff de migraciones. Las migraciones deben ser compatibles con la versión Worker que permanece activa hasta completar el despliegue. Usar expansión/contracción: añadir primero, migrar consumidores después y retirar elementos antiguos en un release posterior.
+3. Verificar que los secretos requeridos existen en el entorno Worker y que no se han incluido en Git.
+4. Ejecutar el comando oficial: pnpm run deploy. No ejecutar wrangler deploy ni migraciones remotas por separado para saltarse deploy:preflight.
+5. El release aplica migraciones, consulta el historial, compara el esquema remoto, publica el Worker y ejecuta pnpm run verify:production.
+6. La verificación de producción comprueba:
+   - / responde HTML HTTP 200 y entrega cabeceras de seguridad.
+   - /api/health responde JSON HTTP 200 con status=ok y service=vega-drive.
+   - /api/auth/config informa ready=true y contiene la site key pública.
+   - Las rutas comprobadas conservan CSP estricta, HSTS, nosniff, Referrer-Policy, protección de framing, Permissions-Policy, COOP/CORP; las rutas API deben responder Cache-Control: no-store.
+7. Si una verificación falla, detener nuevos releases, conservar logs y registrar SHA, hora y versión Worker. No asumir que el release está sano por haber compilado.
 
-```text
-Release candidate
-      ↓
-Staging: aplicar migración compatible
-      ↓
-Staging Worker
-      ↓
-Smoke / E2E
-      ↓
-Confirmar compatibilidad con la versión anterior
-      ↓
-Migración de producción compatible
-      ↓
-Worker de producción
-      ↓
-Health + métricas + revisión de errores
-```
+Comandos de diagnóstico de solo lectura:
 
-El repositorio actualmente no declara un entorno staging separado. Antes de usar este flujo, crear y documentar recursos/configuración aislados para staging: Worker, D1, bucket R2, bindings y secretos independientes. Nunca ejecutar una prueba de rollback contra datos reales de producción.
+    pnpm exec wrangler deployments list
+    pnpm run db:migration:list
+    pnpm run db:verify:schema:production
+    pnpm run verify:production
 
-## Rollback del Worker
+Los dos últimos comandos consultan producción. Ejecutarlos solo con autorización operativa del propietario y credenciales Cloudflare ya configuradas en el entorno seguro.
 
-Ante un fallo de aplicación que no requiera revertir datos:
+## Runbook: rollback del Worker
 
-1. Detener nuevos despliegues y registrar el commit, la versión Worker y la hora del incidente.
-2. Consultar el historial de deployments con Wrangler y elegir explícitamente una versión estable anterior.
-3. Revisar el diff de código/configuración y confirmar que esa versión es compatible con el esquema D1 actual y con cualquier objeto/evento que ya se haya escrito.
-4. Ejecutar el rollback mediante el procedimiento soportado por la versión de Wrangler instalada y confirmar el deployment resultante. Los comandos orientativos son:
+Usar solo cuando el problema sea del código/configuración del Worker y se haya comprobado que no requiere restaurar datos.
 
-   ```bash
-   pnpm exec wrangler deployments list
-   pnpm exec wrangler rollback
-   ```
+1. **Contener:** pausar nuevos despliegues y registrar incidente, hora UTC, SHA desplegado, versión Worker, síntomas y responsable.
+2. **Identificar objetivo:** ejecutar pnpm exec wrangler deployments list; seleccionar la versión estable anterior por ID/metadata y confirmar el SHA asociado. No elegir "la anterior" sin inspeccionar historial.
+3. **Comprobar compatibilidad:** revisar cambios desde el deployment estable, migraciones aplicadas, bindings, variables y secretos. Confirmar que el Worker anterior entiende el esquema D1 actual y los metadatos/objetos R2 escritos desde el release.
+4. **Confirmar la acción:** consultar pnpm exec wrangler rollback --help y seguir el flujo interactivo soportado. No automatizar ni ejecutar rollback sin identificar el deployment objetivo y aprobación explícita del propietario.
+5. **Verificar:** tras el rollback, ejecutar pnpm run verify:production; revisar en Cloudflare los logs/errores del Worker y probar manualmente login, listado, subida, descarga, preview y compartición con cuentas autorizadas. La verificación automatizada de health no sustituye esos flujos.
+6. **Cerrar:** registrar versión restaurada, SHA, hora, comandos, resultado de smoke tests, migraciones que permanecen aplicadas y decisión de seguimiento.
 
-   No ejecutar el segundo comando a ciegas: confirmar el deployment objetivo y la sintaxis/interacción que presenta Wrangler antes de confirmar.
+**Importante:** rollback de Worker no deshace D1, no revoca URLs firmadas ya emitidas, no restaura R2 y no revierte escrituras. No borrar objetos ni revertir migraciones como reacción automática.
 
-5. Verificar salud, logs y flujos críticos; registrar resultado y decisión de recuperación.
+## Migraciones D1 y restauración
 
-El rollback del Worker no deshace las migraciones D1, no restaura R2 y no revierte mensajes ya publicados en una Queue.
+- Nunca editar una migración que ya se aplicó en un entorno compartido; crear una migración nueva.
+- Mantener compatibilidad hacia atrás durante toda la ventana en que pueda volver a activarse el Worker anterior.
+- No combinar cambios destructivos (DROP, eliminación/renombre incompatible) con el release que necesita rollback inmediato.
+- Aplicar expansión/contracción y backfills idempotentes, reanudables y verificables.
+- Antes del release, consultar el historial y el esquema remoto, y confirmar que existe un punto de recuperación D1 adecuado según la política/plan de Cloudflare vigente.
+- El backup y la restauración deben administrarse desde los controles soportados de Cloudflare para esa base. Confirmar retención, timestamp, alcance y efecto sobre escrituras antes de restaurar.
+- Restaurar D1 requiere aprobación explícita, plan de parada/control de escrituras, estimación de pérdida de datos y verificación posterior del esquema y consistencia. No se proporciona un comando genérico de restauración porque el mecanismo y la disponibilidad dependen de la configuración real de Cloudflare.
+- La restauración no debe confundirse con rollback de Worker. Tras restaurar, validar coherencia con R2; no borrar objetos automáticamente.
 
-## Migraciones y rollback de D1
+## R2 y consistencia
 
-Usar expansión/contracción para cambios incompatibles:
+- Mantener el bucket privado y sus claves estables.
+- Los cambios de formato de metadatos deben permitir que el Worker anterior lea los objetos durante la ventana de rollback.
+- No ejecutar limpieza masiva de R2 durante una incidencia.
+- Si se necesita reparar metadatos/objetos, preparar un procedimiento específico, idempotente y con inventario previo.
+- Antes de reabrir operaciones críticas, revisar errores D1, registros de transferencias y coherencia de metadatos/objetos según los medios disponibles.
 
-```text
-vN: esquema antiguo
-  ↓
-expand: añadir columnas/tablas opcionales compatibles
-  ↓
-vN+1: código compatible con esquema antiguo y nuevo
-  ↓
-backfill idempotente y verificado
-  ↓
-vN+2: código usa el esquema nuevo
-  ↓
-esperar a que ninguna versión antigua siga activa
-  ↓
-contract: retirar elementos obsoletos en un release separado
-```
+## Observabilidad, secretos e incidentes
 
-- Antes de migrar, revisar el esquema remoto, historial de migraciones, backup disponible y procedimiento de restauración.
-- Las migraciones se versionan y se prueban primero en una D1 de staging con datos representativos no sensibles.
-- No editar una migración que ya se aplicó en un entorno compartido; añadir una migración nueva.
-- No ejecutar `DROP`, renombres incompatibles ni eliminación de columnas mientras un Worker anterior pueda necesitar esos datos.
-- Backfills y reparaciones deben ser idempotentes, medibles y reanudables.
-- Si se requiere restaurar D1, detener o controlar escrituras, identificar el punto de recuperación, estimar pérdida de datos y obtener aprobación explícita antes de restaurar. No presentar la restauración como un simple rollback de código.
-- El verificador actual de esquema D1 bloquea DDL que no sabe modelar; cualquier evolución del verificador debe revisarse y probarse antes de desplegar esa migración.
+- Revisar Cloudflare Workers Logs/Observability para errores, excepciones y ejecuciones programadas. La configuración actual de observability global está desactivada aunque logs/traces tengan opciones declaradas; no asumir que existe un panel de métricas o alertas avanzadas configurado.
+- No registrar contraseñas, cookies, tokens, URLs firmadas completas, cuerpos privados ni secretos.
+- Mantener secretos en Cloudflare Worker Secrets/GitHub Environment Secrets; nunca en .env versionado, logs o frontend.
+- Ante sospecha de filtración, detener el release, rotar el secreto afectado en Cloudflare y los sistemas que lo usan, invalidar credenciales relacionadas cuando corresponda y revisar el periodo de exposición.
+- No hay Queue/DLQ configurada en el Worker; omitir pasos de replay de mensajes.
 
-## R2
+## Registro de release/incidente
 
-- Mantener el bucket privado y las claves de objeto estables durante el release.
-- No exigir que un rollback borre objetos creados por la versión nueva.
-- Los cambios de formato, nombre o estructura de metadatos deben permitir que ambas versiones lean los objetos durante la ventana de rollback.
-- Si hace falta un backfill o migración de objetos, hacerla por etapas, idempotente y con un plan de reintento.
-- No borrar objetos ni ejecutar una limpieza masiva como respuesta automática a un rollback.
-- Verificar consistencia entre metadatos D1 y objetos R2 antes de reanudar operaciones críticas.
+Guardar en un sistema privado de operaciones (no en Git) los siguientes datos:
 
-## Queues y eventos
+- Fecha/hora UTC y responsable.
+- SHA de Git, ID de deployment anterior/nuevo/restaurado.
+- Resultado CI y comando de release ejecutado.
+- Migraciones aplicadas y resultado de verificación D1.
+- Resultado de frontend, health y auth config.
+- Flujos manuales probados y resultado.
+- Incidente, impacto, decisiones, rollback y acciones correctivas.
 
-**Aplicable solo si Vega Drive incorpora Queues o consumidores asíncronos.** En la configuración actual revisada no hay binding de Queue declarado; no simular ni marcar como existente una Queue/DLQ.
+Nunca incluir secretos, datos personales, tokens ni enlaces firmados.
 
-Cuando existan:
+## Checklist de producción
 
-- Versionar el contrato de eventos cuando un cambio no sea compatible.
-- Mantener consumidores capaces de procesar los mensajes emitidos por versiones anteriores durante la transición.
-- No retirar campos requeridos mientras haya consumidores activos que los necesiten.
-- Hacer handlers idempotentes y definir reintentos, dead-letter queue (DLQ) y replay seguro.
-- Tras el rollback, revisar profundidad, antigüedad, errores y DLQ antes de volver a procesar o reproducir mensajes.
+### Antes
 
-## Checklist operativo
+- [ ] CI verde para el SHA que se va a publicar.
+- [ ] Deployment estable anterior identificado.
+- [ ] Compatibilidad Worker anterior ↔ esquema D1 actual revisada.
+- [ ] Migraciones aditivas/backward-compatible; sin contract destructivo.
+- [ ] Punto de recuperación D1 disponible y retención comprobada en Cloudflare.
+- [ ] Secretos/bindings requeridos presentes y protegidos.
+- [ ] Bucket R2 privado; no se planea borrar objetos durante recuperación.
 
-### Antes del release
+### Después del despliegue
 
-- [ ] Identificar y registrar el deployment estable anterior y el commit correspondiente.
-- [ ] Confirmar compatibilidad del esquema D1 con la versión anterior.
-- [ ] Confirmar que no hay migraciones destructivas pendientes.
-- [ ] Confirmar backup de D1 y que el procedimiento de restauración se ensayó.
-- [ ] Confirmar privacidad/consistencia de R2 y compatibilidad de los objetos.
-- [ ] Revisar Queue/DLQ solo si están configuradas.
-- [ ] Revisar logs, tasa de errores, latencia y alertas disponibles.
-- [ ] Ensayar despliegue y rollback en staging con datos de prueba.
+- [ ] Verificación automatizada frontend + health + auth config + headers aprobada.
+- [ ] Login y logout comprobados.
+- [ ] Listado, subida y descarga comprobados.
+- [ ] Preview y enlaces compartidos comprobados.
+- [ ] Logs de Worker revisados; sin errores nuevos relevantes.
+- [ ] SHA y ID de deployment registrados.
 
-### Durante el rollback
+### Si hay rollback
 
-- [ ] Detener nuevos releases y designar responsable del incidente.
-- [ ] Confirmar objetivo estable y compatibilidad D1/R2 antes de revertir el Worker.
-- [ ] Ejecutar rollback del Worker usando el procedimiento verificado para Wrangler.
-- [ ] No ejecutar migraciones destructivas ni borrar objetos como parte automática del rollback.
-- [ ] Confirmar bindings y secretos compatibles con la versión restaurada.
-- [ ] Verificar el endpoint de salud realmente implementado. Hoy el script de producción verifica `/api/health`; `/api/health/live` y `/api/health/ready` son objetivos futuros hasta implementarlos y probarlos.
+- [ ] Despliegues pausados y responsable asignado.
+- [ ] Deployment objetivo y compatibilidad confirmados.
+- [ ] Rollback Worker aprobado y ejecutado explícitamente.
+- [ ] D1/R2 no revertidos ni limpiados automáticamente.
+- [ ] Smoke tests repetidos y evidencia guardada.
 
-### Después
+## Criterio de cierre honesto
 
-- [ ] Ejecutar smoke tests y flujos E2E críticos disponibles.
-- [ ] Revisar tasa de errores, latencia y logs del Worker.
-- [ ] Revisar errores D1 y coherencia de metadatos/objetos R2.
-- [ ] Revisar Queue depth y DLQ solo si existen.
-- [ ] Confirmar que operaciones y trabajos pendientes no se duplicaron ni perdieron.
-- [ ] Registrar incidente, causa raíz, versión final y acciones preventivas.
-
-## Evidencia y criterio de finalización
-
-Guardar en CI/CD o en el registro operativo: fecha, entorno, commit inicial/final, ID de deployments, migraciones involucradas, comandos ejecutados, resultados de smoke/E2E y responsable. No registrar secretos ni datos privados.
-
-La foundation de rollback solo puede declararse **COMPLETE** cuando staging está aislado, el procedimiento de despliegue y rollback se ejecuta de extremo a extremo, la compatibilidad D1/R2 está comprobada, el backup/restauración de D1 se ha ensayado y la evidencia se conserva. Los controles no aplicables (por ejemplo, Queues antes de incorporarlas) deben quedar explícitamente identificados como tales.
+La fase puede cerrar su implementación de runbooks y verificaciones automatizadas sin staging. La **certificación operativa real** seguirá pendiente hasta que el propietario confirme desde Cloudflare: política/retención de backups D1, acceso a historial de deployments, logs observables y una prueba controlada de rollback/restauración apropiada. No se afirmará que la restauración de D1 o rollback de producción se ensayaron si no se ejecutaron.
