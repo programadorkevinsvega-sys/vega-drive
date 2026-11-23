@@ -761,8 +761,9 @@ describe("files catalog HTTP routes", () => {
     expect(trash.nodes.map((node) => node.id)).not.toContain(foreignItem.id);
   });
 
-
-  it("sirve vistas previas same-origin con sesión vigente, Range y aislamiento por propietario", async () => {
+  it(
+    "sirve vistas previas same-origin con sesión vigente, Range y aislamiento por propietario",
+    async () => {
     const upload = await sendFile("preview-private.txt", "0123456789abcdef");
     expect(upload.status).toBe(201);
     const file = await json<{ id: string }>(upload);
@@ -815,9 +816,12 @@ describe("files catalog HTTP routes", () => {
 
     const unauthenticated = await send(preview.url, {}, null);
     expect(unauthenticated.status).toBe(401);
-  });
+    },
+  );
 
-  it("revalida la sesión al consumir el contenido de la vista previa", async () => {
+  it(
+    "revalida la sesión al consumir el contenido de la vista previa",
+    async () => {
     const upload = await sendFile("preview-expired.txt", "private bytes");
     const file = await json<{ id: string }>(upload);
     const metadata = await send("/api/files/" + file.id + "/preview");
@@ -836,7 +840,8 @@ describe("files catalog HTTP routes", () => {
     expect(await json(response)).toEqual({
       error: "Authentication required",
     });
-  });
+    },
+  );
 
   it("streams private uploads and downloads with ranges and owner isolation", async () => {
     const upload = await sendFile("private report.txt", "abcdefghijklmnop");

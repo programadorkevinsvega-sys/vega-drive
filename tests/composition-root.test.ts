@@ -36,10 +36,9 @@ describe("composition root and module gateways", () => {
     });
 
     for (const gateway of [gateways.quota, gateways.sharing]) {
-      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(gateway))).toEqual([
-        "constructor",
-        "status",
-      ]);
+      expect(
+        Object.getOwnPropertyNames(Object.getPrototypeOf(gateway)),
+      ).toEqual(["constructor", "status"]);
       expect(gateway.status().ready).toBe(false);
     }
   });
@@ -56,15 +55,16 @@ describe("composition root and module gateways", () => {
     } as unknown as IdentityPublicApi;
     const gateway = new InProcessIdentityGateway(api);
 
-    await expect(gateway.resolveSession("session-token")).resolves.toEqual({
-      ok: true,
-      value: session,
-    });
+    await expect(
+      gateway.resolveSession("session-token"),
+    ).resolves.toEqual({ ok: true, value: session });
     expect(resolveSession).toHaveBeenCalledOnce();
     expect(resolveSession).toHaveBeenCalledWith("session-token");
   });
 
-  it("FilesGateway delegates file operations to FilesPublicApi without reimplementing them", async () => {
+  it(
+    "FilesGateway delegates file operations to FilesPublicApi without reimplementing them",
+    async () => {
     const listing = { ok: true, value: { files: [], folders: [] } };
     const listFolder = vi.fn().mockResolvedValue(listing);
     const downloadFile = vi.fn().mockResolvedValue({
@@ -79,9 +79,9 @@ describe("composition root and module gateways", () => {
     const gateway = new InProcessFilesGateway(api);
     const actor = { userId: "owner-a" };
 
-    await expect(gateway.listFolder(actor, { folderId: null })).resolves.toBe(
-      listing,
-    );
+    await expect(
+      gateway.listFolder(actor, { folderId: null }),
+    ).resolves.toBe(listing);
     await expect(
       gateway.downloadFile(actor, "file-a", "bytes=0-1", "preview"),
     ).resolves.toMatchObject({ ok: true });
@@ -92,5 +92,6 @@ describe("composition root and module gateways", () => {
       "bytes=0-1",
       "preview",
     );
-  });
+    },
+  );
 });
