@@ -247,7 +247,7 @@ export function createCompositionRoot(env: Env) {
   const sharingApi = createSharingModuleFromD1(env, {
     getFileMetadata: (actor, id) => filesGateway.getFileMetadata(actor, id),
     downloadFile: (actor, id, range, purpose) => filesGateway.downloadFile(actor, id, range, purpose),
-  });
+  }, filesGateway.status().ready);
   return {
     identity: new InProcessIdentityGateway(identityApi),
     files: filesGateway,
