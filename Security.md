@@ -224,11 +224,11 @@ Comprobaciones automáticas requeridas para el commit de esta fase:
 - escaneo Gitleaks del workflow CI
 - migraciones y verificación de esquema D1 local
 
-**Pendiente de verificación externa antes de declarar la certificación global:**
+**Verificaciones operativas externas (seguimiento de Fase 9; no son un bloqueo de la implementación de Fase 8):**
 
 - Confirmar en Cloudflare que las reglas WAF/rate limiting están activas para el dominio de producción y cubren autenticación, registro y solicitudes costosas. La aplicación ya aplica límites por cuenta en autenticación y por usuario en transferencias; este repositorio no puede demostrar por sí solo la configuración WAF.
 - Verificar en el entorno de producción las cabeceras efectivas de HTML, JS, CSS, respuestas API y errores, además de los flujos de autenticación, aislamiento, preview, descarga y compartición.
 - Confirmar la protección de la rama `main` y los requisitos de aprobación/checks desde la configuración del repositorio. La conexión de GitHub utilizada para esta implementación no concede acceso de lectura a branch protection.
 - Repetir las verificaciones productivas de D1 y despliegue después de una publicación autorizada. Esta fase no ejecuta migraciones remotas ni despliega.
 
-No marcar estos puntos externos como aprobados a partir de pruebas locales o de CI. La certificación global permanece **PENDIENTE** hasta disponer de esa evidencia.
+La Fase 8 queda cerrada por sus controles y evidencias automatizadas. Los puntos externos anteriores siguen pendientes y se gestionan en la Fase 9: no se deben presentar como comprobados por pruebas locales o CI. La certificación operativa de producción permanece pendiente según [Rollback.md](./Rollback.md).
