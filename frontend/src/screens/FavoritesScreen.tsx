@@ -17,6 +17,7 @@ import {
   fileVisualType,
 } from "../lib/file-type-icon";
 import { dateLabel, errorLabel } from "./recent-files-format";
+import { FavoritesHeading } from "./FavoritesHeading";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
@@ -84,21 +85,7 @@ export function FavoritesScreen() {
   return (
     <div className="vd-page vd-catalog">
       <Breadcrumbs items={[DRIVE_HOME, { label: "Favoritos" }]} />
-      <header className="vd-catalog__heading">
-        <div className="vd-catalog__heading-copy">
-          <h1 className="vd-page__title">Favoritos</h1>
-          <p className="vd-catalog__description">
-            Tus archivos favoritos, guardados de forma privada en tu cuenta.
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          onClick={() => setRefreshKey((value) => value + 1)}
-          disabled={loading}
-        >
-          Actualizar
-        </Button>
-      </header>
+      <FavoritesHeading loading={loading} onRefresh={() => setRefreshKey((value) => value + 1)} />
       {error ? (
         <div className="vd-catalog__error" role="alert">
           <Icon name="alert" size="sm" />
