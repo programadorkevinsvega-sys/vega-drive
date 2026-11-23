@@ -34,9 +34,9 @@ sharingRoutes.get("/", requireAuthenticatedActor, async (c) => {
 });
 sharingRoutes.post("/", requireAuthenticatedActor, async (c) => {
   if (!originAllowed(c.req.raw) || new URL(c.req.url).search) return c.json(INVALID, 403);
-  const body = await strictBody(c.req.raw, ["itemId", "expiresInSeconds"]);
+  const body = await strictBody(c.req.raw, ["itemId", "expiresInSeconds", "password"]);
   if (!body || !Object.hasOwn(body, "itemId")) return c.json(INVALID, 400);
-  const result = await createCompositionRoot(c.env).sharing.create(actor(c), body.itemId, body.expiresInSeconds);
+  const result = await createCompositionRoot(c.env).sharing.create(actor(c), body.itemId, body.expiresInSeconds, body.password);
   return result.ok ? c.json(result.value, 201) : failure(c, result.reason);
 });
 sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
@@ -45,9 +45,9 @@ sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
   return result.ok ? c.json(result.value) : failure(c, result.reason);
 });
 sharingRoutes.post("/access", async (c) => {
-  const body = await strictBody(c.req.raw, ["token"]);
+  const body = await strictBody(c.req.raw, ["token", "password"]);
   if (!body || typeof body.token !== "string") return c.json(INVALID, 400);
-  const result = await createCompositionRoot(c.env).sharing.download(body.token, c.req.header("Range") ?? null);
+  const result = await createCompositionRoot(c.env).sharing.download(body.token, c.req.header("Range") ?? null, body.password);
   if (!result.ok) {
     if (result.reason === "range-not-satisfiable") return c.body(null, 416, { "Content-Range": "bytes */" + (result.totalSizeBytes ?? 0), "Cache-Control": "no-store" });
     return c.json({ error: "This share link is invalid, expired, or revoked" }, 404);
