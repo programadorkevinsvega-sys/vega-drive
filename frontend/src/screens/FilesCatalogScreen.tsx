@@ -14,7 +14,8 @@ import type { FilesFileView } from "../services/files-contract";
 import { addFavorite } from "../services/files-service";
 import { CatalogFavoriteError } from "./CatalogFavoriteError";
 import { CatalogDescription } from "./CatalogDescription";
-import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";\nimport { ShareDialog } from "./ShareDialog";
+import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";
+import { ShareDialog } from "./ShareDialog";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -29,7 +30,8 @@ export function FilesCatalogScreen({
   const actions = useCatalogActions(folderId, data.refresh);
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
-  const [favoriteError, setFavoriteError] = useState("");\n  const [shareFile, setShareFile] = useState<FilesFileView | null>(null);
+  const [favoriteError, setFavoriteError] = useState("");
+  const [shareFile, setShareFile] = useState<FilesFileView | null>(null);
   return (
     <div className="vd-page vd-catalog">
       <CatalogBreadcrumbs
@@ -151,7 +153,8 @@ export function FilesCatalogScreen({
                 onDelete={(item) => actions.requestDelete(item, false)}
                 onPermanentDelete={(item) => actions.requestDelete(item, true)}
                 onRestore={(item) => void actions.restoreNode(item)}
-                onShare={(file) => setShareFile(file)}\n                onFavorite={(file) => {
+                onShare={(file) => setShareFile(file)}
+                onFavorite={(file) => {
                   void addFavorite(file.id)
                     .then(() => {
                       setFavoriteError("");
@@ -180,7 +183,9 @@ export function FilesCatalogScreen({
         </section>
       ) : null}
 
-      {shareFile ? <ShareDialog file={shareFile} onClose={() => setShareFile(null)} /> : null}\n\n      {previewFile ? (
+      {shareFile ? <ShareDialog file={shareFile} onClose={() => setShareFile(null)} /> : null}
+
+      {previewFile ? (
         <FilePreviewDialog
           file={previewFile}
           onClose={() => setPreviewFile(null)}
