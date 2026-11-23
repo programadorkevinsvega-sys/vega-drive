@@ -24,6 +24,7 @@
 ### Time Travel de D1
 
 Según la documentación oficial de Cloudflare, Time Travel:
+
 - Está habilitado automáticamente para D1 que usa el almacenamiento nuevo; no hay que activar una opción ni crear snapshots manuales.
 - Conserva historial y bookmarks dentro de la ventana del plan: **7 días en Workers Free y 30 días en Workers Paid**.
 - Es compatible con bases cuyo campo `version` sea `production`. Una base `alpha` usa el sistema legacy de snapshots.
@@ -45,6 +46,7 @@ pnpm run db:migration:list
 ```
 
 Interpretación:
+
 1. En la salida de `d1 info`, revisar que la base corresponda a `vega_drive_db` y que `version` sea `production`.
 2. Si indica `production`, `d1 time-travel info` debe devolver el bookmark actual. Guardar solo el bookmark, la fecha/hora UTC y el resultado operativo en el registro privado; no publicar datos sensibles.
 3. Si indica `alpha`, no asumir soporte de Time Travel; revisar el mecanismo legacy documentado por Cloudflare.
@@ -102,6 +104,7 @@ El rollback de Worker no revierte D1, no revoca instantáneamente URLs firmadas 
 **Esta sección es un procedimiento de emergencia, no una autorización para ejecutarlo.** La restauración es destructiva.
 
 Antes de cualquier restauración:
+
 1. Confirmar `version: production` y el bookmark/fecha objetivo mediante comandos de consulta.
 2. Confirmar plan y ventana de retención real de la cuenta.
 3. Identificar el incidente, hora UTC aproximada, tablas/operaciones afectadas y el último punto sano. No elegir un timestamp solo por intuición.
@@ -113,6 +116,7 @@ Antes de cualquier restauración:
 Solo después de esos pasos el propietario puede seguir el procedimiento oficial de Cloudflare para `wrangler d1 time-travel restore`. El comando sobrescribe la D1 in-place; no debe incluirse en CI, preflight, pruebas automatizadas ni scripts de despliegue normal. Registrar el bookmark previo y el bookmark resultante que Cloudflare devuelva, para poder evaluar una reversión de la propia restauración si fuera necesario.
 
 Después:
+
 - Ejecutar `pnpm run db:verify:schema:production` con autorización.
 - Verificar migraciones, integridad funcional, sesiones, catálogo, compartición y coherencia entre metadatos D1 y objetos R2.
 - Reabrir escrituras solo después de validar los flujos críticos.
@@ -148,6 +152,7 @@ Si la base usa `alpha`, este runbook de Time Travel no aplica; seguir el mecanis
 ## Registro privado de release/incidente
 
 Guardar fuera de Git:
+
 - Fecha/hora UTC y responsable.
 - SHA Git, ID de deployment anterior/nuevo/restaurado.
 - Resultado CI y comando de release.
@@ -161,6 +166,7 @@ Nunca incluir secretos, datos personales, tokens ni URLs firmadas.
 ## Checklist de producción
 
 ### Antes del release
+
 - [ ] CI verde para el SHA candidato.
 - [ ] Deployment estable anterior identificado.
 - [ ] Compatibilidad del Worker anterior con el esquema D1 actual revisada.
@@ -171,6 +177,7 @@ Nunca incluir secretos, datos personales, tokens ni URLs firmadas.
 - [ ] Bucket R2 privado.
 
 ### Después del despliegue
+
 - [ ] Verificación automatizada frontend + health + auth config + headers aprobada.
 - [ ] Login/logout comprobados.
 - [ ] Listado, subida y descarga comprobados.
@@ -179,6 +186,7 @@ Nunca incluir secretos, datos personales, tokens ni URLs firmadas.
 - [ ] SHA e ID de deployment registrados.
 
 ### Si hay rollback/recuperación
+
 - [ ] Incidente contenido y responsable asignado.
 - [ ] Deployment o timestamp/bookmark objetivo identificado.
 - [ ] Compatibilidad y pérdida de escrituras evaluadas.
@@ -190,6 +198,7 @@ Nunca incluir secretos, datos personales, tokens ni URLs firmadas.
 ## Criterio de cierre de Fase 9
 
 La implementación documental y automatizada está completada: runbook de release/rollback, verificador postdespliegue y controles CI. La **certificación operativa** permanece pendiente hasta:
+
 1. comprobar la versión real de `vega_drive_db`, el bookmark de Time Travel y la ventana de retención del plan (o documentar el mecanismo legacy si `alpha`);
 2. confirmar historial de deployments y disponibilidad efectiva de logs/alertas;
 3. ejecutar y registrar, con autorización explícita, una prueba controlada de rollback del Worker y la recuperación D1 que se decida realizar.
