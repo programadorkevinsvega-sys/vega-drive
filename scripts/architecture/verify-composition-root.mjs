@@ -76,8 +76,8 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
   }
 
   if (
-    !root.includes("createSharingModuleFromD1(env,") ||
-    !root.includes("new InProcessSharingGateway(sharingApi)")
+    !/createSharingModuleFromD1\s*\(\s*env\s*,/.test(root) ||
+    !/new\s+InProcessSharingGateway\s*\(\s*sharingApi\s*\)/.test(root)
   ) {
     failures.push(
       "Sharing debe construirse desde D1 e inyectar FilesPublicApi mediante el composition root.",
