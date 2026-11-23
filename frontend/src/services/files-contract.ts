@@ -45,3 +45,13 @@ export interface FilesRecentListing {
   items: FilesRecentItem[];
   nextCursor: string | null;
 }
+
+
+export interface FilesFavoriteItem {
+  file: FilesFileView;
+  favoritedAt: string;
+}
+export interface FilesFavoritesListing {
+  items: FilesFavoriteItem[];
+  nextCursor: string | null;
+}
