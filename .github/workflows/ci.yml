@@ -52,8 +52,12 @@ jobs:
             exit 0
           fi
 
-          if [ "$EVENT_NAME" != "pull_request" ] || [ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" ]; then
-            echo "::error::Prettier found files that need formatting. Push formatted files from this branch; automatic formatting commits are only enabled for branches in this repository."
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ]; then
+            :
+          elif [ "$EVENT_NAME" = "push" ] && [ "$HEAD_BRANCH" = "main" ]; then
+            :
+          else
+            echo "::error::Prettier found files that need formatting. Automatic formatting commits are only enabled for same-repository pull requests and pushes to main."
             exit 1
           fi
 
