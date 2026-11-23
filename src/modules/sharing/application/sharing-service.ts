@@ -50,6 +50,11 @@ function encodeToken(bytes: Uint8Array): string {
     .replace(/\//g, "_")
     .replace(/=+$/g, "");
 }
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
+}
 function hex(bytes: Uint8Array): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
     "",
@@ -81,7 +86,7 @@ async function derivePassword(
   );
   return new Uint8Array(
     await crypto.subtle.deriveBits(
-      { name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 },
+      { name: "PBKDF2", hash: "SHA-256", salt: toArrayBuffer(salt), iterations: 100000 },
       key,
       256,
     ),
@@ -92,7 +97,10 @@ function constantTimeEqual(actual: Uint8Array, expected: Uint8Array): boolean {
   const subtle = crypto.subtle as SubtleCrypto & {
     timingSafeEqual?: (left: BufferSource, right: BufferSource) => boolean;
   };
-  if (subtle.timingSafeEqual) return subtle.timingSafeEqual(actual, expected);
+  if (subtle.timingSafeEqual) return subtle.timingSafeEqual(
+    toArrayBuffer(actual),
+    toArrayBuffer(expected),
+  );
   let difference = 0;
   for (let index = 0; index < actual.length; index += 1)
     difference |= (actual[index] ?? 0) ^ (expected[index] ?? 0);
