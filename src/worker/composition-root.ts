@@ -243,13 +243,14 @@ export function createCompositionRoot(env: Env) {
   const quotaApi: QuotaPublicApi = {
     status: () => ({ module: "quota", ready: false }),
   };
+  const filesGateway = new InProcessFilesGateway(filesApi);
   const sharingApi = createSharingModuleFromD1(env, {
-    getFileMetadata: (actor, id) => filesApi.getFileMetadata(actor, id),
-    downloadFile: (actor, id, range, purpose) => filesApi.downloadFile(actor, id, range, purpose),
+    getFileMetadata: (actor, id) => filesGateway.getFileMetadata(actor, id),
+    downloadFile: (actor, id, range, purpose) => filesGateway.downloadFile(actor, id, range, purpose),
   });
   return {
     identity: new InProcessIdentityGateway(identityApi),
-    files: new InProcessFilesGateway(filesApi),
+    files: filesGateway,
     quota: new InProcessQuotaGateway(quotaApi),
     sharing: new InProcessSharingGateway(sharingApi),
   };
