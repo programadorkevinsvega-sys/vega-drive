@@ -60,6 +60,8 @@ sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
   return result.ok ? c.json(result.value) : failure(c, result.reason);
 });
 sharingRoutes.post("/access", async (c) => {
+  const origin = c.req.header("Origin");
+  if (origin && !originAllowed(c.req.raw)) return c.json(INVALID, 403);
   const body = await strictBody(c.req.raw, ["token", "password"]);
   if (!body || typeof body.token !== "string") return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.download(body.token, c.req.header("Range") ?? null, body.password);
