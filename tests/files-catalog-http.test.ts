@@ -31,6 +31,7 @@ async function createHttpFixture() {
     "src/modules/files/infrastructure/persistence/d1/migrations/0001_files_initial.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0002_files_catalog_names.sql",
     "src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql",
+    "src/modules/files/infrastructure/persistence/d1/migrations/0006_files_favorites.sql",
   ]) {
     dbFixture.exec(await readFile(resolve(path), "utf8"));
   }
@@ -146,6 +147,63 @@ beforeEach(async () => {
 afterEach(() => fixture.close());
 
 describe("files catalog HTTP routes", () => {
+  it("persists favorites per owner, rejects foreign files and supports removal", async () => {
+    const upload = await sendFile(
+      "favorite-a.txt",
+      "favorite content",
+      fixture.tokenA,
+    );
+    const fileA = await json<{ id: string }>(upload);
+    const foreignUpload = await sendFile(
+      "favorite-b.txt",
+      "foreign content",
+      fixture.tokenB,
+    );
+    const fileB = await json<{ id: string }>(foreignUpload);
+
+    const unauthenticated = await send("/api/files/favorites", {}, null);
+    expect(unauthenticated.status).toBe(401);
+
+    const add = await send("/api/files/items/" + fileA.id + "/favorite", {
+      method: "POST",
+    });
+    expect(add.status).toBe(200);
+    expect(await json(add)).toEqual({ favorited: true });
+
+    const duplicateAdd = await send(
+      "/api/files/items/" + fileA.id + "/favorite",
+      { method: "POST" },
+    );
+    expect(duplicateAdd.status).toBe(200);
+
+    const ownList = await send("/api/files/favorites");
+    expect(ownList.status).toBe(200);
+    expect(await json(ownList)).toMatchObject({
+      items: [{ file: { id: fileA.id, name: "favorite-a.txt" } }],
+      nextCursor: null,
+    });
+
+    const foreignList = await send("/api/files/favorites", {}, fixture.tokenB);
+    expect(await json(foreignList)).toMatchObject({ items: [] });
+
+    const foreignAdd = await send(
+      "/api/files/items/" + fileB.id + "/favorite",
+      { method: "POST" },
+    );
+    expect(foreignAdd.status).toBe(404);
+
+    const removed = await send("/api/files/items/" + fileA.id + "/favorite", {
+      method: "DELETE",
+    });
+    expect(removed.status).toBe(200);
+    expect(await json(removed)).toEqual({ favorited: false });
+    const afterRemove = await send("/api/files/favorites");
+    expect(await json(afterRemove)).toMatchObject({
+      items: [],
+      nextCursor: null,
+    });
+  });
+
   it("rejects private catalog routes without a valid session", async () => {
     const listing = await send("/api/files", {}, null);
     expect(listing.status).toBe(401);

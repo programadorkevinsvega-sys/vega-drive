@@ -1,6 +1,10 @@
 import type { ModuleStatus } from "../../worker/env.js";
 import { createCatalogListing } from "./application/catalog-listing.js";
 import {
+  createFavorites,
+  type FilesFavoritesListing,
+} from "./application/favorites.js";
+import {
   createRecentActivity,
   type FilesRecentListing,
 } from "./application/recent-activity.js";
@@ -34,6 +38,7 @@ import type {
   FilesTransferEventRepository,
   FilesUploadRepository,
   FilesRecentActivityRepository,
+  FilesFavoritesRepository,
 } from "./application/ports/files-repositories.js";
 import type {
   CatalogResult,
@@ -166,6 +171,18 @@ export interface FilesPublicApi {
     actor: FilesActor,
     input: unknown,
   ): Promise<CatalogResult<FilesRecentListing>>;
+  addFavorite(
+    actor: FilesActor,
+    itemId: unknown,
+  ): Promise<CatalogResult<{ favorited: true }>>;
+  removeFavorite(
+    actor: FilesActor,
+    itemId: unknown,
+  ): Promise<CatalogResult<{ favorited: false }>>;
+  listFavorites(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesFavoritesListing>>;
 }
 
 export interface FilesModuleDependencies {
@@ -175,6 +192,7 @@ export interface FilesModuleDependencies {
   uploads?: FilesUploadRepository;
   transferEvents?: FilesTransferEventRepository;
   recentActivity?: FilesRecentActivityRepository;
+  favorites?: FilesFavoritesRepository;
   multipartUploads?: FilesMultipartUploadRepository;
   storage?: IFileStoragePort;
   ready?: boolean;
@@ -195,6 +213,14 @@ export function createFilesModule(
         folders: deps.folders,
         items: deps.items,
         recentActivity: deps.recentActivity,
+        ...(deps.now ? { now: deps.now } : {}),
+      })
+    : null;
+  const favorites = deps.favorites
+    ? createFavorites({
+        folders: deps.folders,
+        items: deps.items,
+        favorites: deps.favorites,
         ...(deps.now ? { now: deps.now } : {}),
       })
     : null;
@@ -290,6 +316,9 @@ export function createFilesModule(
     listRecent: (...args) => recent
       ? recent.listRecent(...args)
       : Promise.resolve({ ok: false, reason: "unavailable" }),
+    addFavorite: (...args) => favorites ? favorites.addFavorite(...args) : Promise.resolve({ ok: false, reason: "unavailable" }),
+    removeFavorite: (...args) => favorites ? favorites.removeFavorite(...args) : Promise.resolve({ ok: false, reason: "unavailable" }),
+    listFavorites: (...args) => favorites ? favorites.listFavorites(...args) : Promise.resolve({ ok: false, reason: "unavailable" }),
     uploadFile: (...args) =>
       transfers
         ? transfers.uploadFile(...args)

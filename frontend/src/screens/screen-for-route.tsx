@@ -6,6 +6,7 @@ import { ScreenPlaceholder } from "./ScreenPlaceholder";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 import { FilesCatalogScreen } from "./FilesCatalogScreen";
 import { RecentFilesScreen } from "./RecentFilesScreen";
+import { FavoritesScreen } from "./FavoritesScreen";
 
 const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
 
@@ -22,15 +23,7 @@ export function renderScreen(route: Route): ReactNode {
     case "recent":
       return <RecentFilesScreen />;
     case "favorites":
-      return (
-        <ScreenPlaceholder
-          icon="star"
-          title={title}
-          crumbs={[DRIVE_HOME, { label: title }]}
-          delivery="Entrega 3"
-          description="Esta vista todavía no está conectada al catálogo del servidor."
-        />
-      );
+      return <FavoritesScreen />;
     case "search":
       return (
         <ScreenPlaceholder

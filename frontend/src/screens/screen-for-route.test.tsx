@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 import { FilesCatalogScreen } from "./FilesCatalogScreen";
+import { FavoritesScreen } from "./FavoritesScreen";
 import { renderScreen } from "./screen-for-route";
 
 describe("pantallas conectadas al Worker", () => {
@@ -21,6 +22,14 @@ describe("pantallas conectadas al Worker", () => {
     expect(renderScreen({ name: "trash" })).toMatchObject({
       type: FilesCatalogScreen,
       props: { view: "trash", folderId: null },
+    });
+  });
+});
+
+describe("pantalla de favoritos", () => {
+  it("conecta Favoritos a la pantalla real", () => {
+    expect(renderScreen({ name: "favorites" })).toMatchObject({
+      type: FavoritesScreen,
     });
   });
 });

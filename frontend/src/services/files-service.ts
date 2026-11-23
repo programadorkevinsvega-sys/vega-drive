@@ -4,6 +4,7 @@ import type {
   FilesFolderView,
   FilesTrashListing,
   FilesRecentListing,
+  FilesFavoritesListing,
 } from "./files-contract";
 export type {
   FilesCatalogNode,
@@ -13,6 +14,7 @@ export type {
   FilesTrashListing,
   FilesRecentListing,
   FilesRecentItem,
+  FilesFavoriteItem,
 } from "./files-contract";
 
 export { FilesApiError } from "./files-api-error";
@@ -43,6 +45,26 @@ export function listTrash(cursor?: string): Promise<FilesTrashListing> {
 export function listRecent(cursor?: string): Promise<FilesRecentListing> {
   return requestJson<FilesRecentListing>(
     "/api/files/recent" + queryString({ limit: "50", cursor }),
+  );
+}
+
+export function listFavorites(cursor?: string): Promise<FilesFavoritesListing> {
+  return requestJson<FilesFavoritesListing>(
+    "/api/files/favorites" + queryString({ limit: "50", cursor }),
+  );
+}
+
+export function addFavorite(id: string): Promise<{ favorited: true }> {
+  return sendNoBody<{ favorited: true }>(
+    "/api/files/items/" + encodeURIComponent(id) + "/favorite",
+    "POST",
+  );
+}
+
+export function removeFavorite(id: string): Promise<{ favorited: false }> {
+  return sendNoBody<{ favorited: false }>(
+    "/api/files/items/" + encodeURIComponent(id) + "/favorite",
+    "DELETE",
   );
 }
 

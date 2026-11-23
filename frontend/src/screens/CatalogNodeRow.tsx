@@ -20,6 +20,7 @@ interface CatalogNodeRowProps {
   onDelete: (node: FilesCatalogNode) => void;
   onPermanentDelete: (node: FilesCatalogNode) => void;
   onRestore: (node: FilesCatalogNode) => void;
+  onFavorite: (node: Extract<FilesCatalogNode, { type: "file" }>) => void;
 }
 
 function formattedSize(size: number): string {
@@ -45,6 +46,7 @@ export function CatalogNodeRow({
   onDelete,
   onPermanentDelete,
   onRestore,
+  onFavorite,
 }: CatalogNodeRowProps) {
   const isFolder = node.type === "folder";
   const size = trashed
@@ -87,6 +89,15 @@ export function CatalogNodeRow({
           : []),
         ...(!isFolder
           ? [
+              {
+                id: "favorite",
+                label: "Agregar a Favoritos",
+                icon: "star",
+                onSelect: () =>
+                  onFavorite(
+                    node as Extract<FilesCatalogNode, { type: "file" }>,
+                  ),
+              } satisfies MenuItem,
               {
                 id: "download",
                 label: "Descargar",

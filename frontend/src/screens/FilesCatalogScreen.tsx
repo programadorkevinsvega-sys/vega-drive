@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
@@ -9,10 +8,13 @@ import { useCatalogActions } from "./useCatalogActions";
 import { useCatalogData, type CatalogView } from "./useCatalogData";
 import { navigate } from "../router/use-route";
 import { FileTransferControls } from "./FileTransferControls";
-import { buildCatalogBreadcrumbs } from "./catalog-breadcrumbs";
 import { CatalogDialogs } from "./CatalogDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import type { FilesFileView } from "../services/files-contract";
+import { addFavorite } from "../services/files-service";
+import { CatalogFavoriteError } from "./CatalogFavoriteError";
+import { CatalogDescription } from "./CatalogDescription";
+import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -27,23 +29,18 @@ export function FilesCatalogScreen({
   const actions = useCatalogActions(folderId, data.refresh);
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
-  const breadcrumbs = buildCatalogBreadcrumbs(
-    view,
-    folderId,
-    data.folderData?.breadcrumbs,
-  );
-
+  const [favoriteError, setFavoriteError] = useState("");
   return (
     <div className="vd-page vd-catalog">
-      {breadcrumbs.length ? <Breadcrumbs items={breadcrumbs} /> : null}
+      <CatalogBreadcrumbs
+        view={view}
+        folderId={folderId}
+        breadcrumbs={data.folderData?.breadcrumbs}
+      />
       <header className="vd-catalog__heading">
         <div className="vd-catalog__heading-copy">
           <h1 className="vd-page__title">{data.title}</h1>
-          <p className="vd-catalog__description">
-            {view === "trash"
-              ? "Se eliminan automáticamente a los 30 días y siguen ocupando espacio mientras estén aquí."
-              : "Carpetas y metadatos sincronizados con tu catálogo privado."}
-          </p>
+          <CatalogDescription view={view} />
         </div>
         {view === "trash" && data.nodes.length > 0 ? (
           <div className="vd-catalog__heading-actions">
@@ -71,6 +68,8 @@ export function FilesCatalogScreen({
           </div>
         ) : null}
       </header>
+
+      <CatalogFavoriteError message={favoriteError} />
 
       {data.error ? (
         <div className="vd-catalog__error" role="alert">
@@ -152,6 +151,17 @@ export function FilesCatalogScreen({
                 onDelete={(item) => actions.requestDelete(item, false)}
                 onPermanentDelete={(item) => actions.requestDelete(item, true)}
                 onRestore={(item) => void actions.restoreNode(item)}
+                onFavorite={(file) => {
+                  void addFavorite(file.id)
+                    .then(() => {
+                      setFavoriteError("");
+                    })
+                    .catch(() =>
+                      setFavoriteError(
+                        "No se pudo agregar el archivo a Favoritos. Inténtalo de nuevo.",
+                      ),
+                    );
+                }}
               />
             ))}
           </div>
