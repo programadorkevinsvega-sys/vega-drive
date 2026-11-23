@@ -5,7 +5,7 @@ import type { CatalogView } from "./useCatalogData";
 interface CatalogBreadcrumbsProps {
   view: CatalogView;
   folderId: string | null;
-  breadcrumbs?: Array<{ id: string | null; name: string }>;
+  breadcrumbs: Array<{ id: string | null; name: string }> | undefined;
 }
 
 export function CatalogBreadcrumbs({
