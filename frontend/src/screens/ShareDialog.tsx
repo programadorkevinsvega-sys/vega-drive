@@ -33,7 +33,7 @@ export function ShareDialog({ file, onClose }: ShareDialogProps) {
       const result = await createShare(file.id, Number(lifetime), password || undefined);
       const link = window.location.origin + "/#/share/" + result.token;
       setCreatedLink(link);
-      setShares((current) => [{ id: result.id, itemId: result.itemId, fileName: result.fileName, createdAt: result.createdAt, expiresAt: result.expiresAt, revokedAt: null }, ...current]);
+      setShares((current) => [{ id: result.id, itemId: result.itemId, fileName: result.fileName, createdAt: result.createdAt, expiresAt: result.expiresAt, revokedAt: null, passwordProtected: result.passwordProtected }, ...current]);
     } catch { setError("No se pudo crear el enlace. Comprueba que el archivo siga disponible."); }
     finally { setLoading(false); }
   }
