@@ -36,7 +36,6 @@ import type {
   FilesUploadRepository,
   FilesRecentActivityRepository,
   FilesFavoritesRepository,
-  FilesFavoritesRepository,
 } from "./application/ports/files-repositories.js";
 import type {
   CatalogResult,
