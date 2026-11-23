@@ -3,7 +3,8 @@ import type {
   FilesFolderListing,
   FilesFolderView,
   FilesTrashListing,
-  FilesRecentListing,\n  FilesFavoritesListing,
+  FilesRecentListing,
+  FilesFavoritesListing,
 } from "./files-contract";
 export type {
   FilesCatalogNode,
@@ -12,7 +13,8 @@ export type {
   FilesFolderView,
   FilesTrashListing,
   FilesRecentListing,
-  FilesRecentItem,\n  FilesFavoriteItem,
+  FilesRecentItem,
+  FilesFavoriteItem,
 } from "./files-contract";
 
 export { FilesApiError } from "./files-api-error";
