@@ -27,17 +27,17 @@ El frontend conserva su instalación aislada; no combines los lockfiles. `cloudf
 
 ## Vistas y estado funcional
 
-| Ruta hash | Contenido |
-|---|---|
-| `#/drive` | Mi unidad: catálogo, carpetas y acciones |
-| `#/drive/folder/<id>` | Contenido de carpeta y breadcrumbs |
-| `#/recent` | Archivos abiertos/descargados recientemente |
-| `#/favorites` | Favoritos del propietario |
-| `#/search?q=...` | Búsqueda por nombre, tipo y cursor |
-| `#/trash` | Papelera y restauración |
-| `#/settings` | Cambio de contraseña |
-| `#/login` | Login con Turnstile |
-| `#/register` | Registro cerrado con Turnstile |
+| Ruta hash             | Contenido                                   |
+| --------------------- | ------------------------------------------- |
+| `#/drive`             | Mi unidad: catálogo, carpetas y acciones    |
+| `#/drive/folder/<id>` | Contenido de carpeta y breadcrumbs          |
+| `#/recent`            | Archivos abiertos/descargados recientemente |
+| `#/favorites`         | Favoritos del propietario                   |
+| `#/search?q=...`      | Búsqueda por nombre, tipo y cursor          |
+| `#/trash`             | Papelera y restauración                     |
+| `#/settings`          | Cambio de contraseña                        |
+| `#/login`             | Login con Turnstile                         |
+| `#/register`          | Registro cerrado con Turnstile              |
 
 Las rutas hash desconocidas y los identificadores inválidos muestran página no encontrada. Wrangler mantiene `not_found_handling = "none"`: assets faltantes conservan 404 y la API no recibe un fallback HTML.
 
