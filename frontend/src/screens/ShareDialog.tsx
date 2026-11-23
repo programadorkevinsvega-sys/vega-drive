@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/Button";\nimport { TextField } from "../ui/TextField";
 import { Modal } from "../ui/Modal";
 import { useToast } from "../ui/toast-context";
 import { createShare, listShares, revokeShare, type ShareEntry } from "../services/files-service";
@@ -12,7 +12,7 @@ function dateLabel(value: string) {
 }
 export function ShareDialog({ file, onClose }: ShareDialogProps) {
   const [shares, setShares] = useState<ShareEntry[]>([]);
-  const [lifetime, setLifetime] = useState("604800");
+  const [lifetime, setLifetime] = useState("604800");\n  const [password, setPassword] = useState("");
   const [createdLink, setCreatedLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -28,7 +28,7 @@ export function ShareDialog({ file, onClose }: ShareDialogProps) {
     if (!file || loading) return;
     setLoading(true); setError("");
     try {
-      const result = await createShare(file.id, Number(lifetime));
+      const result = await createShare(file.id, Number(lifetime), password || undefined);
       const link = window.location.origin + "/#/share/" + result.token;
       setCreatedLink(link);
       setShares((current) => [{ id: result.id, itemId: result.itemId, fileName: result.fileName, createdAt: result.createdAt, expiresAt: result.expiresAt, revokedAt: null }, ...current]);
@@ -59,7 +59,7 @@ export function ShareDialog({ file, onClose }: ShareDialogProps) {
             <option value="2592000">30 días</option>
           </select>
         </label>
-        <Button icon="plus" loading={loading} onClick={() => void create()}>Crear enlace de lectura</Button>
+        <TextField label="Contraseña (opcional)" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} hint="Si la defines, el destinatario deberá introducirla para descargar." />\n        <Button icon="plus" loading={loading} disabled={Boolean(password) && password.length < 8} onClick={() => void create()}>Crear enlace de lectura</Button>
         {createdLink ? <div className="vd-share__created">
           <label className="vd-field__label" htmlFor="vd-share-link">Enlace creado</label>
           <input id="vd-share-link" className="vd-field__input" readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} />
@@ -72,7 +72,7 @@ export function ShareDialog({ file, onClose }: ShareDialogProps) {
             const expired = new Date(share.expiresAt).getTime() <= Date.now();
             const disabled = Boolean(share.revokedAt) || expired;
             return <div className="vd-share__entry" key={share.id}>
-              <div><strong>{disabled ? (share.revokedAt ? "Revocado" : "Vencido") : "Activo"}</strong><span>Vence: {dateLabel(share.expiresAt)}</span></div>
+              <div><strong>{disabled ? (share.revokedAt ? "Revocado" : "Vencido") : "Activo"}{share.passwordProtected ? " · Con contraseña" : " · Sin contraseña"}</strong><span>Vence: {dateLabel(share.expiresAt)}</span></div>
               {!disabled ? <Button size="sm" variant="danger" onClick={() => void revoke(share.id)}>Revocar</Button> : null}
             </div>;
           })}
