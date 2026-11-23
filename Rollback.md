@@ -94,6 +94,7 @@ Nunca incluir secretos, datos personales, tokens ni enlaces firmados.
 ## Checklist de producción
 
 ### Antes
+
 - [ ] CI verde para el SHA que se va a publicar.
 - [ ] Deployment estable anterior identificado.
 - [ ] Compatibilidad Worker anterior ↔ esquema D1 actual revisada.
@@ -103,6 +104,7 @@ Nunca incluir secretos, datos personales, tokens ni enlaces firmados.
 - [ ] Bucket R2 privado; no se planea borrar objetos durante recuperación.
 
 ### Después del despliegue
+
 - [ ] Verificación automatizada frontend + health + auth config + headers aprobada.
 - [ ] Login y logout comprobados.
 - [ ] Listado, subida y descarga comprobados.
@@ -111,6 +113,7 @@ Nunca incluir secretos, datos personales, tokens ni enlaces firmados.
 - [ ] SHA y ID de deployment registrados.
 
 ### Si hay rollback
+
 - [ ] Despliegues pausados y responsable asignado.
 - [ ] Deployment objetivo y compatibilidad confirmados.
 - [ ] Rollback Worker aprobado y ejecutado explícitamente.
