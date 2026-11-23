@@ -75,8 +75,13 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
       );
   }
 
-  if (!/createSharingModuleFromD1\\s*\\(env,/.test(root) || !/new InProcessSharingGateway\\(sharingApi\\)/.test(root)) {
-    failures.push("Sharing debe construirse desde D1 e inyectar FilesPublicApi mediante el composition root.");
+  if (
+    !root.includes("createSharingModuleFromD1(env,") ||
+    !root.includes("new InProcessSharingGateway(sharingApi)")
+  ) {
+    failures.push(
+      "Sharing debe construirse desde D1 e inyectar FilesPublicApi mediante el composition root.",
+    );
   }
 
   const bffFiles = await walk(absolute("src/bff"), /[.](?:ts|tsx|js|mjs)$/i);
