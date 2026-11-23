@@ -12,14 +12,14 @@
 
 ## Arquitectura de recuperación
 
-| Componente | Mecanismo | Límite importante |
-|---|---|---|
-| Worker | Volver a una versión de deployment anterior compatible | No revierte D1 ni R2 |
-| D1 | Time Travel y bookmarks, si `wrangler d1 info` indica `version: production` | Restore sobrescribe la base in-place y puede perder escrituras posteriores |
-| D1 legacy | Backend `alpha` usa el mecanismo snapshot legacy | No asumir que los comandos de Time Travel están disponibles |
-| R2 | Objetos permanecen en el bucket privado | No se borran ni restauran automáticamente |
-| Queues/DLQ | No hay binding de Queue declarado en `wrangler.toml` | No aplica |
-| Staging | No existe | No se crea como parte de la fase |
+| Componente | Mecanismo                                                                   | Límite importante                                                          |
+| ---------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Worker     | Volver a una versión de deployment anterior compatible                      | No revierte D1 ni R2                                                       |
+| D1         | Time Travel y bookmarks, si `wrangler d1 info` indica `version: production` | Restore sobrescribe la base in-place y puede perder escrituras posteriores |
+| D1 legacy  | Backend `alpha` usa el mecanismo snapshot legacy                            | No asumir que los comandos de Time Travel están disponibles                |
+| R2         | Objetos permanecen en el bucket privado                                     | No se borran ni restauran automáticamente                                  |
+| Queues/DLQ | No hay binding de Queue declarado en `wrangler.toml`                        | No aplica                                                                  |
+| Staging    | No existe                                                                   | No se crea como parte de la fase                                           |
 
 ### Time Travel de D1
 
