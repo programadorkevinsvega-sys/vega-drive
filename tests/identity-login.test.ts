@@ -65,7 +65,7 @@ function makeDeps(
       return true;
     }),
     revokeOtherSessions: vi.fn(async () => undefined),
-    touch: vi.fn(async () => undefined),
+    touch: vi.fn(async () => true),
   };
   const user = overrides.user === undefined ? null : overrides.user;
   const users: IdentityUserRepository = {
