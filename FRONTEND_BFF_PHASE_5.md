@@ -37,7 +37,7 @@
 - [x] El BFF expone `GET /api/files/recent` y `POST /api/files/items/:id/open`, detrás del middleware de sesión. Las descargas registran actividad al iniciar el flujo autorizado, tanto en la ruta de URL firmada como en el fallback del Worker.
 - [x] La pantalla Recientes consume el BFF y muestra carga, error, reintento, vacío, paginación y acción de descarga.
 - [ ] La migración aún no se ha aplicado ni desplegado desde esta tarea; requiere autorización operativa explícita y posterior verificación de D1.
-- [ ] Favoritos y búsqueda siguen siendo placeholders, sin contratos reales conectados. La persistencia de favoritos debe ser propiedad de un módulo; no introducir SQL desde el BFF ni desde otro módulo.
+- [x] Favoritos y Búsqueda cuentan con contratos reales en Files, persistencia D1 y endpoints BFF protegidos. La búsqueda consulta únicamente el árbol activo del propietario autenticado; no introducir SQL desde el BFF ni desde otro módulo.
 - [ ] Se añadieron pruebas unitarias para aislamiento de actividad, pero todavía no se han ejecutado. Falta prueba de integración BFF y evidencia de acceso cruzado en el entorno de pruebas.
 
 ### Composition root
@@ -52,7 +52,8 @@
 - [ ] Añadir pruebas automatizadas de componentes/servicios para carga, vacío, error, reintento, paginación, transferencia fallida, cancelación y finalización.
 - [ ] Probar assets y cabeceras en build/preview y en la URL desplegada: CSP compatible con React y Turnstile, nosniff, Referrer-Policy, frame protection, HSTS y `Cache-Control: no-store` en API; registrar respuestas observadas.
 - [x] Definir e implementar el contrato inicial de Recientes, su persistencia por propietario y su pantalla conectada.
-- [ ] Diseñar e implementar contratos de Favoritos y Búsqueda antes de sustituir esos placeholders.
+- [x] Favoritos implementados: migración `0006_files_favorites.sql`, contrato público, persistencia D1, endpoints protegidos, pantalla conectada y pruebas.
+- [x] Búsqueda implementada en el alcance del PR: búsqueda parcial por nombre de archivos/carpetas activos, filtro por tipo, paginación por cursor, endpoint protegido y pantalla conectada. La aplicación de `0007_files_search_indexes.sql` en D1 requiere el despliegue autorizado.
 - [ ] Aplicar/verificar la migración de Recientes solo en una operación autorizada; ejecutar las pruebas añadidas y agregar pruebas BFF/E2E de acceso cruzado.
 - [ ] Ejecutar la integración E2E de transferencia desde la UI hasta el resultado del catálogo, incluyendo archivos grandes, descarga, error, cancelación y acceso cruzado.
 - [ ] Añadir pruebas de composición/arquitectura para Identity, Files y los gateways futuros; mantener Quota/Sharing explícitamente no disponibles hasta que sus módulos existan.

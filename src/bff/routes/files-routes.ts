@@ -231,6 +231,19 @@ filesRoutes.delete("/items/:id/favorite", async (c) => {
   );
 });
 
+filesRoutes.get("/search", async (c) => {
+  const query = queryRecord(c.req.raw, ["q", "type", "limit", "cursor"]);
+  if (!query || !Object.hasOwn(query, "q")) return c.json(REQUEST_ERROR, 400);
+  const input: Record<string, unknown> = { q: query.q };
+  if (Object.hasOwn(query, "type")) input.type = query.type;
+  if (Object.hasOwn(query, "limit")) input.limit = query.limit;
+  if (Object.hasOwn(query, "cursor")) input.cursor = query.cursor;
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.search(actorFor(c), input),
+  );
+});
+
 filesRoutes.get("/recent", async (c) => {
   const query = queryRecord(c.req.raw, ["limit", "cursor"]);
   if (!query) return c.json(REQUEST_ERROR, 400);

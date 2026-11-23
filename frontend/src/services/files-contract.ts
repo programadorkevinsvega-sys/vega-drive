@@ -54,3 +54,8 @@ export interface FilesFavoritesListing {
   items: FilesFavoriteItem[];
   nextCursor: string | null;
 }
+
+export interface FilesSearchListing {
+  nodes: FilesCatalogNode[];
+  nextCursor: string | null;
+}

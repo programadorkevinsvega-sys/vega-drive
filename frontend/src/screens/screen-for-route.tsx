@@ -1,18 +1,14 @@
 import type { ReactNode } from "react";
-import { routeMeta } from "../router/route-meta";
 import type { Route } from "../router/routes";
 import { NotFoundScreen } from "./NotFoundScreen";
-import { ScreenPlaceholder } from "./ScreenPlaceholder";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
 import { FilesCatalogScreen } from "./FilesCatalogScreen";
 import { RecentFilesScreen } from "./RecentFilesScreen";
 import { FavoritesScreen } from "./FavoritesScreen";
-
-const DRIVE_HOME = { label: "Mi unidad", href: "#/drive" };
+import { SearchScreen } from "./SearchScreen";
 
 /** Tabla ruta -> pantalla, con el catálogo real conectado al BFF. */
 export function renderScreen(route: Route): ReactNode {
-  const title = routeMeta(route).title;
   switch (route.name) {
     case "not-found":
       return <NotFoundScreen />;
@@ -25,15 +21,7 @@ export function renderScreen(route: Route): ReactNode {
     case "favorites":
       return <FavoritesScreen />;
     case "search":
-      return (
-        <ScreenPlaceholder
-          icon="search"
-          title={title}
-          crumbs={[DRIVE_HOME, { label: title }]}
-          delivery="Entrega 5"
-          description="La búsqueda sobre el catálogo llegará en una entrega posterior."
-        />
-      );
+      return <SearchScreen initialQuery={route.query} />;
     case "settings":
       return <PasswordSettingsScreen />;
     case "login":

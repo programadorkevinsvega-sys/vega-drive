@@ -5,6 +5,11 @@ import {
   type FilesFavoritesListing,
 } from "./application/favorites.js";
 import {
+  createFilesSearch,
+  type FilesSearchListing,
+} from "./application/search.js";
+import type { FilesSearchRepository } from "./application/ports/files-search-repository.js";
+import {
   createRecentActivity,
   type FilesRecentListing,
 } from "./application/recent-activity.js";
@@ -183,6 +188,10 @@ export interface FilesPublicApi {
     actor: FilesActor,
     input: unknown,
   ): Promise<CatalogResult<FilesFavoritesListing>>;
+  search(
+    actor: FilesActor,
+    input: unknown,
+  ): Promise<CatalogResult<FilesSearchListing>>;
 }
 
 export interface FilesModuleDependencies {
@@ -193,6 +202,7 @@ export interface FilesModuleDependencies {
   transferEvents?: FilesTransferEventRepository;
   recentActivity?: FilesRecentActivityRepository;
   favorites?: FilesFavoritesRepository;
+  search?: FilesSearchRepository;
   multipartUploads?: FilesMultipartUploadRepository;
   storage?: IFileStoragePort;
   ready?: boolean;
@@ -223,6 +233,9 @@ export function createFilesModule(
         favorites: deps.favorites,
         ...(deps.now ? { now: deps.now } : {}),
       })
+    : null;
+  const search = deps.search
+    ? createFilesSearch({ search: deps.search, folders: deps.folders })
     : null;
   const trash = deps.storage
     ? createTrashMutations({
@@ -319,6 +332,10 @@ export function createFilesModule(
     addFavorite: (...args) => favorites ? favorites.addFavorite(...args) : Promise.resolve({ ok: false, reason: "unavailable" }),
     removeFavorite: (...args) => favorites ? favorites.removeFavorite(...args) : Promise.resolve({ ok: false, reason: "unavailable" }),
     listFavorites: (...args) => favorites ? favorites.listFavorites(...args) : Promise.resolve({ ok: false, reason: "unavailable" }),
+    search: (...args) =>
+      search
+        ? search.search(...args)
+        : Promise.resolve({ ok: false, reason: "unavailable" }),
     uploadFile: (...args) =>
       transfers
         ? transfers.uploadFile(...args)
