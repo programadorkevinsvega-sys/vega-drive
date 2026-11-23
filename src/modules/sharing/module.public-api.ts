@@ -4,10 +4,10 @@ import type { SharingRepository } from "./application/sharing-repository.js";
 
 export interface SharingPublicApi {
   status(): ModuleStatus;
-  create(actor: { userId: string }, itemId: unknown, lifetimeSeconds: unknown): ReturnType<ReturnType<typeof createSharingService>["create"]>;
+  create(actor: { userId: string }, itemId: unknown, lifetimeSeconds: unknown, password?: unknown): ReturnType<ReturnType<typeof createSharingService>["create"]>;
   list(actor: { userId: string }): ReturnType<ReturnType<typeof createSharingService>["list"]>;
   revoke(actor: { userId: string }, id: unknown): ReturnType<ReturnType<typeof createSharingService>["revoke"]>;
-  download(token: unknown, range: string | null): ReturnType<ReturnType<typeof createSharingService>["download"]>;
+  download(token: unknown, range: string | null, password?: unknown): ReturnType<ReturnType<typeof createSharingService>["download"]>;
 }
 export interface SharingModuleDependencies {
   repository: SharingRepository;
