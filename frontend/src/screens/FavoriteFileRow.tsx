@@ -1,8 +1,15 @@
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
-import { downloadFileUrl, type FilesFavoriteItem } from "../services/files-service";
+import {
+  downloadFileUrl,
+  type FilesFavoriteItem,
+} from "../services/files-service";
 import { RecentFilePreviewAction } from "./RecentFilePreviewAction";
-import { fileTypeIcon, fileTypeLabel, fileVisualType } from "../lib/file-type-icon";
+import {
+  fileTypeIcon,
+  fileTypeLabel,
+  fileVisualType,
+} from "../lib/file-type-icon";
 import { dateLabel } from "./recent-files-format";
 
 interface FavoriteFileRowProps {
