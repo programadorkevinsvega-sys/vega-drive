@@ -42,26 +42,22 @@ const fixedNow = new Date("2026-11-22T12:00:00.000Z");
 function fixture() {
   let currentNow = new Date(fixedNow);
   const repository = new MemorySharingRepository();
-  const downloadFile = vi
-    .fn()
-    .mockResolvedValue({
-      ok: true,
-      value: {
-        name: "private.txt",
-        contentType: "text/plain",
-        sizeBytes: 4,
-        contentLength: 4,
-        status: 200,
-        contentRange: null,
-        body: new ReadableStream<Uint8Array>(),
-      },
-    });
-  const getFileMetadata = vi
-    .fn()
-    .mockResolvedValue({
-      ok: true,
-      value: { id: "file-a", name: "private.txt" },
-    });
+  const downloadFile = vi.fn().mockResolvedValue({
+    ok: true,
+    value: {
+      name: "private.txt",
+      contentType: "text/plain",
+      sizeBytes: 4,
+      contentLength: 4,
+      status: 200,
+      contentRange: null,
+      body: new ReadableStream<Uint8Array>(),
+    },
+  });
+  const getFileMetadata = vi.fn().mockResolvedValue({
+    ok: true,
+    value: { id: "file-a", name: "private.txt" },
+  });
   const service = createSharingService({
     repository,
     files: { downloadFile, getFileMetadata },
@@ -73,7 +69,9 @@ function fixture() {
     downloadFile,
     getFileMetadata,
     service,
-    setNow: (value: Date) => { currentNow = value; },
+    setNow: (value: Date) => {
+      currentNow = value;
+    },
   };
 }
 describe("sharing service security", () => {
