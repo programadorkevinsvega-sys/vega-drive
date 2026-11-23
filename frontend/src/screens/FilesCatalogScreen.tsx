@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { Icon } from "../ui/Icon";
@@ -9,13 +8,13 @@ import { useCatalogActions } from "./useCatalogActions";
 import { useCatalogData, type CatalogView } from "./useCatalogData";
 import { navigate } from "../router/use-route";
 import { FileTransferControls } from "./FileTransferControls";
-import { buildCatalogBreadcrumbs } from "./catalog-breadcrumbs";
 import { CatalogDialogs } from "./CatalogDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import type { FilesFileView } from "../services/files-contract";
 import { addFavorite } from "../services/files-service";
 import { CatalogFavoriteError } from "./CatalogFavoriteError";
 import { CatalogDescription } from "./CatalogDescription";
+import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -31,15 +30,9 @@ export function FilesCatalogScreen({
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
   const [favoriteError, setFavoriteError] = useState("");
-  const breadcrumbs = buildCatalogBreadcrumbs(
-    view,
-    folderId,
-    data.folderData?.breadcrumbs,
-  );
-
   return (
     <div className="vd-page vd-catalog">
-      {breadcrumbs.length ? <Breadcrumbs items={breadcrumbs} /> : null}
+      <CatalogBreadcrumbs view={view} folderId={folderId} breadcrumbs={data.folderData?.breadcrumbs} />
       <header className="vd-catalog__heading">
         <div className="vd-catalog__heading-copy">
           <h1 className="vd-page__title">{data.title}</h1>
