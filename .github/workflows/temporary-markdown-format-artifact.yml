@@ -23,6 +23,15 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Format Markdown without committing changes
         run: pnpm exec prettier --write "**/*.md"
+      - name: Export exact formatted files for manual review
+        shell: bash
+        run: |
+          for file in README.md roadmap.md Rollback.md R2_DIRECT_TRANSFER_SETUP.md frontend/README.md POST_ROADMAP_DIRECT_R2_DELIVERY.md; do
+            echo "DOC_START:$file"
+            base64 -w0 "$file"
+            echo
+            echo "DOC_END:$file"
+          done
       - uses: actions/upload-artifact@v6
         with:
           name: formatted-markdown
