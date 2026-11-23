@@ -3,26 +3,14 @@ import { Button } from "../ui/Button";
 import { TextField } from "../ui/TextField";
 import { Modal } from "../ui/Modal";
 import { useToast } from "../ui/toast-context";
-import {
-  createShare,
-  listShares,
-  revokeShare,
-  type ShareEntry,
-} from "../services/files-service";
+import { createShare, listShares, revokeShare } from "../services/files-sharing-service";
+import type { ShareEntry } from "../services/files-sharing-service";
+import { ShareEntriesList } from "./ShareEntriesList";
 import type { FilesFileView } from "../services/files-contract";
 
 interface ShareDialogProps {
   file: FilesFileView | null;
   onClose: () => void;
-}
-function dateLabel(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "Fecha no disponible"
-    : new Intl.DateTimeFormat("es-CO", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date);
 }
 export function ShareDialog({ file, onClose }: ShareDialogProps) {
   const [shares, setShares] = useState<ShareEntry[]>([]);
@@ -181,43 +169,7 @@ export function ShareDialog({ file, onClose }: ShareDialogProps) {
             {error}
           </p>
         ) : null}
-        <div className="vd-share__list">
-          <h3>Enlaces de este archivo</h3>
-          {shares.length === 0 ? (
-            <p className="vd-share__empty">Todavía no hay enlaces creados.</p>
-          ) : (
-            shares.map((share) => {
-              const expired = new Date(share.expiresAt).getTime() <= Date.now();
-              const disabled = Boolean(share.revokedAt) || expired;
-              return (
-                <div className="vd-share__entry" key={share.id}>
-                  <div>
-                    <strong>
-                      {disabled
-                        ? share.revokedAt
-                          ? "Revocado"
-                          : "Vencido"
-                        : "Activo"}
-                      {share.passwordProtected
-                        ? " · Con contraseña"
-                        : " · Sin contraseña"}
-                    </strong>
-                    <span>Vence: {dateLabel(share.expiresAt)}</span>
-                  </div>
-                  {!disabled ? (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => void revoke(share.id)}
-                    >
-                      Revocar
-                    </Button>
-                  ) : null}
-                </div>
-              );
-            })
-          )}
-        </div>
+        <ShareEntriesList shares={shares} onRevoke={revoke} />
       </div>
     </Modal>
   );
