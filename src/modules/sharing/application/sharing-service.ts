@@ -34,6 +34,14 @@ async function derivePassword(password: string, salt: Uint8Array): Promise<Uint8
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, key, 256));
 }
+function constantTimeEqual(actual: Uint8Array, expected: Uint8Array): boolean {
+  if (actual.length !== expected.length) return false;
+  const subtle = crypto.subtle as SubtleCrypto & { timingSafeEqual?: (left: BufferSource, right: BufferSource) => boolean };
+  if (subtle.timingSafeEqual) return subtle.timingSafeEqual(actual, expected);
+  let difference = 0;
+  for (let index = 0; index < actual.length; index += 1) difference |= (actual[index] ?? 0) ^ (expected[index] ?? 0);
+  return difference === 0;
+}
 function validToken(token: unknown): token is string {
   return typeof token === "string" && /^[A-Za-z0-9_-]{43}$/.test(token);
 }
@@ -88,9 +96,12 @@ export function createSharingService(deps: SharingServiceDependencies) {
       if (!record || record.revokedAt !== null || record.expiresAt <= timestamp) return { ok: false as const, reason: "not-found" };
       if (record.passwordHash !== null && record.passwordSalt !== null) {
         if (typeof rawPassword !== "string" || rawPassword.length > 128) return { ok: false as const, reason: "password-required" };
+        const currentTime = now();
+        const windowStart = new Date(currentTime.getTime() - 3600000).toISOString();
+        if (!(await deps.repository.consumePasswordAttempt(record.tokenHash, currentTime.toISOString(), windowStart))) return { ok: false as const, reason: "rate-limited" };
         const actual = await derivePassword(rawPassword, fromHex(record.passwordSalt));
         const expected = fromHex(record.passwordHash);
-        if (actual.length !== expected.length || !crypto.subtle.timingSafeEqual(actual, expected)) return { ok: false as const, reason: "password-required" };
+        if (!constantTimeEqual(actual, expected)) return { ok: false as const, reason: "password-required" };
       }
       return deps.files.downloadFile({ userId: record.ownerId }, record.itemId, range, "download");
     } catch { return { ok: false as const, reason: "unavailable" }; }
