@@ -28,7 +28,8 @@
 - [x] La vista previa usa rutas same-origin protegidas; el Worker vuelve a validar la sesión y el propietario y transmite los bytes privados desde R2. El navegador no recibe una URL firmada de R2.
 - [x] Visor nativo de imágenes, audio/vídeo y PDF, lectura de texto y extracción local limitada de DOCX/XLSX.
 - [x] CORS de R2 no es requisito del visor actual: el navegador no lee R2 directamente. Se documentó la distinción respecto a futuras transferencias directas en FILES_PREVIEW.md.
-- [x] Pruebas HTTP con D1/R2 aislados para sesión ausente/expirada, aislamiento entre propietarios, respuestas Range 206/416, ausencia de host R2 en el contrato y cabeceras no-store/no-referrer. No se presenta esta suite como una prueba contra el bucket de producción.
+- [x] Pruebas HTTP con D1/R2 aislados para sesión ausente/expirada/revocada, aislamiento entre propietarios en metadatos y contenido, respuestas Range 206/416, ausencia de host R2 en el contrato y cabeceras no-store/no-referrer. No se presenta esta suite como una prueba contra el bucket de producción.
+- [ ] Verificación manual autenticada en producción con dos cuentas y Network para confirmar el comportamiento desplegado; las pruebas automatizadas usan D1/R2 simulados.
 
 ### Recientes, favoritos y búsqueda
 
@@ -64,6 +65,7 @@ Las migraciones `0005`, `0006` y `0007` deben verificarse individualmente en D1 
 - [x] `src/worker/composition-root.ts` expone gateways in-process para Identity y Files y gateways tipados para Quota y Sharing.
 - [x] Quota y Sharing son placeholders con `ready: false`; sus gateways solo exponen `status()` y no ofrecen operaciones funcionales.
 - [x] Pruebas de composition root y delegación de IdentityGateway/FilesGateway a sus APIs públicas; se verifica que Quota/Sharing permanecen sin capacidades operativas. No se crea una segunda composición ni se importan repositorios D1/R2 desde rutas.
+- [x] Guardia de arquitectura integrada a `verify:architecture:all` para impedir regresiones en el composition root, las fronteras del BFF y el estado no disponible de Quota/Sharing.
 
 ## Trabajo pendiente para cerrar la Fase 5
 
