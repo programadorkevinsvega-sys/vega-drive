@@ -26,9 +26,13 @@ describe("pantallas conectadas al Worker", () => {
   });
 });
 
-it("conecta Favoritos a la pantalla real", () => {
-    expect(renderScreen({ name: "favorites" })).toMatchObject({ type: FavoritesScreen });
+describe("pantalla de favoritos", () => {
+  it("conecta Favoritos a la pantalla real", () => {
+    expect(renderScreen({ name: "favorites" })).toMatchObject({
+      type: FavoritesScreen,
+    });
   });
+});
 
 describe("pantalla de ajustes", () => {
   it("usa el formulario real de seguridad de la cuenta", () => {
