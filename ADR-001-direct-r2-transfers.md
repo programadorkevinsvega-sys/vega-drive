@@ -3,7 +3,7 @@
 - **Estado:** APROBADO E IMPLEMENTADO para transferencias de la aplicación Vega Drive. La Fase 4 registró validaciones operativas de producción completadas el 2026-10-12 por confirmación explícita del propietario. El valor efectivo actual del feature flag `DIRECT_R2_TRANSFERS_ENABLED` no se infiere del repositorio y debe consultarse en el entorno Worker.
 - **Runbook operativo:** [R2_DIRECT_TRANSFER_SETUP.md](./R2_DIRECT_TRANSFER_SETUP.md) registra la configuración y evidencia histórica; no autoriza por sí mismo cambios de entorno ni despliegues.
 - **Ámbito:** Vega Drive existente; no presupone ni implementa una API externa nueva.
-- **Despliegue:** Este ADR no autoriza un despliegue automático. La migración se habilita solo tras pruebas y configuración operativa verificadas.
+- **Despliegue:** Este ADR define el diseño aprobado, no autoriza despliegues automáticos ni cambios futuros del entorno. Las validaciones de producción de la Fase 4 están registradas como completadas; cualquier cambio posterior requiere autorización explícita.
 - **Decisión:** El Worker conserva el plano de control y autorización; los bytes de subida y descarga se transfieren directamente entre navegador y el endpoint S3 compatible de R2 mediante URLs prefirmadas de alcance mínimo y duración corta.
 - **Bucket:** Debe permanecer privado, sin dominio público ni `r2.dev`. El acceso directo se permite únicamente mediante solicitudes S3 firmadas. No se permite acceso anónimo.
 - **Credenciales:** Las credenciales S3 de R2 se guardan como secretos del Worker, limitadas al bucket `vega-drive-files`, con permisos mínimos de lectura/escritura de objetos. Nunca se entregan al cliente ni se versionan.
