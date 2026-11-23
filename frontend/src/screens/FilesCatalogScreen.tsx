@@ -12,7 +12,7 @@ import { FileTransferControls } from "./FileTransferControls";
 import { buildCatalogBreadcrumbs } from "./catalog-breadcrumbs";
 import { CatalogDialogs } from "./CatalogDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
-import type { FilesFileView } from "../services/files-contract";
+import type { FilesFileView, FilesCatalogNode } from "../services/files-contract";\nimport { addFavorite } from "../services/files-service";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -26,7 +26,7 @@ export function FilesCatalogScreen({
   const data = useCatalogData(view, folderId);
   const actions = useCatalogActions(folderId, data.refresh);
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
-  const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);
+  const [previewFile, setPreviewFile] = useState<FilesFileView | null>(null);\n  const [favoriteError, setFavoriteError] = useState("");
   const breadcrumbs = buildCatalogBreadcrumbs(
     view,
     folderId,
@@ -72,7 +72,7 @@ export function FilesCatalogScreen({
         ) : null}
       </header>
 
-      {data.error ? (
+      {favoriteError ? <div className="vd-catalog__error" role="alert">{favoriteError}</div> : null}\n\n      {data.error ? (
         <div className="vd-catalog__error" role="alert">
           <Icon name="alert" size="sm" />
           <span>{data.error}</span>
@@ -151,7 +151,7 @@ export function FilesCatalogScreen({
                 }
                 onDelete={(item) => actions.requestDelete(item, false)}
                 onPermanentDelete={(item) => actions.requestDelete(item, true)}
-                onRestore={(item) => void actions.restoreNode(item)}
+                onRestore={(item) => void actions.restoreNode(item)}\n                onFavorite={(file) => { void addFavorite(file.id).then(() => { setFavoriteError(""); }).catch(() => setFavoriteError("No se pudo agregar el archivo a Favoritos. Inténtalo de nuevo.")); }}
               />
             ))}
           </div>
