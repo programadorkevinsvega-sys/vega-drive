@@ -17,11 +17,11 @@ Vega Drive se diseña como un monolito modular serverless:
 
 El contrato arquitectónico está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), los controles de seguridad en [Security.md](./Security.md), el procedimiento de recuperación en [Rollback.md](./Rollback.md) y el plan por fases en [roadmap.md](./roadmap.md).
 
-## Rollback y recuperación
+## Operación, rollback y recuperación
 
-La política de rollback del Worker, compatibilidad de D1/R2, staging y evidencia operativa está en [Rollback.md](./Rollback.md), y su implementación planificada en la [Fase 9 del roadmap](./roadmap.md#fase-9--despliegue-operación-y-rollback).
+El procedimiento de producción (sin entorno staging), la compatibilidad D1/R2, el runbook de rollback del Worker y el registro de incidentes están en [Rollback.md](./Rollback.md). La Fase 9 del [roadmap](./roadmap.md) añade verificaciones posteriores al despliegue para frontend, health, configuración de autenticación y cabeceras de seguridad.
 
-**El rollback aún no está certificado.** El flujo actual `pnpm run deploy` aplica migraciones remotas antes de desplegar el Worker y solo verifica `/api/health` después. Revertir el Worker no deshace migraciones D1 ni restaura objetos R2. No ejecutar un rollback de producción sin identificar el deployment objetivo y comprobar compatibilidad del esquema.
+**El rollback y la restauración de D1 aún no están certificados mediante una ejecución real.** El comando `pnpm run deploy` aplica migraciones remotas antes de publicar el Worker y verifica el frontend, `/api/health`, `/api/auth/config` y las cabeceras requeridas. Revertir el Worker no deshace migraciones D1 ni restaura objetos R2. No ejecutar un rollback de producción sin identificar el deployment objetivo y comprobar compatibilidad del esquema.
 
 ## Estado de seguridad y certificación
 
