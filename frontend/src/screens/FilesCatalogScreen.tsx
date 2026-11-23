@@ -12,7 +12,7 @@ import { FileTransferControls } from "./FileTransferControls";
 import { buildCatalogBreadcrumbs } from "./catalog-breadcrumbs";
 import { CatalogDialogs } from "./CatalogDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
-import type { FilesFileView, FilesCatalogNode } from "../services/files-contract";
+import type { FilesFileView } from "../services/files-contract";
 import { addFavorite } from "../services/files-service";
 
 export interface FilesCatalogScreenProps {
