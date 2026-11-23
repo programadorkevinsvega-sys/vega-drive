@@ -225,14 +225,6 @@ export function createFilesModule(
         ...(deps.now ? { now: deps.now } : {}),
       })
     : null;
-  const favorites = deps.favorites
-    ? createFavorites({
-        folders: deps.folders,
-        items: deps.items,
-        favorites: deps.favorites,
-        ...(deps.now ? { now: deps.now } : {}),
-      })
-    : null;
   const trash = deps.storage
     ? createTrashMutations({
         folders: deps.folders,
