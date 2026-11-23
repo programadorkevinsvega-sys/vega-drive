@@ -3,7 +3,11 @@ import { Button } from "../ui/Button";
 import { TextField } from "../ui/TextField";
 import { Modal } from "../ui/Modal";
 import { useToast } from "../ui/toast-context";
-import { createShare, listShares, revokeShare } from "../services/files-sharing-service";
+import {
+  createShare,
+  listShares,
+  revokeShare,
+} from "../services/files-sharing-service";
 import type { ShareEntry } from "../services/files-sharing-service";
 import { ShareEntriesList } from "./ShareEntriesList";
 import type { FilesFileView } from "../services/files-contract";

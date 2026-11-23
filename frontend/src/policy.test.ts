@@ -99,12 +99,14 @@ describe("politica del frontend", () => {
       .filter(NOT_TESTS)
       .filter((file) => /\bfetch\s*\(/.test(file.text))
       .map((file) => file.path);
-    expect(callers.sort()).toEqual([
-      "services/files-http-client.ts",
-      "services/identity-service.ts",
-      "services/preview-http-client.ts",
-      "screens/ShareAccessScreen.tsx",
-    ].sort());
+    expect(callers.sort()).toEqual(
+      [
+        "services/files-http-client.ts",
+        "services/identity-service.ts",
+        "services/preview-http-client.ts",
+        "screens/ShareAccessScreen.tsx",
+      ].sort(),
+    );
 
     for (const path of callers) {
       const client = readFileSync(join(SRC, path), "utf8");
