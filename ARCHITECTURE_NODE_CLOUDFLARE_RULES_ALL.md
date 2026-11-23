@@ -227,7 +227,7 @@ No se anticipa esta separación con Workers ficticios ni con dependencias de red
 - [ ] No hay consultas, JOINs, claves foráneas ni db.batch() entre tablas de módulos distintos.
 - [ ] Existe y pasa el lint/test que detecta referencias SQL a prefijos de otros módulos.
 - [ ] El frontend no contiene lógica de negocio y usa solo /api.
-- [ ] No existe acceso del navegador a R2, ni URLs prefirmadas, ni SDK/configuración de R2 en assets.
+- [ ] El navegador no recibe credenciales S3, claves internas ni SDK/configuración de R2 en assets. Las transferencias directas solo usan URLs prefirmadas temporales y limitadas emitidas por el Worker conforme a ADR-001; la vista previa sigue same-origin y autenticada.
 - [ ] Solo files accede a R2 mediante IFileStoragePort.
 - [ ] Las rutas HTTP no contienen reglas de negocio ni SQL directo.
 - [ ] Se añadieron pruebas de aislamiento entre usuarios cuando aplica.
@@ -261,6 +261,6 @@ El procedimiento operativo canónico está en [Rollback.md](./Rollback.md). Todo
 - Las migraciones D1 deben ser backward-compatible durante la ventana de rollback; aplicar expansión/contracción y reservar los cambios destructivos para un release posterior al período de compatibilidad.
 - No borrar objetos R2 como efecto automático de un rollback. Mantener claves/formato compatibles hasta que ninguna versión anterior pueda necesitarlos.
 - Si se incorporan Queues, versionar contratos incompatibles y mantener consumidores compatibles durante la transición; no documentar Queue/DLQ como existente hasta que esté configurada.
-- Staging debe tener Worker, D1, R2 y secretos aislados de producción y debe validar despliegue, smoke/E2E y rollback antes de certificar el procedimiento.
+- **Entorno actual:** el proyecto opera únicamente en producción y no dispone de staging. No crear ni presuponer un entorno staging para los flujos actuales. Si el propietario aprueba uno en el futuro, deberá aislar Worker, D1, R2 y secretos antes de usarlo.
 - El rollback debe seleccionar explícitamente un deployment estable de Wrangler; confirmar el objetivo y la sintaxis interactiva antes de confirmar. No automatizar un rollback ciego.
-- La evidencia, el estado de backups y los criterios de recuperación se mantienen en [Rollback.md](./Rollback.md). Un health check aislado no demuestra recuperación de D1/R2 ni de los flujos funcionales.
+- La evidencia, el estado de recuperación D1 (Time Travel para `version: production`; mecanismo legacy para `alpha`), los bookmarks consultados y los criterios de recuperación se mantienen en [Rollback.md](./Rollback.md). Un health check aislado no demuestra recuperabilidad D1/R2 ni de los flujos funcionales.
