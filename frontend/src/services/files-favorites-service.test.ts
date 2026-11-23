@@ -43,5 +43,4 @@ describe("cliente HTTP de Favoritos", () => {
       expect.objectContaining({ method: "DELETE", credentials: "same-origin" }),
     );
   });
-
 });

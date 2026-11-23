@@ -32,7 +32,11 @@ export function FilesCatalogScreen({
   const [favoriteError, setFavoriteError] = useState("");
   return (
     <div className="vd-page vd-catalog">
-      <CatalogBreadcrumbs view={view} folderId={folderId} breadcrumbs={data.folderData?.breadcrumbs} />
+      <CatalogBreadcrumbs
+        view={view}
+        folderId={folderId}
+        breadcrumbs={data.folderData?.breadcrumbs}
+      />
       <header className="vd-catalog__heading">
         <div className="vd-catalog__heading-copy">
           <h1 className="vd-page__title">{data.title}</h1>

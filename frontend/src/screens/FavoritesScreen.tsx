@@ -85,7 +85,10 @@ export function FavoritesScreen() {
   return (
     <div className="vd-page vd-catalog">
       <Breadcrumbs items={[DRIVE_HOME, { label: "Favoritos" }]} />
-      <FavoritesHeading loading={loading} onRefresh={() => setRefreshKey((value) => value + 1)} />
+      <FavoritesHeading
+        loading={loading}
+        onRefresh={() => setRefreshKey((value) => value + 1)}
+      />
       {error ? (
         <div className="vd-catalog__error" role="alert">
           <Icon name="alert" size="sm" />
