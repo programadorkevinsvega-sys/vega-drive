@@ -32,23 +32,23 @@ await runGuard("Composition root y gateways de módulos", async (failures) => {
       failures.push(name + " debe permanecer explícitamente ready: false y sin capacidades ficticias.");
   }
 
-  const bffFiles = await walk(absolute("src/bff"), /\\.(?:ts|tsx|js|mjs)$/i);
+  const bffFiles = await walk(absolute("src/bff"), /[.](?:ts|tsx|js|mjs)$/i);
   for (const file of bffFiles) {
     const rel = relativePath(file);
     const source = await readFile(file, "utf8");
-    if (/from\\s*['\"][^'\"]*\\/modules\\//.test(source))
+    if (source.includes("from ") && source.includes("/modules/"))
       failures.push(rel + " importa módulos directamente en vez de consumir gateways.");
-    if (/\\b(?:VEGA_DRIVE_DB|FILES_BUCKET|D1Database|R2Bucket)\\b/.test(source))
+    if (["VEGA_DRIVE_DB", "FILES_BUCKET", "D1Database", "R2Bucket"].some((token) => source.includes(token)))
       failures.push(rel + " accede directamente a infraestructura.");
   }
 
   const worker = contents.get("src/worker/index.ts") ?? "";
-  if ((worker.match(/createCompositionRoot\\s*\\(/g) ?? []).length !== 1)
+  if (worker.split("createCompositionRoot(").length - 1 !== 1)
     failures.push("El Worker debe resolver sus dependencias mediante un único composition root.");
 
   const previewDoc = await readFile(absolute("FILES_PREVIEW.md"), "utf8");
   if (!/same-origin/i.test(previewDoc) || !/no necesita.*CORS/i.test(previewDoc))
     failures.push("FILES_PREVIEW.md debe documentar que el preview same-origin no necesita CORS de R2.");
-  if (/Access-Control-Allow-Origin\\s*[:=]\\s*['\"]\\*['\"]/.test(previewDoc))
+  if (previewDoc.includes("Access-Control-Allow-Origin: *"))
     failures.push("La documentación de preview no debe recomendar CORS wildcard.");
 });
