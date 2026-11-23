@@ -22,6 +22,12 @@ describe("parseHash", () => {
     }
   });
 
+  it("reconoce enlaces de compartición con token opaco en el fragmento", () => {
+    const token = "a".repeat(43);
+    expect(parseHash("#/share/" + token)).toEqual({ name: "share", token });
+    expect(parseHash("#/share/" + "short")).toEqual({ name: "not-found" });
+  });
+
   it("acepta carpetas con identificador seguro", () => {
     expect(parseHash("#/drive/folder/abc_123-X")).toEqual({
       name: "drive",
