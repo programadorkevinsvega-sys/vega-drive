@@ -9,7 +9,7 @@ import type { IdentityPublicApi } from "../src/modules/identity/module.public-ap
 import type { Env } from "../src/worker/env.js";
 
 describe("composition root and module gateways", () => {
-  it("assembles one gateway per module and leaves future capabilities unavailable", () => {
+  it("assembles one gateway per module and keeps quota unavailable until its phase", () => {
     const gateways = createCompositionRoot({} as Env);
 
     expect(Object.keys(gateways).sort()).toEqual([
@@ -38,7 +38,7 @@ describe("composition root and module gateways", () => {
     for (const gateway of [gateways.quota, gateways.sharing]) {
       expect(
         Object.getOwnPropertyNames(Object.getPrototypeOf(gateway)),
-      ).toEqual(["constructor", "status"]);
+      ).toEqual(gateway === gateways.sharing ? ["constructor", "status", "create", "list", "revoke", "download"] : ["constructor", "status"]);
       expect(gateway.status().ready).toBe(false);
     }
   });
