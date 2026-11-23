@@ -238,3 +238,19 @@ export interface FilesRecentActivityRepository {
     cursor?: FilesRecentActivityCursor | null,
   ): Promise<FilesRecentActivityRecord[]>;
 }
+
+
+export interface FilesFavoritesRecord {
+  itemId: string;
+  favoritedAt: string;
+}
+export interface FilesFavoritesCursor {
+  favoritedAt: string;
+  itemId: string;
+}
+/** Favorites are owned by files and scoped to the authenticated owner. */
+export interface FilesFavoritesRepository {
+  add(ownerId: string, itemId: string, favoritedAt: string): Promise<void>;
+  remove(ownerId: string, itemId: string): Promise<boolean>;
+  listByOwner(ownerId: string, limit: number, cursor?: FilesFavoritesCursor | null): Promise<FilesFavoritesRecord[]>;
+}
