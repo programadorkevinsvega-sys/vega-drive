@@ -1,0 +1,32 @@
+name: Temporary Markdown formatting artifact
+
+on:
+  push:
+    branches:
+      - docs/current-project-state-and-d1-time-travel
+
+permissions:
+  contents: read
+
+jobs:
+  format-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.28.13
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22.23.5
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Format Markdown without committing changes
+        run: pnpm exec prettier --write "**/*.md"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: formatted-markdown
+          path: |
+            **/*.md
+            .github/**/*.md
+          if-no-files-found: error
