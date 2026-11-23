@@ -25,6 +25,8 @@ export function renderScreen(route: Route): ReactNode {
       return <SearchScreen initialQuery={route.query} />;
     case "settings":
       return <PasswordSettingsScreen />;
+    case "share":
+      return <ShareAccessScreen token={route.token} />;
     case "login":
     case "register":
       return null;
