@@ -63,6 +63,8 @@ export function buildHash(route: Route): string {
   switch (route.name) {
     case "drive":
       return route.folderId ? `#/drive/folder/${route.folderId}` : DEFAULT_HASH;
+    case "share":
+      return "#/share/" + route.token;
     case "search":
       return route.query
         ? `#/search?q=${encodeURIComponent(route.query)}`
