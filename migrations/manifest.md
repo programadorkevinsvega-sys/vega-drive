@@ -65,7 +65,7 @@ Antes de cualquier migración remota, `pnpm run deploy:preflight` ejecuta tres c
 - `pnpm run db:migrate:production` aplica las migraciones modulares a D1 remota; úsalo únicamente como parte del procedimiento de despliegue revisado.
 - `pnpm run db:migration:list` enumera migraciones pendientes según el patrón activo de Wrangler.
 - `pnpm run db:verify:schema:production` consulta explícitamente la D1 remota y compara tablas e índices con las migraciones modulares.
-- `pnpm run deploy` es el comando de despliegue documentado: migraciones remotas, historial, verificación estructural, publicación del Worker y comprobación de `/api/health`.
+- `pnpm run deploy` es el comando oficial de despliegue: preflight, comprobaciones/build/auditorías, migraciones remotas, historial, verificación estructural, publicación del Worker y ejecución de `pnpm run verify:production` (HTML, health, auth config y cabeceras/no-store).
 
 Una migración nueva debe ser propiedad de un módulo, permanecer dentro de su directorio y ser aditiva y compatible con el Worker desplegado durante la ventana de rollback. Nunca edites una migración que ya se haya aplicado en un entorno compartido. No ejecutes migraciones remotas ni alteres datos de producción durante una validación local.
 
@@ -79,4 +79,4 @@ El incidente y la evidencia se documentan en [FILES_PHASE_3.md](../FILES_PHASE_3
 
 ## Compatibilidad y rollback
 
-Un rollback del Worker no revierte D1. Usa expansión/contracción: añade estructuras compatibles primero, despliega código compatible, realiza backfills idempotentes y retira estructuras obsoletas en otro release, cuando ninguna versión anterior las necesite. Antes de cambios de riesgo, revisa el esquema remoto, backups y el procedimiento de restauración según [Rollback.md](../Rollback.md).
+Un rollback del Worker no revierte D1. Usa expansión/contracción: añade estructuras compatibles primero, despliega código compatible, realiza backfills idempotentes y retira estructuras obsoletas en otro release, cuando ninguna versión anterior las necesite. Antes de cambios de riesgo, revisa el esquema remoto, el mecanismo de recuperación D1 aplicable (Time Travel si `version: production`; legacy si `alpha`) y el procedimiento de restauración según [Rollback.md](../Rollback.md).

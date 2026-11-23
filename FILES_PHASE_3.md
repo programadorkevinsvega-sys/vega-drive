@@ -1,6 +1,8 @@
 # Cierre de Fase 3 — Catálogo de archivos y carpetas
 
-**Estado del catálogo de metadatos: CERRADO (2026-10-11).** El alcance definido para el módulo está implementado y validado localmente en el commit `9cfb738` (`test: strengthen architecture boundary checks`). El catálogo dispone ahora de un hito incremental de integración HTTP autenticada descrito en la sección 7. Esto no cierra la integración visual del frontend ni la Fase 5 completa.
+**Estado del catálogo de metadatos: CERRADO (2026-10-11).** El alcance definido para el módulo está implementado y validado localmente en el commit `9cfb738` (`test: strengthen architecture boundary checks`). El catálogo dispone ahora de un hito incremental de integración HTTP autenticada descrito en la sección 7. Esto no cerraba en esa fecha la integración visual del frontend ni la Fase 5 completa.
+
+> **Nota de vigencia:** este es un informe histórico de la Fase 3 con evidencia fechada en octubre de 2026. Las referencias a fases posteriores como pendientes describen el estado que tenían al redactarse, no el estado actual del proyecto. Para el estado vigente de fases 0–10 consulta [roadmap.md](./roadmap.md).
 
 ## 1. Alcance implementado
 

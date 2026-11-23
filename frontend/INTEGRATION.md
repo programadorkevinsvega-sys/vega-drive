@@ -1,90 +1,64 @@
-# Integración del frontend con el Worker existente
+# Integración del frontend con el Worker
 
-## Decisiones aplicadas en el código
+**Estado: INTEGRACIÓN IMPLEMENTADA. Revisión: 2026-11-23.** El frontend forma parte del artefacto del Worker y consume el BFF desde el mismo origen. El estado de fases y sus criterios de cierre se mantienen en [roadmap.md](../roadmap.md).
 
-- Un solo Worker y un solo origen. La API sigue en Hono bajo `/api/*` y la raíz
-  de assets de Wrangler apunta a `./frontend/dist`.
-- El enrutado del producto usa hash (`#/drive`, `#/recent`, etc.). Se mantiene
-  `not_found_handling = "none"`; ni los assets inexistentes ni las rutas API
-  desconocidas deben responder con `index.html`.
-- Se mantienen separados `pnpm-lock.yaml` y `frontend/pnpm-lock.yaml`. La raíz
-  ofrece `frontend:install`, `frontend:check` y `frontend:audit` para reproducir
-  la instalación y validación del paquete independiente.
-- Vite copia `frontend/public/_headers` a `frontend/dist`. Workers Static Assets
-  aplica desde ese archivo CSP, `nosniff`, Referrer-Policy, X-Frame-Options y
-  HSTS a las respuestas estáticas. Hono conserva esas cabeceras en las respuestas
-  API y `Cache-Control: no-store` para `/api/*`.
-- `cloudflare:build` valida arquitectura, formato, lint, typecheck, tests,
-  dependencias de ambos paquetes y `wrangler deploy --dry-run`. El script `deploy`
-  ejecuta este gate antes de migraciones o publicación; no se ejecuta como parte
-  de estas instrucciones de integración.
-- La guía temporal `#/kit` y sus componentes/estilos se retiran.
-- Login, registro, consulta de sesión y logout usan `/api/auth/*` en el mismo
-  origen. La cookie de sesión permanece HttpOnly y el navegador no lee ni guarda
-  el token de sesión.
-- El widget oficial de Cloudflare Turnstile se carga en login y registro; el token
-  se envía al Worker para validación server-side. La CSP permite los orígenes
-  necesarios de Turnstile para script, iframe y conexión.
-- Ajustes contiene un formulario real de cambio de contraseña que usa
-  `POST /api/auth/password` en el mismo origen. El backend comprueba la sesión
-  y la contraseña actual, rota la cookie y revoca las otras sesiones; el
-  navegador no lee el valor de la cookie HttpOnly.
+## Decisiones aplicadas
 
-## Datos y alcance funcional
+- Un único Worker y un único origen. Hono sirve la API bajo `/api/*`; Workers Static Assets sirve `frontend/dist`.
+- El enrutado de vistas usa hash (`#/drive`, `#/recent`, etc.). `not_found_handling = "none"` conserva los 404 reales de assets y rutas API desconocidas.
+- Se mantienen separados `pnpm-lock.yaml` y `frontend/pnpm-lock.yaml`; la raíz ofrece `frontend:install`, `frontend:check` y `frontend:audit`.
+- Vite copia `frontend/public/_headers` a `frontend/dist`. La configuración estática aplica CSP, nosniff, Referrer-Policy, protección de framing, HSTS, Permissions-Policy, COOP y CORP. El Worker/BFF conserva las cabeceras aplicables y añade `Cache-Control: no-store` en `/api/*`.
+- `cloudflare:build` ejecuta preflight, formato, arquitectura, tipos, pruebas, auditorías y Wrangler dry-run. `pnpm run deploy` ejecuta el flujo de producción completo, incluidas migraciones remotas y `verify:production`; no debe sustituirse por un `wrangler deploy` aislado.
+- Login, registro, sesión, logout y cambio de contraseña usan `/api/auth/*`. La cookie permanece HttpOnly y el token de sesión no se expone al JavaScript.
+- Turnstile se verifica en el servidor; la CSP permite los recursos necesarios del widget.
+- La vista previa usa rutas same-origin autenticadas; el Worker comprueba sesión y propietario en cada petición y transmite los bytes privados.
+- Las transferencias directas a R2, cuando el feature flag está habilitado, usan URLs prefirmadas temporales de alcance mínimo emitidas por el Worker conforme a [ADR-001](../ADR-001-direct-r2-transfers.md). El navegador no recibe credenciales ni claves internas. El valor actual del flag no se puede deducir del repositorio.
 
-La autenticación de la interfaz está conectada al backend existente: la sesión se
-consulta al cargar la aplicación, las rutas de la interfaz requieren una sesión
-resuelta, login y registro envían el token Turnstile, y cerrar sesión llama al
-endpoint de revocación. No se cambió la lógica de identidad del backend ni se
-añadieron endpoints. El registro no inicia sesión automáticamente: después de
-crear la cuenta, el usuario debe iniciar sesión.
+## Vistas y capacidades conectadas
 
-Mi unidad, las carpetas y la papelera consumen las rutas autenticadas del catálogo de `/api/files` mediante `services/files-service.ts`: listado con paginación, breadcrumbs, creación de carpetas, renombrado, movimiento, borrado lógico y restauración. La interfaz permite seleccionar varios archivos, subir archivos de hasta 95 MiB a `POST /api/files` y usar sesiones multipart con fragmentos de 50 MiB para archivos mayores; las descargas usan `GET /api/files/:id/download`. Durante la subida muestra una cola por archivo con estado, progreso de bytes informado por el navegador, tamaño, errores y confirmación final del servidor. La transferencia usa XMLHttpRequest para observar el progreso de la subida normal y de cada fragmento. Todos los endpoints son autenticados y del mismo origen. El Worker continúa siendo la autoridad de autenticación, propiedad, tamaño, cuota de 10 GiB por propietario y límites de transferencia. El navegador nunca accede directamente a R2 ni recibe sus claves o URLs. Las pantallas recientes, favoritos y búsqueda siguen siendo marcadores. Ajustes conserva el cambio real de contraseña; el perfil y otras preferencias siguen pendientes.
+- Mi unidad y carpetas: listado, paginación, breadcrumbs, creación, renombrado y movimiento.
+- Papelera: listado, borrado lógico y restauración.
+- Recientes: persistencia de última apertura/descarga por propietario, cursor y pantalla conectada.
+- Favoritos: persistencia por propietario, endpoints protegidos y pantalla conectada.
+- Búsqueda: nombre parcial de archivos/carpetas activas, filtro por tipo, paginación y aislamiento entre propietarios.
+- Transferencias: subida simple/multipart, progreso, pausa/reanudación, cancelación y descarga; ver [FILES_PHASE_4.md](../FILES_PHASE_4.md).
+- Vista previa: imágenes, audio/vídeo compatibles, PDF, texto/Markdown y extracción local limitada de DOCX/XLSX; ver [FILES_PREVIEW.md](../FILES_PREVIEW.md).
+- Sharing: flujos de enlaces compartidos implementados en Fase 7.
+- Ajustes: cambio real de contraseña; preferencias adicionales de perfil siguen fuera del alcance actual.
 
-El contrato y las rutas del catálogo están documentados en
-[FILES_PHASE_3.md](../FILES_PHASE_3.md), sección 7. La conexión inicial del
-cliente y las pantallas Mi unidad/papelera ya está implementada. La Fase 5 sigue
-abierta: quedan la integración de presentación restante, la comprobación integral
-de assets/cabeceras en el Worker y la aceptación operativa.
+## Límites de responsabilidad
 
-## Comandos de instalación y validación
+- El frontend presenta UI, estado, accesibilidad y navegación; no decide propiedad, permisos, cuotas ni reglas de negocio.
+- El BFF valida transporte, resuelve la sesión y delega en gateways. No ejecuta SQL ni accede directamente a R2.
+- El módulo Files posee sus tablas y adaptadores de almacenamiento.
+- Quota sigue pendiente en Fase 6; Sharing se implementó en Fase 7. No describir Sharing como placeholder.
+- La vista previa no necesita CORS de R2. CORS solo aplica al intercambio directo de bytes autorizado.
+- No hay staging; estas instrucciones no crean ni presuponen uno.
 
-Desde la raíz del repositorio, con Node `>=22.13.0` y pnpm `10.18.3`:
+## Instalación y validación
+
+Requisitos: Node.js `22.23.5` o superior y pnpm `11.28.13`.
+
+Desde la raíz:
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm run frontend:install
+pnpm run frontend:check
 pnpm run cloudflare:build
-```
-
-`cloudflare:build` no despliega ni migra recursos remotos. Produce el build de assets,
-corre las comprobaciones y ejecuta el dry-run del build Worker/Assets. Para probar el
-servidor local después del build:
-
-```bash
 pnpm run dev
 ```
 
-El gate `cloudflare:build` instala por sí mismo las dependencias del frontend con
-su lockfile independiente, por lo que también funciona en proveedores de build que
-solo instalan las dependencias de la raíz. La CI ejecuta ese mismo gate y mantiene
-Gitleaks como job independiente. Ninguna de estas comprobaciones
-por sí sola demuestra la aplicación de cabeceras o disponibilidad en producción.
+`cloudflare:build` produce los assets y ejecuta Wrangler dry-run; no despliega ni aplica migraciones remotas. `pnpm run deploy` es una operación de producción.
 
-## Evidencia de integración y pendientes de la fase 5
+## Evidencia y separación de estados
 
-- [x] Ejecutar el gate completo sobre el commit integrado y revisar el diff, incluido el formateo manual acordado. La ejecución de GitHub Actions del commit `bd7e192f1afe6e89af2b6c10442f2b51e7d60ed5` terminó correctamente: [ver CI](https://github.com/programadorkevinsvega-sys/vega-drive/actions/runs/38112184984).
-- [ ] Probar localmente `/`, archivos JS/CSS/favicon, 404 de assets, `/api/health` y un endpoint API inexistente; comprobar tipo de contenido, CSP y las demás cabeceras.
-- [x] Conectar Mi unidad, carpetas y papelera con `files-service.ts` y el BFF same-origin; comprobar estado vacío, carga, error, paginación y acciones contra el catálogo.
-- [x] Conectar la subida binaria y descarga autenticada desde la interfaz mediante las rutas same-origin de la Fase 4; la validación definitiva sigue en el Worker.
-- [x] El propietario confirmó la prueba de extremo a extremo en producción: Turnstile válido funciona y el servidor rechaza un token inválido en el flujo probado.
-- [x] Tras publicar Ajustes, el propietario probó el cambio de contraseña: la nueva contraseña permite iniciar sesión, la anterior es rechazada, la sesión actual sigue operativa y las sesiones previas quedan revocadas.
-- [ ] Verificar en producción las cabeceras CSP, HSTS, nosniff, framing, Referrer-Policy y `Cache-Control`. La interfaz de Ajustes y el flujo de cambio de contraseña ya fueron aceptados funcionalmente.
-- [ ] Cumplir el checklist aplicable de `Security.md` y el procedimiento `Rollback.md`; staging aislado y el ensayo de rollback siguen pendientes.
-- [ ] No marcar la fase 5 como cerrada hasta que se reúna la evidencia de presentación, assets, cabeceras y operación requerida en su propio alcance. El cierre de la Fase 2 ni la conexión inicial del catálogo cierran automáticamente la fase 5.
+- Las pruebas de frontend/BFF y las guardias de arquitectura se ejecutan en CI.
+- Las pruebas con D1/R2 simulados validan contratos y aislamiento, no el estado externo de Cloudflare.
+- La Fase 4 registra las validaciones operativas de transferencias confirmadas por el propietario.
+- El cierre de Fase 8 incluye controles de seguridad automatizados.
+- La certificación operativa de Fase 9 permanece pendiente de verificar Time Travel de la D1 real, historial/logs/alertas y ejercicios autorizados de rollback/recuperación. Consultar [Rollback.md](../Rollback.md).
 
 ## Reversión
 
-No borrar `frontend/` como procedimiento genérico: ahora forma parte del artefacto
-integrado. Antes de revertir, revisar el diff y restaurar de forma coordinada la
-configuración de Wrangler, scripts, cabeceras, CI, rutas y la antigua página estática.
-Cualquier rollback de un release desplegado debe seguir `Rollback.md`.
+No eliminar `frontend/` como procedimiento genérico: forma parte del artefacto integrado. Antes de revertir una versión, revisar el diff y la compatibilidad de Worker, assets, rutas, cabeceras, migraciones y estado D1/R2. Todo rollback de producción debe seguir [Rollback.md](../Rollback.md) y requiere autorización explícita.

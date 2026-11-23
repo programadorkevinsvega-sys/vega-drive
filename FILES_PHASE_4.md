@@ -9,7 +9,7 @@
 - POST /api/files acepta el contenido binario en el cuerpo de la petición; el nombre, carpeta, tamaño declarado y tipo de contenido viajan en cabeceras same-origin. No se acepta una clave de almacenamiento desde el navegador.
 - Las subidas directas se transmiten como stream para archivos de hasta 95 MiB. Los archivos mayores usan multipart con fragmentos de 50 MiB, sesión persistida en D1 y verificación mediante HEAD antes de registrar metadatos. El backend genera claves con u/{userId}/{uuid}.
 - Una reserva D1 impide superar la cuota inicial de 10 GiB por propietario. files_transfer_events aplica límites de 20 subidas y 120 descargas por hora por propietario.
-- GET /api/files/:id/download comprueba sesión, propiedad y carpeta activa antes de obtener el contenido. Soporta un único rango HTTP de bytes, responde con attachment, nosniff y no-store; no devuelve URLs de R2.
+- GET /api/files/:id/download comprueba sesión, propiedad y carpeta activa antes de transferir el contenido. Soporta un único rango HTTP de bytes y fuerza attachment/nosniff/no-store. Según el modo configurado, el Worker transmite los bytes o redirige a una URL GET prefirmada de corta duración; nunca entrega credenciales ni la clave interna del objeto.
 - Un cron horario reconcilia reservas de subida vencidas/fallidas, poda eventos de limitación antiguos y purga elementos de la papelera con más de 30 días.
 - Los elementos de la papelera siguen ocupando cuota; al eliminarlos permanentemente se borra el objeto R2 y luego su registro D1.
 - La eliminación permanente de una carpeta recorre sus subcarpetas y elimina también los objetos de archivo que contiene.
@@ -41,15 +41,17 @@ La papelera conserva archivos y carpetas durante 30 días desde `deleted_at`. El
 - Frecuencia por propietario: máximo 20 intentos de subida y 120 descargas en una ventana móvil de una hora.
 - El MIME se valida como tipo declarativo, no se considera una prueba de la naturaleza real del archivo. Las descargas siempre son attachment con nosniff.
 
-Estos valores son límites iniciales del producto en files; cuotas configurables y políticas adicionales siguen siendo trabajo de las Fases 6 y 8.
+Estos valores son límites iniciales implementados en Files; el módulo independiente de cuotas configurables sigue siendo trabajo pendiente de la Fase 6.
 
 ## Integración de interfaz
 
 - [x] El navegador sube archivos de hasta 95 MiB a `POST /api/files` usando `X-File-Name`, `X-File-Size`, el MIME declarativo y, cuando corresponde, `X-File-Folder-Id`.
 - [x] Los archivos mayores usan sesiones multipart autenticadas y fragmentos de 50 MiB a través del mismo origen; el Worker conserva el ID R2 y los ETags en estado privado del módulo files.
-- [x] La interfaz envía archivos de más de 95 MiB mediante multipart; el backend valida tamaño real, sesión y propiedad de cada fragmento.\n- [x] La cola permite pausar/reanudar transferencias, cancelar archivos y lotes de carpeta, retirar archivos pendientes y distinguir estados pausado/cancelado/error/completado.\n- [x] Los fragmentos multipart reintentan errores de red y HTTP 5xx hasta tres veces antes de marcar error; el backend registra fallos de escritura de fragmentos para facilitar diagnóstico.
+- [x] La interfaz envía archivos de más de 95 MiB mediante multipart; el backend valida tamaño real, sesión y propiedad de cada fragmento.
+- [x] La cola permite pausar/reanudar transferencias, cancelar archivos y lotes de carpeta, retirar archivos pendientes y distinguir estados pausado/cancelado/error/completado.
+- [x] Los fragmentos multipart reintentan errores de red y HTTP 5xx hasta tres veces antes de marcar error; el backend registra fallos de escritura de fragmentos para facilitar diagnóstico.
 - [x] Las filas de archivos ofrecen descarga a través de `GET /api/files/:id/download`, que conserva la autorización y el streaming privado del Worker.
-- [x] Las transferencias usan mismo origen, cookies same-origin y `cache: no-store`; no se configura acceso a R2 desde el cliente.
+- [x] El plano de control usa rutas same-origin y cookies same-origin. Cuando `DIRECT_R2_TRANSFERS_ENABLED` está habilitado, el navegador intercambia bytes con R2 únicamente mediante URLs prefirmadas temporales autorizadas por el Worker; no recibe credenciales ni claves internas. El modo de vista previa continúa same-origin.
 - [x] La integración de interfaz y las transferencias cuentan con la validación operativa de producción descrita al final de este documento.
 
 ## Pruebas añadidas
@@ -62,7 +64,7 @@ Estos valores son límites iniciales del producto en files; cuotas configurables
 
 ## Verificación y despliegue
 
-La migración src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql agrega files_transfer_events e índices propios del módulo. pnpm run deploy usa el preflight antes de aplicar migraciones remotas, comprueba el esquema D1 y solo entonces publica Worker y verifica /api/health. La nueva migración no debe editarse después de haber sido aplicada en un entorno compartido.
+La migración src/modules/files/infrastructure/persistence/d1/migrations/0003_files_transfers.sql agrega files_transfer_events e índices propios del módulo. pnpm run deploy ejecuta preflight, comprobaciones/build/auditorías, aplica migraciones remotas, verifica el esquema D1, publica el Worker y ejecuta `pnpm run verify:production` (frontend, health, auth config y cabeceras/no-store). La nueva migración no debe editarse después de haber sido aplicada en un entorno compartido.
 
 ## Evidencia operativa de producción
 
@@ -85,8 +87,9 @@ La confirmación de cierre procede del propietario. El SHA Git exacto no se vuel
 - Tanto la subida directa simple como la finalización multipart comparan el
   tamaño y el `Content-Type` devueltos por `HEAD` con la sesión autorizada
   antes de publicar el catálogo. Una discrepancia rechaza la finalización y
-  activa la limpieza/reconciliación existente; si falla la limpieza, el cierre
-  operativo de la fase sigue pendiente.
+  activa la limpieza/reconciliación existente. Si la limpieza falla, conservar
+  la sesión/reserva para reintento y registrar el incidente; no borrar metadatos
+  de forma que se pierda la posibilidad de reconciliar.
 - La cancelación de un PUT directo conserva una reserva fallida y su sesión D1
   hasta la limpieza posterior a la expiración: una URL ya emitida no se puede
   revocar instantáneamente. La reserva puede seguir computando para la cuota
@@ -95,16 +98,19 @@ La confirmación de cierre procede del propietario. El SHA Git exacto no se vuel
   firmadas por parte; el navegador envía cada parte a R2 y confirma el ETag al
   Worker. El Worker conserva la autoridad sobre la lista de partes y completa
   el multipart. La compatibilidad de IDs/ETags entre la API de bindings y la
-  API S3 debe probarse en E2E antes de habilitar el flag.
+  API S3 requiere pruebas E2E específicas para la ruta multipart; la evidencia
+  operativa resumida al inicio no debe extenderse a escenarios que no se hayan
+  registrado explícitamente.
 - Las descargas pueden redirigir a una URL GET firmada de 120 segundos, emitida
   después de validar propiedad, carpeta activa, cuota de frecuencia y tamaño
   real. La URL es una credencial portadora hasta expirar; no hay revocación
   instantánea garantizada.
 - Configuración requerida fuera del repositorio: secretos del Worker
   `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`;
-  `DIRECT_R2_TRANSFERS_ENABLED` permanece `false` hasta que CORS permita solo
-  orígenes conocidos, métodos PUT/GET y cabeceras mínimas, exponiendo `ETag`
-  para multipart.
+  el valor efectivo de `DIRECT_R2_TRANSFERS_ENABLED` no se puede deducir del
+  repositorio; consultarlo en el entorno Worker antes de afirmar qué ruta está
+  activa. No modificar el flag sin autorización. CORS debe limitarse a orígenes
+  conocidos, métodos PUT/GET y cabeceras mínimas, exponiendo `ETag` para multipart.
 - Las URLs no se guardan en almacenamiento local ni se escriben en logs. Las
   credenciales S3 deben tener permisos mínimos limitados al bucket
   `vega-drive-files`.

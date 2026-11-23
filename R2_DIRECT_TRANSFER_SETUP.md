@@ -1,42 +1,35 @@
 # Configuración operativa de transferencias directas a R2
 
-Este runbook documenta la configuración y los controles operativos del flujo aprobado en [ADR-001](./ADR-001-direct-r2-transfers.md). No autoriza por sí mismo futuros despliegues. **Estado actualizado el 2026-10-12:** el propietario confirmó que las validaciones de privacidad, CORS, permisos mínimos, despliegue, subida/descarga real con comparación de bytes, rangos y aislamiento entre cuentas se completaron en producción. El flujo de respaldo por Worker se conserva para rollback.
+**Revisión documental: 2026-11-23.** Este runbook complementa [ADR-001](./ADR-001-direct-r2-transfers.md) y [FILES_PHASE_4.md](./FILES_PHASE_4.md). No autoriza cambios de configuración, rotación, activación/desactivación de flags ni despliegues.
 
-## Estado conocido del bucket
+## Estado confirmado y límites de lo conocido
 
-Bucket: `vega-drive-files`  
-Endpoint S3 mostrado por Cloudflare: `https://03f46bf3839f506fe22124be5f1cda25.r2.cloudflarestorage.com/vega-drive-files`
+El propietario confirmó el 2026-10-12 que en producción se completaron las validaciones de privacidad del bucket, CORS mínimo, permisos limitados, despliegue, subida/descarga real con comparación de bytes, rangos parciales y aislamiento entre cuentas. El bucket `vega-drive-files` se informó privado, con `r2.dev` y dominio público desactivados. Esta evidencia histórica sigue siendo el último estado operativo confirmado en este documento; no se presume que la configuración externa no haya cambiado desde entonces.
 
-Estado actualizado informado por el propietario el 2026-10-12: `r2.dev` está desactivado, el bucket está privado y el dominio personalizado `s3-vegadirve.jnmtortas.com` está desactivado. Mantener esos tres controles así. Antes de la prueba E2E, comprobar desde una sesión no autenticada que un objeto de prueba no pueda leerse por una URL pública. No basta con CORS para proteger el bucket. El firmador usa el endpoint S3 estándar basado en el Account ID; Vega Drive no necesita un dominio público de R2 para usar URLs S3 prefirmadas.
+El código contiene la variable `DIRECT_R2_TRANSFERS_ENABLED`. **El valor efectivo actual de esa variable no se puede deducir del repositorio**: debe consultarse en la configuración de entorno del Worker antes de afirmar qué ruta está activa. No cambiarla como parte de una revisión documental.
 
-## 1. Corregir CORS del bucket
+## 1. Privacidad del bucket y CORS
 
-La política CORS configurada e informada el 2026-10-12 permite `https://vega-drive.programadorkevinsvega.workers.dev`, métodos `GET`/`PUT`, encabezados `Content-Type`/`If-None-Match`, expone `ETag` y usa `MaxAgeSeconds: 3600`. Esa configuración es correcta para solicitudes iniciadas desde el origen `workers.dev`.
+Mantener el bucket privado, sin acceso público, sin dominio público y con `r2.dev` desactivado. CORS no es autorización y nunca debe usarse para hacer público el bucket.
 
-La aplicación también contempla el origen de producción `https://drive.jnmtortas.com`. Si ese dominio es el que los usuarios usan para abrir Vega Drive, añadirlo a `AllowedOrigins` y guardar la política. Si no se usa, no hace falta añadirlo. No incluir el dominio de R2 como origen del navegador ni usar `*`. `http://localhost:3000` solo debe permitirse temporalmente para desarrollo local controlado y retirarse de CORS de producción.
+La política operativa confirmada para transferencias directas contempla los orígenes exactos:
 
-- **Allowed methods:** `GET`, `PUT`
-- **Allowed headers:** `Content-Type`, `If-None-Match`
-- **Expose headers:** `ETag`
-- **Max age:** `3600` segundos.
+- `https://vega-drive.programadorkevinsvega.workers.dev`
+- `https://drive.jnmtortas.com`
 
-CORS no autoriza usuarios ni objetos: las URLs firmadas y las comprobaciones del Worker siguen siendo obligatorias.
+Métodos mínimos: `GET` y `PUT`. Encabezados permitidos: `Content-Type` e `If-None-Match`. Encabezados expuestos: `ETag`. Max age registrado: 3600 segundos. No usar `*`, no añadir el endpoint S3 como origen del navegador y no incorporar localhost a CORS de producción.
 
-CORS no autoriza usuarios ni objetos: las URLs firmadas y las comprobaciones del Worker siguen siendo obligatorias.
+La vista previa de archivos no necesita CORS de R2: el navegador consume rutas same-origin autenticadas y el Worker transmite los bytes. CORS se aplica únicamente al flujo de transferencia directa autorizado.
 
-## 2. Credenciales S3 de alcance mínimo
+## 2. Credenciales S3
 
-**Regla de respuesta ante exposición:** si un token de Cloudflare, un Access Key ID o una Secret Access Key se pega en un chat, issue, log, captura o commit, tratarlo como expuesto aunque el texto parezca truncado. Revocar la credencial afectada y generar una nueva antes de usarla. Si se compartieron un token de API de Cloudflare y credenciales S3, rotarlos por separado: son credenciales distintas. No copiar valores de secretos al repositorio ni a este runbook.
+- Las credenciales S3 deben tener permisos mínimos de lectura/escritura de objetos limitados al bucket `vega-drive-files`.
+- Guardar `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` como secretos del Worker, nunca en Git, `wrangler.toml`, frontend, logs ni este documento.
+- No confundir un token de API de Cloudflare con Access Key ID/Secret Access Key S3 de R2: son credenciales distintas.
+- Si alguna credencial se compartió en un lugar no autorizado, tratarla como expuesta, rotarla desde Cloudflare y comprobar el nuevo secreto sin mostrar su valor.
+- No pedir ni copiar valores secretos en issues, commits, capturas o chats.
 
-La política que se ha compartido incluye los grupos **Workers R2 Storage Bucket Item Read** y **Workers R2 Storage Bucket Item Write** sobre el recurso específico `vega-drive-files`. Es el alcance de permisos adecuado para leer/escribir objetos sin conceder administración de la cuenta ni acceso a otros buckets.
-
-Importante: el JSON de la política muestra permisos y alcance; **no contiene por sí solo las credenciales S3**. Confirma que el token se creó desde **R2 → Overview → Manage API Tokens**, no desde el creador genérico de tokens de Cloudflare. En el resultado de creación de un token R2 deben aparecer **Access Key ID** y **Secret Access Key**. Si ya cerraste esa pantalla y no guardaste la clave secreta, crea otro token R2 equivalente y revoca el anterior cuando hayas confirmado que no se utiliza.
-
-El endpoint S3 que usa el firmador es `https://03f46bf3839f506fe22124be5f1cda25.r2.cloudflarestorage.com`; el firmador añade el bucket y la clave de objeto. No uses el dominio personalizado público como endpoint de firma.
-
-No publiques el Access Key ID ni, especialmente, el Secret Access Key en issues, commits, logs, capturas ni conversaciones. El Account ID no es una clave secreta, pero también debe configurarse en el entorno correcto.
-
-Configurar los valores como secretos del Worker desde una terminal autenticada con Wrangler:
+Comandos de configuración (solo cuando se apruebe una rotación/cambio; no ejecutar durante una auditoría documental):
 
 ```sh
 pnpm exec wrangler secret put R2_ACCOUNT_ID
@@ -44,33 +37,51 @@ pnpm exec wrangler secret put R2_ACCESS_KEY_ID
 pnpm exec wrangler secret put R2_SECRET_ACCESS_KEY
 ```
 
-Introducir cada valor cuando Wrangler lo solicite. No escribir secretos en `wrangler.toml`, archivos `.env` versionados ni en el frontend. Si no se han creado las credenciales, detenerse aquí; no inventar valores.
+## 3. Flag y selección de flujo
 
-## Estado de credenciales tras una posible exposición
+`DIRECT_R2_TRANSFERS_ENABLED` controla la selección del flujo directo. La evidencia operativa de Fase 4 confirma que las transferencias se probaron en producción, pero no determina el valor actual del flag. Antes de diagnosticar una transferencia:
 
-El propietario confirmó que los secretos `R2_ACCESS_KEY_ID`, `R2_ACCOUNT_ID` y `R2_SECRET_ACCESS_KEY` aparecen configurados en el panel del Worker. Sin embargo, los valores de credenciales se compartieron parcialmente en una conversación. Por precaución, **no considerar seguras las credenciales actuales aunque el texto parezca truncado**: crear un nuevo token S3 de R2 con el mismo alcance mínimo, actualizar los tres secretos correspondientes si cambian sus valores, probarlo y revocar las credenciales anteriores. Si también se compartió un token de API de Cloudflare, revocarlo/rotarlo por separado; no es lo mismo que la clave S3.
+1. Consultar el valor efectivo en el entorno Worker, sin revelar secretos.
+2. Confirmar que los secretos R2 necesarios existen y corresponden al bucket.
+3. Confirmar privacidad/CORS/permisos en Cloudflare.
+4. No activar ni desactivar el flag sin autorización explícita del propietario y un despliegue aprobado.
 
-El propietario confirmó el 2026-10-12 que las operaciones reales de transferencia y el alcance mínimo de acceso fueron probados en producción. Esto no sustituye la rotación preventiva indicada arriba si alguna credencial se expuso. Nunca pedir ni copiar sus valores en este documento, el repositorio, logs o chats.
+El flujo alternativo a través del Worker se conserva como mecanismo de respaldo. Una URL prefirmada es una credencial portadora hasta expirar; no prometer revocación instantánea.
 
-## 3. Mantener la transferencia directa deshabilitada hasta validar
+## 4. Evidencia operativa de Fase 4
 
-La aplicación solo usa las rutas directas cuando `DIRECT_R2_TRANSFERS_ENABLED` vale `true`. No habilitar esa variable todavía. Primero rotar las credenciales compartidas, comprobar que los tres secretos están configurados en el entorno correcto y que el bucket continúa privado.
+**Estado: COMPLETADO (2026-10-12, según confirmación explícita del propietario).**
 
-La activación futura debe hacerse explícitamente mediante la configuración de entorno del Worker, después de completar las pruebas descritas abajo y con autorización de despliegue. No añadir la variable a `wrangler.toml` ni desplegar como parte de este runbook.
+- [x] Bucket privado, sin dominio público ni `r2.dev`.
+- [x] CORS de producción con orígenes exactos, métodos y cabeceras mínimos; sin comodines.
+- [x] Permisos de R2 limitados al bucket requerido.
+- [x] Despliegue de migración/Worker correspondiente.
+- [x] Subida y descarga reales con comparación de bytes.
+- [x] Rango parcial y rechazo de acceso desde otra cuenta.
+- [x] SHA desplegado y evidencia registrados por el propietario.
 
-## 4. Validaciones obligatorias antes de activar
+Esta confirmación no equivale a una auditoría actual del panel Cloudflare. Las siguientes pruebas adicionales no tienen evidencia operativa individual registrada en este documento y no deben presentarse como ejecutadas solo por CI:
 
-- [x] CORS de producción comprobado con orígenes exactos y métodos/cabeceras mínimos, sin comodines (confirmación del propietario, 2026-10-12).
-- [x] La URL pública `r2.dev` está desactivada y no hay acceso público al bucket (confirmación del propietario, 2026-10-12).
-- [x] El acceso de R2 está limitado al bucket requerido y las credenciales se gestionan como secretos del Worker (confirmación del propietario, 2026-10-12).
-- [ ] Una URL firmada expira; método, clave, encabezados o parte alterados son rechazados.
-- [ ] Un usuario no puede iniciar, completar, cancelar ni descargar recursos de otro usuario.
-- [ ] Subida directa pequeña: verificar que tamaño real y Content-Type de HEAD coincidan con la sesión antes de publicar metadatos; comprobar cuota y limpieza ante discrepancias.
-- [ ] Subida multipart grande: verificar todas las partes, reintentos, reanudación, pausa, cancelación, Content-Type de HEAD y limpieza/reintento de sesiones incompletas.
-- [ ] Cancelación de PUT directo: como la URL previamente emitida no puede revocarse al instante, confirmar que `complete` se rechaza, que una escritura tardía no queda huérfana después de la limpieza diferida y que la sesión fallida se conserva para reintento.
-- [ ] Validación adicional de expiración de URL firmada, método/clave/headers alterados y ausencia de secretos en logs (no se marca aquí como completada sin evidencia específica).
-- [x] Prueba E2E real de subida/descarga con comparación de bytes, rango parcial y rechazo de acceso desde otra cuenta (confirmación del propietario, 2026-10-12).
-- [x] CORS mínimo de producción comprobado; no usar `*` y mantener la lista de orígenes exacta.
-- [ ] Prueba de concurrencia controlada y métricas de capacidad; es independiente del checklist de cierre operativo citado arriba.
+- [ ] Prueba de carga/concurrencia controlada y métricas de capacidad.
+- [ ] Prueba operativa adicional de expiración y alteración de URLs firmadas (método, objeto, encabezados y parte).
+- [ ] Revisión periódica de rotación de credenciales y vigencia del valor de `DIRECT_R2_TRANSFERS_ENABLED`.
 
-Las pruebas unitarias y CI no sustituyen estas comprobaciones reales en Cloudflare. No declarar la migración completa ni desplegar por el hecho de haber configurado CORS o creado credenciales.
+Las pruebas automatizadas de autorización, sesión y seguridad están integradas en CI; consulta [Security.md](./Security.md). CI no demuestra por sí sola la configuración actual de Cloudflare ni el estado efectivo del flag.
+
+## 5. Seguridad de transferencias
+
+- El Worker valida actor, propietario, estado, tamaño y permisos antes de emitir una URL.
+- Cada URL autoriza una acción, objeto o parte concretos y tiene expiración corta.
+- Las credenciales S3, claves internas y el identificador de objeto no se entregan como campos independientes al navegador.
+- En multipart, el Worker conserva la sesión y la lista autoritativa de partes/ETags.
+- La aplicación valida el objeto final mediante `HEAD` antes de registrar metadatos.
+- Las URLs no se almacenan en localStorage ni se registran en logs.
+- El flujo de vista previa nunca entrega URL R2; usa rutas same-origin con autorización en cada petición.
+
+## Referencias
+
+- [ADR-001 — Transferencias directas y autorizadas a R2](./ADR-001-direct-r2-transfers.md)
+- [Fase 4 — Transferencias privadas con R2](./FILES_PHASE_4.md)
+- [Vista previa privada](./FILES_PREVIEW.md)
+- [Reglas de seguridad](./Security.md)
+- [Operación y recuperación](./Rollback.md)

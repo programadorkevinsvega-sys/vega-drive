@@ -1,5 +1,7 @@
 # Fase 2 — Identidad, autenticación y sesiones
 
+> **Informe histórico de cierre (2026-10-10).** Las referencias a fases posteriores como pendientes describen el estado en la fecha de este informe. El estado vigente del proyecto está en [roadmap.md](./roadmap.md); no interpretar esta sección histórica como un backlog actual.
+
 ## Alcance
 
 Esta fase implementa el registro cerrado, login, logout, consulta de sesión, cambio de contraseña y resolución de identidad del lado servidor. No implementa todavía autorización de archivos: esa integración pertenece a las fases de files y debe recibir el actor autenticado a través del gateway.

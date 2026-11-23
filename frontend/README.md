@@ -1,154 +1,103 @@
-# Vega Drive · frontend integrado
+# Vega Drive — Frontend integrado
 
-Base visual y esqueleto de navegación de Vega Drive, servidos por el Worker existente.
-Las dependencias del frontend se mantienen aisladas con su propio `package.json` y
-`pnpm-lock.yaml`; no se fusionan con el workspace ni con el lockfile raíz.
+Frontend React/Vite integrado en el único Cloudflare Worker de Vega Drive. Sus dependencias mantienen un `package.json` y `pnpm-lock.yaml` propios, separados del workspace raíz.
 
-## Estado
-
-| Incluido hoy                                                                       | Pendiente                                         |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Identidad visual, tokens y temas claro/oscuro                                      | Transferencias privadas de bytes a/desde R2       |
-| Login, registro, sesiones y cambio de contraseña conectados al Worker              | Recientes, favoritos y búsqueda sobre el catálogo |
-| Mi unidad, carpetas, renombrado, movimiento y papelera conectados al catálogo HTTP | Subida y descarga de contenido real               |
-| Restauración, paginación y breadcrumbs del servidor                                | Perfil y preferencias adicionales en Ajustes      |
-| Turnstile en login y registro                                                      | —                                                 |
-
-Mi unidad, las carpetas y la papelera ya consumen el catálogo real del Worker mediante `/api/files`: crear carpetas, listar, renombrar, mover, enviar a papelera y restaurar. Se muestran los metadatos que devuelve el servidor y se usan sus breadcrumbs y cursores. Esto no carga ni descarga bytes: el botón de subida permanece deshabilitado hasta que exista la integración física con R2. Recientes, favoritos y búsqueda continúan como marcadores. Login, registro, sesiones y cambio de contraseña usan las rutas reales de identidad del Worker.
+**Estado: integrado y funcional. Revisión documental: 2026-11-23.** Mi unidad, Papelera, Recientes, Favoritos, Búsqueda, autenticación, transferencias y vista previa están conectados al BFF. Sharing se integra mediante las rutas del producto de la Fase 7. Quota sigue pendiente en la Fase 6.
 
 ## Requisitos
 
-- Node 22 (`>=22.13.0`, probado con 22.22.2) y pnpm 10.18.3, igual que el repo.
+- Node.js `22.23.5` o superior.
+- pnpm `11.28.13` (versión fijada en el repositorio).
 
-## Instalar, comprobar y ejecutar dentro del repositorio
+## Instalar, comprobar y ejecutar
 
 Desde la raíz de Vega Drive:
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm run frontend:install
-pnpm run frontend:check       # typecheck + pruebas + build del frontend
-pnpm run cloudflare:build     # guardias, checks, auditorías y build dry-run de Wrangler
-pnpm run dev                  # Worker local; requiere el build de assets anterior
+pnpm run frontend:check
+pnpm run cloudflare:build
+pnpm run dev
 ```
 
 Para ejecutar únicamente Vite durante trabajo visual: `pnpm --dir frontend run dev`.
-El frontend conserva una instalación aislada; no borres ni combines ninguno de los
-lockfiles. Las rutas por hash son estado del navegador y no requieren un fallback HTTP.
 
-Qué revisar primero:
+El frontend conserva su instalación aislada; no combines los lockfiles. `cloudflare:build` instala/verifica dependencias, ejecuta las guardias, pruebas, auditorías y Wrangler dry-run. No despliega ni aplica migraciones remotas. `pnpm run deploy` sí es el flujo de producción y requiere autorización operativa.
 
-1. `#/drive`: crea una carpeta, entra, renómbrala, muévela y envíala a la papelera.
-2. `#/trash`: restaura los elementos; los cambios deben sobrevivir a una recarga.
-3. `#/settings`, `#/login` y `#/register`: flujos reales de identidad.
-4. Cambiar el tema y probar el diseño estrecho; las transferencias físicas aún no están habilitadas.
+## Vistas y estado funcional
 
-## Rutas
+| Ruta hash             | Contenido                                   |
+| --------------------- | ------------------------------------------- |
+| `#/drive`             | Mi unidad: catálogo, carpetas y acciones    |
+| `#/drive/folder/<id>` | Contenido de carpeta y breadcrumbs          |
+| `#/recent`            | Archivos abiertos/descargados recientemente |
+| `#/favorites`         | Favoritos del propietario                   |
+| `#/search?q=...`      | Búsqueda por nombre, tipo y cursor          |
+| `#/trash`             | Papelera y restauración                     |
+| `#/settings`          | Cambio de contraseña                        |
+| `#/login`             | Login con Turnstile                         |
+| `#/register`          | Registro cerrado con Turnstile              |
 
-| Hash                  | Contenido hoy                    | Se construye en |
-| --------------------- | -------------------------------- | --------------- |
-| `#/drive`             | Catálogo real de Mi unidad       | Entrega 3 + BFF |
-| `#/drive/folder/<id>` | Contenido real de una carpeta    | Entrega 3 + BFF |
-| `#/recent`            | Marcador                         | Pendiente       |
-| `#/favorites`         | Marcador                         | Pendiente       |
-| `#/trash`             | Papelera real y restauración     | Entrega 3 + BFF |
-| `#/search?q=...`      | Marcador (el buscador ya navega) | Entrega 5       |
-| `#/settings`          | Cambio de contraseña             | Fase 2          |
-| `#/login`             | Formulario real + Turnstile      | Fase 2          |
-| `#/register`          | Formulario real + Turnstile      | Fase 2          |
+Las rutas hash desconocidas y los identificadores inválidos muestran página no encontrada. Wrangler mantiene `not_found_handling = "none"`: assets faltantes conservan 404 y la API no recibe un fallback HTML.
 
-Una ruta hash desconocida o un identificador de carpeta no válido muestran
-"Página no encontrada". Las rutas por hash no llegan al servidor HTTP. Wrangler usa
-`not_found_handling = "none"`: los assets que faltan conservan 404 y la API no recibe
-un fallback HTML.
+## Transferencias y vista previa
+
+- Subida simple y multipart para archivos grandes, con progreso, pausa/reanudación, cancelación y reintentos.
+- Descargas autenticadas con verificación de propiedad.
+- El Worker conserva el plano de control. Si `DIRECT_R2_TRANSFERS_ENABLED` está activo, el navegador puede intercambiar bytes directamente con R2 mediante URLs prefirmadas temporales de alcance mínimo emitidas por el Worker. No recibe credenciales ni claves internas.
+- El valor efectivo actual del feature flag debe consultarse en el entorno Worker; no se puede deducir del repositorio.
+- La vista previa utiliza rutas same-origin autenticadas y el Worker transmite los bytes privados. No entrega URLs R2 y no depende de CORS del navegador hacia R2.
+- Formatos y límites de vista previa: [FILES_PREVIEW.md](../FILES_PREVIEW.md).
+
+## Seguridad y responsabilidades
+
+- El frontend es una capa de presentación; la autorización y propiedad siempre se validan en el backend.
+- Las llamadas de control usan el mismo origen bajo `/api`.
+- La cookie de sesión es HttpOnly y el JavaScript no puede leer el token.
+- El único almacenamiento persistente local de preferencia de UI es el tema (`light|dark|system`). No guardar contraseñas, tokens ni URLs prefirmadas.
+- Las claves R2 y credenciales S3 nunca llegan al navegador.
+- La CSP y cabeceras se configuran para assets y respuestas del Worker; X-Frame-Options `SAMEORIGIN` y CSP `frame-ancestors 'self'` permiten la vista previa PDF dentro de Vega Drive y bloquean framing externo.
+- No existe entorno staging; no crear ni presuponer uno.
 
 ## Estructura
 
 ```text
 frontend/
   index.html · vite.config.ts · vitest.config.ts · tsconfig.json
-  package.json · pnpm-lock.yaml · public/favicon.svg
+  package.json · pnpm-lock.yaml · public/_headers
   src/
-    main.tsx            raíz de composición (único lugar que importa mock/)
+    main.tsx            raíz de composición
     App.tsx             proveedores + selección de layout
     brand/              símbolo y logotipo
-    styles/             tokens, tema oscuro, base y un CSS por componente
-    ui/                 componentes base (botón, campo, modal, menú, avisos...)
-    shell/              barra lateral, barra superior, buscador, perfil
-    router/             rutas, parseo/construcción de hash, NavLink
-    theme/              preferencia de tema (pura) + proveedor + selector
-    domain/             tipos de presentación (UserProfile)
-    services/           clientes same-origin para identidad y catálogo + ProfileService
-    mock/               adaptadores SIMULADOS
-    screens/            catálogo real y marcadores explícitos de funciones pendientes
+    styles/             tokens, temas, base y estilos de componentes
+    ui/                 componentes base
+    shell/              navegación y shell
+    router/             rutas hash y navegación
+    theme/              preferencia de tema
+    domain/             tipos de presentación
+    services/           clientes same-origin para BFF
+    screens/            vistas de producto
     *.test.ts           pruebas junto al código
 ```
 
 ## Decisiones de diseño
 
-- **Identidad**: una "V" de dos trazos con una estrella de cuatro puntas en su
-  apertura (Vega, la estrella de Lyra). Logotipo tipográfico "Vega" en negrita
-  y "Drive" en peso normal.
-- **Paleta**: tinta azul-pizarra (`#17203a`), papel frío y un acento
-  turquesa profundo (`#0a7c86`), lejos del azul de los servicios conocidos. El
-  color ámbar queda reservado a todo lo **simulado**.
-- **Tipografía**: pila del sistema; la CSP bloquea fuentes externas.
-- **Tokens**: `src/styles/tokens.css` (claro) y `dark.css` (oscuro) con prefijo
-  `--vd-`. Los componentes solo usan tokens semánticos.
-- **Accesibilidad**: foco visible, objetivos ≥ 32 px, diálogo sobre `<dialog>`
-  nativo, menú con patrón ARIA y teclado, avisos con `role` status/alert,
-  `prefers-reduced-motion` y `forced-colors`. El tono de un aviso no depende
-  solo del color.
-- **Sin estilos en línea**: la CSP del Worker (`default-src 'self'`) los
-  bloquearía; todo va por clases y variables CSS.
-- **Archivos ≤ 200 líneas** (regla de la arquitectura), verificado por prueba.
+- Identidad visual Vega, paleta azul-pizarra/turquesa y temas claro/oscuro.
+- Tipografía del sistema; no cargar fuentes externas.
+- Tokens CSS con prefijo `--vd-`; componentes consumen tokens semánticos.
+- Foco visible, etiquetas accesibles, navegación por teclado, avisos con roles ARIA y soporte para reduced motion/forced colors.
+- Sin estilos inline; la CSP bloquea inline scripts/styles no autorizados.
+- Archivos de código sujetos al límite arquitectónico de 200 líneas salvo excepción aprobada.
 
-## Seguridad y límites
+## Verificación y evidencia
 
-- Las solicitudes de identidad usan solo `fetch` al mismo origen bajo
-  `/api/auth/*`; no se incorporan XHR, sockets ni referencias a R2/S3.
-  Las guardias del repo comprueban que la capa de UI no asuma autorización.
-- Único almacenamiento persistente del frontend: la preferencia de tema
-  (`light|dark|system`) en `localStorage`, a través de `lib/safe-storage.ts`.
-  Las contraseñas no se guardan en almacenamiento local y el token de sesión
-  permanece en una cookie HttpOnly controlada por el navegador.
-- Los identificadores de ruta se validan solo como ayuda de UX. La
-  autorización es del backend.
-- Toda acción simulada se rotula como tal en la interfaz ("Simulado").
+La CI ejecuta las comprobaciones frontend junto con las guardias de arquitectura y backend. El cierre de Fase 5 cubre las vistas y servicios conectados. Las pruebas automatizadas con D1/R2 simulados no demuestran por sí solas la configuración externa ni el estado actual de producción.
 
-## Historial de verificación de la entrega visual (previo a la integración)
+Los controles transversales de seguridad están cerrados según Fase 8. La certificación operativa de Fase 9 sigue pendiente de confirmar la recuperación D1 (Time Travel), historial de deployments, logs/alertas disponibles y ejercicios autorizados de rollback/recuperación. Ver [Rollback.md](../Rollback.md) y [roadmap.md](../roadmap.md).
 
-| Comprobación                                                            | Resultado                                      |
-| ----------------------------------------------------------------------- | ---------------------------------------------- |
-| `pnpm run typecheck` (TS 5.9.3, estricto)                               | Sin errores                                    |
-| `pnpm run test` (Vitest 5.0.2)                                          | 103 pruebas en 7 archivos, todas correctas     |
-| `pnpm run build`                                                        | JS 252 kB (78 kB gzip), CSS 22 kB (5 kB gzip)  |
-| 9 guardias `scripts/architecture/verify-*.mjs` del repo, en una copia   | Todas OK, incluida "Frontera del frontend"     |
-| Chromium headless 153 sobre `vite preview` con la CSP del Worker        | 29/29 comprobaciones; 0 errores de consola/CSP |
-| Revisión visual (claro, oscuro, móvil 390 px) y desbordamiento a 360 px | Sin desbordamiento en las 5 rutas medidas      |
+## Pendientes conocidos fuera del cierre de integración
 
-Las pruebas incluyen contraste WCAG (33 pares en cada tema) y se comprobó que
-**fallan** al introducir a propósito un error de contraste, un `fetch` o
-referencias a R2/XHR. Un fallo real hallado y corregido durante la revisión:
-el buscador desbordaba la barra superior a 360 px.
-
-## Pendiente de verificar
-
-- Lectores de pantalla reales (NVDA, VoiceOver, TalkBack): los avisos y el
-  menú siguen el patrón ARIA pero no se probaron con tecnología de asistencia.
-- Firefox y Safari (solo se probó Chromium).
-- Tablet y orientación horizontal en dispositivos reales.
-- Pruebas de componentes con DOM (jsdom/Testing Library): no se añadieron para
-  no sumar dependencias; la lógica pura sí está cubierta.
-- El check aislado del frontend descrito arriba no demuestra que el Worker lo
-  sirva ni que la política `_headers` se aplique en Cloudflare. Para esos puntos se
-  necesita el build integrado y smoke tests en un entorno desplegado.
-- La CI y la auditoría de dependencias del frontend se incorporan al flujo principal
-  mediante `pnpm run cloudflare:build`; deben volver a verificarse tras estos cambios.
-
-## Problemas conocidos
-
-- En `#/drive` el título repite la ruta ("Mi unidad" dos veces); se resolverá
-  con el dashboard real.
-- Sin apple-touch-icon (requiere PNG; se puede generar en la integración).
-- `vitest` está en 5.0.2 y el repo usa 5.0.3 (versión con < 14 días).
+- Quota configurable: Fase 6, reservada para el final.
+- Preferencias/perfil adicionales en Ajustes: mejora futura, no parte de las capacidades funcionales ya conectadas.
+- Pruebas de tecnología de asistencia y navegadores/dispositivos adicionales deben añadirse cuando se amplíe la matriz de aceptación; no declarar probadas plataformas que no se hayan ejecutado.

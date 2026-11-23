@@ -11,8 +11,8 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 - **SEC-ISO-01** El `userId` se obtiene **únicamente de la sesión validada en el servidor**. Nunca de la URL, el body, headers ni cookies no firmadas.
 - **SEC-ISO-02** Toda consulta a D1 sobre datos propiedad de un usuario debe limitarse al actor obtenido de la sesión validada usando la columna de propiedad definida por el esquema del módulo. En tablas que usan `user_id`, aplica `WHERE user_id = ?`; en las tablas de `files` existentes (`files_items`, `files_folders` y `files_uploads`), aplica `WHERE owner_id = ?`. Las búsquedas directas de recursos deben combinar el identificador del recurso con el filtro de propiedad, nunca confiar solo en un ID recibido del cliente. Cada repositorio vive en el módulo dueño y solo accede a sus tablas con prefijo; está prohibido SQL suelto en rutas, gateways o módulos ajenos.
 - **SEC-ISO-03** Un recurso ajeno responde **404** (no 403), para no revelar que existe.
-- **SEC-ISO-04** Las claves de R2 las genera el servidor con el formato `u/{userId}/{uuid}`. El cliente nunca envía, elige, conoce ni recibe una clave o URL de R2.
-- **SEC-ISO-05** Antes de cada operación de subida, descarga, lectura o borrado en R2, el Worker verifica en D1 que el recurso pertenece al usuario de la sesión. El navegador nunca contacta R2.
+- **SEC-ISO-04** Las claves de R2 las genera el servidor con el formato `u/{userId}/{uuid}`. El cliente nunca envía, elige ni recibe la clave interna del objeto. Puede recibir únicamente una URL prefirmada temporal emitida por el Worker para una acción/objeto/parte concretos conforme a ADR-001; esa URL es una credencial portadora hasta su expiración.
+- **SEC-ISO-05** Antes de emitir una URL prefirmada o autorizar una operación de almacenamiento, el Worker verifica en D1 que el recurso/sesión pertenece al actor autenticado. En transferencias directas autorizadas el navegador intercambia bytes con R2 usando únicamente esa URL temporal y limitada; no recibe credenciales ni puede elegir la clave, objeto, método o expiración. La vista previa no usa URLs de R2: pasa por rutas same-origin y el Worker transmite los bytes.
 - **SEC-ISO-06** Toda funcionalidad nueva debe incluir al menos una **prueba automatizada de acceso cruzado** (usuario A intenta leer/modificar/borrar recursos de usuario B y falla).
 
 ## 2. Autenticación y contraseñas (AUTH)
@@ -67,7 +67,7 @@ Modelo de amenaza resumido: hasta 10 clientes de confianza limitada entre sí; e
 ## 8. CORS, cabeceras y transporte (WEB)
 
 - **SEC-WEB-01** Servir frontend y API desde el **mismo origen**; sin CORS abierto en la API. Si hace falta CORS, lista blanca exacta, nunca `*` con credenciales.
-- **SEC-WEB-02** Cabeceras en todas las respuestas: `Content-Security-Policy` estricta (sin `unsafe-inline` si es posible), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` (o `frame-ancestors 'none'`).
+- **SEC-WEB-02** Cabeceras en las respuestas aplicables: `Content-Security-Policy` estricta (sin `unsafe-inline`/`unsafe-eval`), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` restrictiva, `Cross-Origin-Opener-Policy` y `Cross-Origin-Resource-Policy` según compatibilidad. Vega Drive usa `X-Frame-Options: SAMEORIGIN` y CSP `frame-ancestors 'self'` para permitir la vista previa PDF dentro de la aplicación; no permite framing desde otros orígenes.
 - **SEC-WEB-03** Solo HTTPS; redirección forzada y "Always Use HTTPS" activo.
 - **SEC-WEB-04** Respuestas de la API con `Cache-Control: no-store` en datos autenticados.
 
@@ -131,7 +131,7 @@ Si encuentras una vulnerabilidad, no abras un issue público: contacta directame
 
 Esta sección concreta los requisitos de seguridad para la arquitectura real de Vega Drive: Cloudflare Workers, Hono, D1, R2 y frontend servido desde el mismo origen. No se debe copiar configuración específica de Next.js ni introducir roles, identidades o mecanismos paralelos que el producto no necesite.
 
-**Estado de certificación: PENDIENTE.** Que el Worker se despliegue, que D1 coincida con las migraciones y que `/api/health` responda correctamente no demuestra que los controles de seguridad estén implementados ni que hayan superado pruebas negativas. Los checks de esta sección solo se marcan como completados cuando exista evidencia reproducible en pruebas o en la verificación de producción.
+**Estado de la Fase 8: CERRADA** según las pruebas de seguridad, controles de arquitectura, cabeceras y CI integrados en el proyecto. Esto no significa que cada configuración externa de Cloudflare ni la recuperación operativa de D1 estén certificadas: esas comprobaciones pertenecen a la Fase 9 y siguen pendientes según [Rollback.md](./Rollback.md). Que `/api/health` responda correctamente nunca demuestra por sí solo aislamiento entre usuarios ni seguridad completa. Los controles de regresión de esta sección siguen siendo obligatorios para cambios futuros.
 
 ### 14.1 Reglas transversales obligatorias
 
@@ -139,7 +139,7 @@ Esta sección concreta los requisitos de seguridad para la arquitectura real de 
 - **SEC-BASE-02 — Autorización por operación:** cada endpoint y caso de uso sensible comprobará la identidad autenticada, los permisos necesarios y la propiedad del recurso antes de leerlo o mutarlo. La interfaz nunca es una frontera de autorización.
 - **SEC-BASE-03 — IDOR/BOLA:** conocer o adivinar un identificador no concede acceso. Las lecturas, descargas, cambios y borrados deben estar limitados al propietario o al actor explícitamente autorizado; se devolverá 404 para recursos ajenos cuando corresponda para evitar enumeración.
 - **SEC-BASE-04 — Validación del servidor:** validar tipos, formato, longitud, rangos, identificadores, campos permitidos y límites de cuerpo en el servidor. Las restricciones del navegador son solo UX. SQL debe estar parametrizado.
-- **SEC-BASE-05 — Privacidad de datos y archivos:** R2 permanecerá privado y solo será accesible a través del Worker autorizado. No exponer credenciales, tokens, claves internas de objetos, URLs de almacenamiento ni datos sensibles en URLs, respuestas o logs.
+- **SEC-BASE-05 — Privacidad de datos y archivos:** R2 permanecerá privado. El Worker autoriza cada transferencia y puede emitir URLs prefirmadas de alcance mínimo y vida corta conforme a ADR-001; estas URLs son credenciales portadoras hasta su expiración. Nunca exponer credenciales S3, claves internas de objetos ni datos sensibles en respuestas/logs. La vista previa usa el Worker y rutas same-origin.
 - **SEC-BASE-06 — Protección contra abuso:** aplicar límites apropiados a autenticación, recuperación de acceso si existe, subidas/descargas y operaciones costosas. Combinar controles por IP y por actor cuando sea viable; un límite global no sustituye los controles específicos.
 - **SEC-BASE-07 — Fronteras de aplicación:** las rutas Hono validan el transporte y delegan en gateways/APIs públicas y casos de uso. No contienen SQL, acceso directo a R2 ni reglas de negocio; el actor se deriva de la sesión validada.
 - **SEC-BASE-08 — Roles mínimos:** solo implementar roles y clases de identidad que tengan un requisito real. No añadir una identidad de técnicos ni un segundo sistema de autorización por analogía con otra aplicación. Si se introducen roles administrativos, la comprobación de permisos será server-side.
@@ -153,7 +153,7 @@ La configuración debe implementarse en la capa Hono/Worker adecuada para este r
 - `Content-Security-Policy`: limitar scripts, estilos, imágenes, conexiones y `frame-ancestors` a lo que la aplicación realmente necesita; evitar `unsafe-inline` cuando sea viable.
 - `Strict-Transport-Security`: habilitar solo para dominios servidos exclusivamente por HTTPS y con un alcance deliberado.
 - `X-Content-Type-Options: nosniff`.
-- `X-Frame-Options: DENY` o una política CSP equivalente con `frame-ancestors 'none'`, salvo necesidad de incrustación aprobada.
+- `X-Frame-Options: SAMEORIGIN` y CSP `frame-ancestors 'self'` son la excepción funcional aprobada para la vista previa PDF dentro de Vega Drive; bloquear framing desde otros orígenes.
 - `Referrer-Policy: strict-origin-when-cross-origin` o una política más restrictiva compatible con el producto.
 - `Permissions-Policy`: desactivar capacidades del navegador que no se utilicen.
 - Considerar también `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` y `X-DNS-Prefetch-Control` cuando sean compatibles con la aplicación.
@@ -197,7 +197,7 @@ Todos los puntos comienzan **pendientes**. Para marcar uno como completado se re
 
 Para cada punto certificado, registrar la prueba o comando, el resultado, el commit revisado y, para verificaciones productivas, la fecha y el entorno. No incluir tokens, datos privados ni secretos en la evidencia. Mantener los fallos como pendientes hasta corregirlos y volver a ejecutar las pruebas.
 
-La certificación global solo puede declararse completada cuando todos los controles aplicables hayan pasado, las excepciones estén justificadas y las pruebas se ejecuten contra el commit que se pretende desplegar. Los controles que aún no tengan funcionalidad asociada se mantienen como requisitos futuros, no como controles aprobados.
+El cierre de la Fase 8 se refiere a los controles automatizados y evidencias de seguridad incorporados en esa fase; no certifica configuraciones externas de Cloudflare ni la recuperación operativa de producción, que se siguen en la Fase 9. Para cualquier control nuevo, solo se marcará como aprobado cuando la prueba aplicable pase en el commit candidato. Los controles sin funcionalidad asociada permanecen como requisitos futuros, no como controles aprobados.
 
 ### 14.5 Evidencia incorporada en la Fase 8
 
@@ -224,11 +224,11 @@ Comprobaciones automáticas requeridas para el commit de esta fase:
 - escaneo Gitleaks del workflow CI
 - migraciones y verificación de esquema D1 local
 
-**Pendiente de verificación externa antes de declarar la certificación global:**
+**Verificaciones operativas externas (seguimiento de Fase 9; no son un bloqueo de la implementación de Fase 8):**
 
 - Confirmar en Cloudflare que las reglas WAF/rate limiting están activas para el dominio de producción y cubren autenticación, registro y solicitudes costosas. La aplicación ya aplica límites por cuenta en autenticación y por usuario en transferencias; este repositorio no puede demostrar por sí solo la configuración WAF.
 - Verificar en el entorno de producción las cabeceras efectivas de HTML, JS, CSS, respuestas API y errores, además de los flujos de autenticación, aislamiento, preview, descarga y compartición.
 - Confirmar la protección de la rama `main` y los requisitos de aprobación/checks desde la configuración del repositorio. La conexión de GitHub utilizada para esta implementación no concede acceso de lectura a branch protection.
 - Repetir las verificaciones productivas de D1 y despliegue después de una publicación autorizada. Esta fase no ejecuta migraciones remotas ni despliega.
 
-No marcar estos puntos externos como aprobados a partir de pruebas locales o de CI. La certificación global permanece **PENDIENTE** hasta disponer de esa evidencia.
+La Fase 8 queda cerrada por sus controles y evidencias automatizadas. Los puntos externos anteriores siguen pendientes y se gestionan en la Fase 9: no se deben presentar como comprobados por pruebas locales o CI. La certificación operativa de producción permanece pendiente según [Rollback.md](./Rollback.md).

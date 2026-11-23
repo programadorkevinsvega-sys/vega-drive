@@ -1,72 +1,46 @@
 # Vega Drive
 
-Sistema privado de almacenamiento de archivos sobre Cloudflare, diseñado para un máximo de 10 clientes y aislamiento estricto entre cuentas.
+Vega Drive es una aplicación privada de almacenamiento y compartición de archivos sobre Cloudflare, diseñada para un máximo de 10 clientes y con aislamiento estricto entre cuentas.
 
-> **Estado real (2026-10-12):** las Fases 0, 1 y 2 están cerradas; la Fase 3 del catálogo está implementada y validada, y la Fase 4 de transferencias privadas con R2 tiene registradas como completadas sus validaciones operativas. Mi unidad, carpetas y papelera están conectadas al BFF autenticado; la pantalla de Mi unidad incluye controles frontend de transferencia. La Fase 5 sigue en curso: Recientes ya tiene contrato autenticado, persistencia por propietario y pantalla conectada (su migración aún requiere aplicación autorizada); Favoritos y Búsqueda siguen siendo placeholders. Faltan auditoría completa de presentación/accesibilidad, evidencia HTTP de assets/cabeceras, pruebas E2E de integración UI-transferencias y verificación automatizada del composition root. Cuotas (Fase 6), compartición (Fase 7), certificación global (Fase 8) y rollback/operación (Fase 9) siguen pendientes. Ver [FRONTEND_BFF_PHASE_5.md](./FRONTEND_BFF_PHASE_5.md).
+> **Estado documental: 2026-11-23.** Las fases 0–5 y 7–8 están cerradas. La Fase 9 tiene implementados el runbook y los controles automáticos de postdespliegue, pero su certificación operativa sigue pendiente de confirmar Time Travel de la D1 real, observabilidad/historial de despliegues y ejecutar pruebas de recuperación únicamente con autorización explícita. La Fase 6 (cuotas) se mantiene pendiente y se abordará al final, según el orden acordado. No existe entorno staging y no se presupone uno.
+
+## Estado funcional
+
+- **Identity:** registro/login protegido por Turnstile, sesiones, logout y cambio de contraseña.
+- **Files:** carpetas, catálogo, papelera, restauración, recientes, favoritos y búsqueda paginada por nombre/tipo, siempre filtrados por el actor autenticado.
+- **Transferencias:** subida/descarga con autorización del Worker y transferencia directa de bytes navegador↔R2 mediante URLs prefirmadas limitadas cuando el modo directo está habilitado; el Worker conserva el plano de control. El flujo de respaldo a través del Worker se mantiene disponible según la configuración.
+- **Vista previa:** rutas same-origin autenticadas; el Worker comprueba sesión y propietario y transmite el contenido privado. Incluye formatos compatibles del navegador, PDF, texto/Markdown y extracción local limitada de DOCX/XLSX. La vista previa no entrega URLs de R2.
+- **Sharing:** enlaces de lectura protegidos, con token almacenado como hash, expiración/revocación y aislamiento del recurso.
+- **Quota:** módulo no implementado funcionalmente; es la Fase 6 pendiente.
+
+Los detalles históricos y las evidencias específicas de cada fase permanecen en los documentos de fase enlazados desde [roadmap.md](./roadmap.md).
 
 ## Arquitectura
 
-Vega Drive se diseña como un monolito modular serverless:
+Vega Drive es un monolito modular serverless:
 
-- Un único Cloudflare Worker y un único origen para frontend y API.
-- Una única D1 con binding `VEGA_DRIVE_DB`.
-- Un bucket R2 privado con binding `FILES_BUCKET`.
-- El navegador solo consume rutas del mismo origen bajo `/api`; nunca accede directamente a R2.
-- Los módulos previstos son `identity`, `files`, `quota` y `sharing`. Cada módulo debe poseer sus tablas con prefijo, migraciones, dominio y API pública.
-- Los módulos solo se comunican mediante sus API públicas y gateways. No se permiten JOIN, claves foráneas ni SQL entre prefijos de módulos.
+- Un único Cloudflare Worker sirve frontend y BFF desde el mismo origen.
+- Una única base D1 usa el binding `VEGA_DRIVE_DB`.
+- Un bucket R2 privado usa el binding `FILES_BUCKET`.
+- El navegador consume el BFF bajo `/api`. Para transferencias directas autorizadas puede enviar/recibir bytes desde R2 usando URLs temporales firmadas; nunca recibe credenciales ni elige claves, permisos o expiración.
+- La vista previa y las operaciones de metadatos pasan por el Worker y no requieren acceso CORS del navegador a R2.
+- Cada módulo posee sus tablas, migraciones, dominio y API pública. No se permiten SQL/JOIN/FK ni imports internos entre módulos.
 
-El contrato arquitectónico está en [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md), los controles de seguridad en [Security.md](./Security.md), el procedimiento de recuperación en [Rollback.md](./Rollback.md) y el plan por fases en [roadmap.md](./roadmap.md).
+Contrato arquitectónico: [ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md](./ARCHITECTURE_NODE_CLOUDFLARE_RULES_ALL.md). Controles de seguridad: [Security.md](./Security.md). Decisión de transferencias: [ADR-001-direct-r2-transfers.md](./ADR-001-direct-r2-transfers.md). Migraciones: [migrations/manifest.md](./migrations/manifest.md).
 
-## Operación, rollback y recuperación
+## Operación de producción y recuperación
 
-El procedimiento de producción (sin entorno staging), la compatibilidad D1/R2, el runbook de rollback del Worker y el registro de incidentes están en [Rollback.md](./Rollback.md). La Fase 9 del [roadmap](./roadmap.md) añade verificaciones posteriores al despliegue para frontend, health, configuración de autenticación y cabeceras de seguridad.
+No hay staging. El comando oficial de despliegue es `pnpm run deploy`; ejecuta preflight, verificaciones, auditorías/build, migraciones remotas, verificación del esquema, despliegue del Worker y `pnpm run verify:production`. No se debe sustituir por un `wrangler deploy` aislado que omita el flujo aprobado.
 
-**El rollback y la restauración de D1 aún no están certificados mediante una ejecución real.** El comando `pnpm run deploy` aplica migraciones remotas antes de publicar el Worker y verifica el frontend, `/api/health`, `/api/auth/config` y las cabeceras requeridas. Revertir el Worker no deshace migraciones D1 ni restaura objetos R2. No ejecutar un rollback de producción sin identificar el deployment objetivo y comprobar compatibilidad del esquema.
+La verificación postdespliegue comprueba HTML, `/api/health`, `/api/auth/config`, cabeceras de seguridad y `Cache-Control: no-store` en las rutas API inspeccionadas.
 
-## Estado de seguridad y certificación
+**Recuperación D1:** Cloudflare D1 no muestra necesariamente una sección llamada “Backups”. Para bases que usan el almacenamiento `production`, el mecanismo es Time Travel: se activa automáticamente, mantiene bookmarks y permite recuperación punto en el tiempo dentro de la ventana del plan (7 días Workers Free / 30 días Workers Paid según la documentación de Cloudflare). Bases legacy `alpha` usan el mecanismo antiguo. La versión real de `vega_drive_db` y su bookmark todavía deben verificarse con los comandos de solo lectura documentados en [Rollback.md](./Rollback.md); no se afirma que ya se haya verificado. Restaurar es destructivo y requiere autorización explícita, evaluación de pérdida de escrituras y un plan operativo.
 
-Las reglas obligatorias, los headers esperados para Workers/Hono y la matriz de regresión están en [Security.md](./Security.md). El roadmap detalla el trabajo de certificación en la [Fase 8](./roadmap.md#fase-8--endurecimiento-y-pruebas-de-seguridad).
-
-**La certificación global de seguridad permanece pendiente.** Un build correcto, la verificación de esquema D1 y una respuesta HTTP 200 de `/api/health` son señales útiles de despliegue, pero no prueban por sí solas autenticación, autorización, aislamiento entre cuentas ni todos los flujos. Las validaciones operativas de R2 de la Fase 4 se registraron como completadas el 2026-10-12; esto no equivale a la certificación transversal de la Fase 8.
-
-La autenticación y la resolución de sesión de `identity` están implementadas y probadas. El catálogo de `files` se consume desde Mi unidad y Papelera mediante rutas HTTP privadas sobre `FilesGateway`; el actor se obtiene de la sesión validada. El código de transferencia física con R2 está implementado y sus validaciones operativas están registradas en [FILES_PHASE_4.md](./FILES_PHASE_4.md). En Fase 5 siguen pendientes recientes, favoritos, búsqueda y evidencia E2E de integración de la interfaz. `/api/health` es una comprobación de liveness, no prueba que D1 o R2 estén operativos.
-
-## Flujo de archivos previsto
-
-1. El frontend envía el archivo a `POST /api/files`.
-2. El BFF valida la petición y la sesión y llama a `FilesGateway`.
-3. El módulo `files` valida autorización, cuota, nombre y tamaño.
-4. El adaptador privado transmite el objeto a R2.
-5. El módulo registra los metadatos y devuelve un resultado seguro.
-
-Las descargas se realizan por `GET /api/files/:id/download`, tras autorizar el recurso. Según la configuración de transferencias, el Worker transmite el contenido o responde con una redirección a una URL temporal firmada para R2. La ruta frontend de descarga y la integración de transferencia forman parte de la verificación E2E de Fase 5.
-
-## Estructura
-
-- `src/worker`: entrada del Worker.
-- `src/bff`: Hono y composition root.
-- `src/modules/identity`, `files`, `quota` y `sharing`: límites y APIs públicas de módulos.
-- `src/modules/identity/application/ports` y `src/modules/files/application/ports`: contratos de repositorios sin dependencias de Cloudflare.
-- `src/modules/{identity,files}/infrastructure/persistence/d1`: adaptadores y migraciones D1 propietarios del módulo.
-- `src/platform`: infraestructura técnica compartida.
-- `src/shared-kernel`: abstracciones compartidas mínimas.
-- `public`: assets estáticos.
-- `tests`: pruebas de salud, configuración, migraciones, repositorios y arquitectura.
-
-El módulo `identity` ya implementa registro/login, logout, resolución de sesión y cambio de contraseña mediante sus APIs reales. El módulo `files` implementa el catálogo de metadatos y su persistencia D1, así como las operaciones de transferencia con R2. La interfaz ya expone controles de subida en Mi unidad; la cobertura visual, accesible y E2E de extremo a extremo continúa en la Fase 5.
-
-## Servicios Cloudflare
-
-- Backend, BFF y assets: Cloudflare Workers.
-- Metadatos, usuarios y sesiones: D1 mediante `VEGA_DRIVE_DB`.
-- Archivos: R2 privado mediante `FILES_BUCKET`.
-- Anti-bots: Turnstile integrado en registro/login; configuración de producción y aceptación de tokens válidos e inválidos confirmadas el 2026-10-10.
-
-El esquema de D1 para `identity` y `files` está versionado en migraciones independientes por módulo y se comprueba con `pnpm run db:verify:schema:local` o `pnpm run db:verify:schema:production`. La existencia de un binding, por sí sola, no prueba que el esquema real coincida con las migraciones ni que el bucket R2 sea privado. Verifica en Cloudflare que R2 no tenga acceso público, dominio público, `r2.dev` ni CORS de navegador.
+**No se ha ejecutado rollback real ni restauración de D1 como parte de la Fase 9.** Revertir el Worker no revierte migraciones D1 ni recupera objetos R2. El estado de certificación y los pendientes están en [Rollback.md](./Rollback.md) y en la Fase 9 del [roadmap](./roadmap.md).
 
 ## Desarrollo
 
-Requisitos: Node.js 22.13+ y pnpm 10.18.3. La suite de aislamiento usa `node:sqlite`, disponible sin bandera experimental desde Node 22.13.
+Requisitos: Node.js `22.23.5` o superior y pnpm `11.28.13` (versión fijada en `package.json`).
 
 ```bash
 pnpm install --frozen-lockfile
@@ -74,39 +48,35 @@ pnpm run dev
 pnpm run check
 ```
 
-No guardes secretos en Git ni en `wrangler.toml`. Configura secretos de Worker mediante Wrangler, por ejemplo:
+No guardes secretos en Git, `.env` versionados ni `wrangler.toml`. Los secretos del Worker se administran mediante Wrangler/Cloudflare Secrets. La clave de sitio de Turnstile es pública; la clave secreta solo existe en el entorno del Worker.
+
+## CI, verificaciones y despliegue
+
+- GitHub Actions valida los PR sobre su merge ref sintético y también los pushes a ramas, `main` y `merge_group`.
+- Los checks incluyen formato sin autoescritura, verificación de arquitectura/tipos/pruebas y escaneo de secretos.
+- El job agregado requerido se llama exactamente **`Required checks`**. Para bloquear merges con CI rojo, la protección de `main` debe exigir ese check; la configuración de branch protection/ruleset debe verificarse en GitHub y no se presume activa solo porque el workflow exista.
+- `pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas.
+- `pnpm run cloudflare:build` ejecuta preflight, checks, build/auditorías y Wrangler dry-run.
+- `pnpm run deploy` es el flujo completo de publicación de producción; incluye migraciones D1 remotas y por ello es una operación de producción, no un comando de CI local.
+- `pnpm run db:verify:schema:local` verifica D1 local. Los comandos con sufijo `:production` o `--remote` consultan/modifican producción y requieren autorización operativa.
+
+### Comandos D1 de consulta
 
 ```bash
-pnpm exec wrangler secret put TURNSTILE_SECRET_KEY
+pnpm exec wrangler d1 info vega_drive_db
+pnpm exec wrangler d1 time-travel info vega_drive_db
+pnpm run db:migration:list
 ```
 
-La clave de sitio de Turnstile es pública; la clave secreta nunca debe incluirse en el frontend ni en archivos versionados.
+Los dos primeros permiten comprobar versión del almacenamiento y bookmark actual de Time Travel. No ejecutar `wrangler d1 time-travel restore` durante una comprobación: restaura la base in-place y sobrescribe datos.
 
-## Comprobaciones, migraciones y CI
+## Fases
 
-`pnpm run check` ejecuta formato, guardia arquitectónica, TypeScript y pruebas. `pnpm run cloudflare:build` ejecuta primero `pnpm run deploy:preflight`, después todas las comprobaciones y finalmente `pnpm audit --audit-level=high`; debe usarse como comando de build de Cloudflare Workers Builds, junto con la instalación reproducible `pnpm install --frozen-lockfile`.
-
-`pnpm run deploy:preflight` comprueba la configuración de Cloudflare, la propiedad y ubicación de cada migración con `scripts/check-module-migrations.mjs`, y las fronteras entre módulos con `scripts/architecture-check.mjs`. Si falla cualquiera de las guardias, termina antes de consultar o mutar la D1 remota. El comando `pnpm run deploy` ejecuta explícitamente ese gate antes de `db:migrate:production`; no uses `pnpm exec wrangler deploy` como comando de publicación.
-
-El comando de despliegue de producción de Cloudflare Workers Builds debe ser **`pnpm run deploy`**, no `pnpm exec wrangler deploy`. El script ejecuta, en orden:
-
-0. `pnpm run deploy:preflight` valida los bindings, la ubicación y prefijos de tablas/índices de las migraciones y las reglas arquitectónicas. Cualquier infracción bloquea los pasos remotos posteriores.
-1. `wrangler d1 migrations apply vega_drive_db --remote` para aplicar migraciones pendientes.
-2. `wrangler d1 migrations list vega_drive_db --remote` para comprobar el historial registrado.
-3. `scripts/verify-d1-schema.mjs` inspecciona `sqlite_schema` en la D1 remota y compara tablas e índices con las definiciones SQL versionadas; detecta objetos ausentes, definiciones incompatibles y objetos inesperados. Si hay diferencias, termina con error y bloquea el despliegue.
-4. `wrangler deploy` publica el Worker solo si los pasos anteriores terminan correctamente.
-5. `pnpm run verify:production` comprueba que `/api/health` responde con HTTP 200 y el JSON esperado.
-
-Las migraciones activas viven junto a su módulo en `src/modules/<módulo>/infrastructure/persistence/d1/migrations/`. Wrangler descubre `src/modules/*/infrastructure/persistence/d1/migrations/*.sql`; `migrations/manifest.md` documenta el orden de aplicación y cada módulo mantiene su propia numeración. `migrations/0001_initial_schema.sql` se conserva intacta como migración histórica conjunta, pero queda fuera del patrón activo.
-
-`pnpm run db:migrate:local` aplica las migraciones modulares al D1 local y `pnpm run db:verify:schema:local` compara el esquema local con `sqlite_schema` sin usar producción. `pnpm run db:verify:schema:production` consulta explícitamente la D1 remota. La verificación estructural compara las definiciones SQL de las migraciones activas con `sqlite_schema`; por seguridad, si se añade una migración con `ALTER`, `DROP` u otro DDL no admitido por el verificador, el despliegue se detendrá hasta actualizar el verificador para modelar el esquema final esperado. Las tablas o índices creados manualmente también se reportan como inesperados y requieren reconciliación intencional. La comprobación no sustituye pruebas funcionales de la aplicación ni valida datos de negocio.
-
-GitHub Actions ejecuta las comprobaciones complementarias y Gitleaks; la ejecución del commit `23329baa646e38ecc816620c68eef8f861ae49b5` terminó correctamente, con 4 archivos/12 tests aprobados y sin secretos detectados. Cloudflare Workers Builds también ejecutó correctamente `pnpm run cloudflare:build` y `pnpm run deploy` el 2026-10-10, incluidas migraciones, verificación estructural D1 y smoke check de producción. Son ejecuciones separadas; no se asume que el commit de CI y el artefacto desplegado sean el mismo commit porque el log de despliegue aportado no incluye el SHA del commit.
-
-## Estado de Fase 0 y preparación para producción
-
-**Fase 0: CERRADA (2026-10-10), dentro de su alcance fundacional.** El contrato, el esqueleto del Worker, los bindings base, el build, las pruebas, CI y el despliegue están verificados. Los pendientes operativos que dependen de funciones aún no implementadas se asignan a las fases que las incorporan; no bloquean el cierre de Fase 0. Evidencia del 2026-10-10: Cloudflare completó `pnpm run cloudflare:build` y `pnpm run deploy`; los 4 archivos de pruebas (12 tests), el typecheck, el control arquitectónico y `pnpm audit --audit-level=high` pasaron. D1 no tenía migraciones pendientes y la verificación remota confirmó 17 tablas/índices. La versión Worker desplegada más reciente registrada a las 07:13 UTC fue `a6bb5609-9afd-4566-b298-d0b3178c5698`, y `/api/health` respondió HTTP 200. GitHub Actions para el commit `23329baa646e38ecc816620c68eef8f861ae49b5` quedó verde (29 s), con 4 archivos/12 tests aprobados y Gitleaks sin fugas detectadas. El usuario confirmó en el panel que el bucket R2 es privado.
-
-Las verificaciones operativas de privacidad, CORS, permisos mínimos y transferencias reales de R2 quedaron registradas como completadas en la Fase 4 el 2026-10-12, según confirmación del propietario. Turnstile y su secreto quedaron configurados y validados durante la Fase 2. No se deben inferir ajustes de Cloudflare únicamente de un binding o de un escaneo de repositorio; consulta [FILES_PHASE_4.md](./FILES_PHASE_4.md) para el estado de cierre registrado. La certificación global de seguridad sigue pendiente.
-
-El despliegue por sí solo no certifica que Vega Drive esté lista para todos los escenarios de producción. Registro/login, sesiones, cambio de contraseña y Turnstile están implementados; Mi unidad y Papelera consumen el catálogo HTTP autenticado; las transferencias físicas con R2 están implementadas y las validaciones operativas de Fase 4 están registradas como completadas. Siguen pendientes recientes/favoritos/búsqueda, el cierre de presentación y accesibilidad, la evidencia de assets/cabeceras/operación y la verificación E2E de la integración frontend-transferencias. La certificación global de seguridad y el rollback siguen pendientes según [Security.md](./Security.md) y [Rollback.md](./Rollback.md).
+| Fase | Alcance                                                              | Estado                                                    |
+| ---- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| 0–5  | Fundamentos, módulos base, transferencias e integración frontend/BFF | Cerradas                                                  |
+| 6    | Cuotas                                                               | Pendiente; se abordará al final                           |
+| 7    | Compartición segura                                                  | Cerrada                                                   |
+| 8    | Endurecimiento y certificación de seguridad                          | Cerrada según evidencias del proyecto                     |
+| 9    | Operación, postchecks y recuperación sin staging                     | Implementación cerrada; certificación operativa pendiente |
+| 10   | Mejoras futuras y posible extracción                                 | Futuro, sin alcance comprometido                          |
