@@ -13,10 +13,13 @@ import { ToastProvider } from "./ui/ToastProvider";
 function Routes() {
   const route = useRoute();
   const auth = useAuth();
-  const layout = routeMeta(route).layout;\n  const isAuthRoute = layout === "auth";\n  const isPublicRoute = layout === "public";
+  const layout = routeMeta(route).layout;
+  const isAuthRoute = layout === "auth";
+  const isPublicRoute = layout === "public";
   useEffect(() => {
     if (
-      !isAuthRoute &&\n      !isPublicRoute &&
+      !isAuthRoute &&
+      !isPublicRoute &&
       (auth.status === "anonymous" || auth.status === "unavailable")
     ) {
       navigate({ name: "login" });
@@ -25,7 +28,8 @@ function Routes() {
     }
   }, [auth.status, isAuthRoute, isPublicRoute]);
 
-  if (isAuthRoute) return <AuthLayout route={route} />;\n  if (isPublicRoute) return renderScreen(route);
+  if (isAuthRoute) return <AuthLayout route={route} />;
+  if (isPublicRoute) return renderScreen(route);
   if (auth.status === "loading")
     return (
       <div className="vd-auth__loading" role="status">
