@@ -34,8 +34,8 @@ export function FilePreviewContent({
           <p>{error}</p>
           {needsCors ? (
             <p>
-              Para texto y Office, comprueba la política CORS del bucket R2.
-              También puedes abrir el original o descargar el archivo.
+              No se pudo leer el contenido con tu sesión actual. Reintenta la
+              vista previa o descarga el archivo.
             </p>
           ) : (
             <p>

@@ -16,6 +16,7 @@ import {
 import { readDocx, readXlsx } from "./office-document-parser";
 import { FilePreviewContent } from "./FilePreviewContent";
 import { previewKind } from "./preview-format";
+import { decodePreviewText } from "./decode-preview-text";
 
 export function FilePreviewDialog({
   file,
@@ -55,9 +56,7 @@ export function FilePreviewDialog({
           const buffer = await fetchPreviewBytes(result.url, controller.signal);
           if (cancelled) return;
           if (kind === "text") {
-            setText(
-              new TextDecoder("utf-8").decode(buffer).replace(/^\uFEFF/, ""),
-            );
+            setText(decodePreviewText(buffer));
           } else if (kind === "docx") {
             setText(await readDocx(buffer));
           } else if (kind === "xlsx") {
