@@ -16,3 +16,10 @@ CREATE INDEX IF NOT EXISTS sharing_links_owner_created_idx
 CREATE INDEX IF NOT EXISTS sharing_links_expiry_idx
   ON sharing_links (expires_at)
   WHERE revoked_at IS NULL;
+
+-- Fixed-window attempts prevent password guessing without retaining IP addresses.
+CREATE TABLE IF NOT EXISTS sharing_password_attempts (
+  token_hash TEXT PRIMARY KEY NOT NULL,
+  window_start TEXT NOT NULL,
+  attempts INTEGER NOT NULL CHECK (attempts >= 1 AND attempts <= 10)
+);
