@@ -33,6 +33,7 @@ function setup(
   options: {
     session?: IdentitySessionRecord | null;
     user?: IdentityUserRecord | null;
+    touchResult?: boolean;
   } = {},
 ) {
   const sessions: IdentitySessionRepository = {
@@ -42,7 +43,7 @@ function setup(
     insert: vi.fn(async () => undefined),
     revokeForUser: vi.fn(async () => true),
     revokeOtherSessions: vi.fn(async () => undefined),
-    touch: vi.fn(async () => undefined),
+    touch: vi.fn(async () => options.touchResult ?? true),
   };
   const users: IdentityUserRepository = {
     findById: vi.fn(async () =>
@@ -70,7 +71,9 @@ describe("identity session resolution", () => {
     );
     expect(deps.sessions.touch).toHaveBeenCalledWith(
       "session-a",
+      "user-a",
       now.toISOString(),
+      new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
     );
   });
 
@@ -119,4 +122,10 @@ describe("identity session resolution", () => {
     await expect(disabled.resolve(token)).resolves.toBeNull();
     expect(disabled.sessions.revokeForUser).toHaveBeenCalled();
   });
+  it("rejects a session when the atomic refresh detects concurrent revocation", async () => {
+    const deps = setup({ touchResult: false });
+    await expect(deps.resolve(token)).resolves.toBeNull();
+    expect(deps.sessions.touch).toHaveBeenCalled();
+  });
+
 });
