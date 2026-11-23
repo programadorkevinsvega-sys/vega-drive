@@ -1050,5 +1050,4 @@ describe("files catalog HTTP routes", () => {
       expect(shapeResponse.status).toBe(400);
     }
   });
-
 });

@@ -15,9 +15,15 @@ describe("cabeceras de seguridad para documentos privados", () => {
   it("autoriza exclusivamente los recursos necesarios para la aplicación y Turnstile", () => {
     const policy = SECURITY_HEADERS["Content-Security-Policy"];
     expect(policy).toContain("default-src 'self'");
-    expect(policy).toContain("script-src 'self' https://challenges.cloudflare.com");
-    expect(policy).toContain("connect-src 'self' https://challenges.cloudflare.com");
-    expect(policy).toContain("frame-src 'self' https://challenges.cloudflare.com");
+    expect(policy).toContain(
+      "script-src 'self' https://challenges.cloudflare.com",
+    );
+    expect(policy).toContain(
+      "connect-src 'self' https://challenges.cloudflare.com",
+    );
+    expect(policy).toContain(
+      "frame-src 'self' https://challenges.cloudflare.com",
+    );
     expect(policy).toContain("form-action 'self'");
     expect(policy).not.toContain("unsafe-inline");
     expect(policy).not.toContain("unsafe-eval");
@@ -29,7 +35,9 @@ describe("cabeceras de seguridad para documentos privados", () => {
     expect(SECURITY_HEADERS["Permissions-Policy"]).toContain("microphone=()");
     expect(SECURITY_HEADERS["Permissions-Policy"]).toContain("geolocation=()");
     expect(SECURITY_HEADERS["Cross-Origin-Opener-Policy"]).toBe("same-origin");
-    expect(SECURITY_HEADERS["Cross-Origin-Resource-Policy"]).toBe("same-origin");
+    expect(SECURITY_HEADERS["Cross-Origin-Resource-Policy"]).toBe(
+      "same-origin",
+    );
     expect(SECURITY_HEADERS["X-DNS-Prefetch-Control"]).toBe("off");
   });
 

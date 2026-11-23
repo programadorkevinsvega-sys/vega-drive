@@ -127,5 +127,4 @@ describe("identity session resolution", () => {
     await expect(deps.resolve(token)).resolves.toBeNull();
     expect(deps.sessions.touch).toHaveBeenCalled();
   });
-
 });

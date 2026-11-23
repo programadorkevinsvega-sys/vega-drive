@@ -128,5 +128,4 @@ describe("AuthenticatedActor middleware", () => {
       error: "Authentication required",
     });
   });
-
 });

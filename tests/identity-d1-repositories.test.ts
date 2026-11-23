@@ -112,5 +112,4 @@ describe("identity D1 repositories", () => {
       current,
     ]);
   });
-
 });

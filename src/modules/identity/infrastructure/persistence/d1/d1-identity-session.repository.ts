@@ -80,14 +80,7 @@ export class D1IdentitySessionRepository implements IdentitySessionRepository {
           "AND expires_at > ? AND last_seen_at > ? AND last_seen_at <= ? " +
           "AND EXISTS (SELECT 1 FROM identity_users WHERE identity_users.id = identity_sessions.user_id AND disabled_at IS NULL)",
       )
-      .bind(
-        lastSeenAt,
-        sessionId,
-        userId,
-        lastSeenAt,
-        idleCutoff,
-        lastSeenAt,
-      )
+      .bind(lastSeenAt, sessionId, userId, lastSeenAt, idleCutoff, lastSeenAt)
       .run();
     return result.meta.changes > 0;
   }
