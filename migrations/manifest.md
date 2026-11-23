@@ -29,7 +29,11 @@ Wrangler ordena las rutas de forma lexicográfica. El orden actual es:
    - Migración: `files/infrastructure/persistence/d1/migrations/0005_files_recent_activity.sql`.
    - Tabla e índice: `files_recent_activity` y `files_recent_owner_activity_idx`; registran por propietario la última apertura o descarga de cada elemento del catálogo.
 
-6. **Propietario: `identity`**
+6. **Propietario: `files`**
+   - Migración: `files/infrastructure/persistence/d1/migrations/0006_files_favorites.sql`.
+   - Tabla e índice: `files_favorites` y `files_favorites_owner_time_idx`; registran por propietario los archivos marcados como favoritos, sin claves foráneas entre módulos.
+
+8. **Propietario: `identity`**
    - Migración: `identity/infrastructure/persistence/d1/migrations/0001_identity_initial.sql`.
    - Tablas: `identity_users`, `identity_sessions`, `identity_invites` e `identity_outbox`.
 
