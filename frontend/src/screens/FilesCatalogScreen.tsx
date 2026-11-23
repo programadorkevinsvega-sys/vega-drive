@@ -15,6 +15,7 @@ import { FilePreviewDialog } from "./FilePreviewDialog";
 import type { FilesFileView } from "../services/files-contract";
 import { addFavorite } from "../services/files-service";
 import { CatalogFavoriteError } from "./CatalogFavoriteError";
+import { CatalogDescription } from "./CatalogDescription";
 
 export interface FilesCatalogScreenProps {
   view: CatalogView;
@@ -42,11 +43,7 @@ export function FilesCatalogScreen({
       <header className="vd-catalog__heading">
         <div className="vd-catalog__heading-copy">
           <h1 className="vd-page__title">{data.title}</h1>
-          <p className="vd-catalog__description">
-            {view === "trash"
-              ? "Se eliminan automáticamente a los 30 días y siguen ocupando espacio mientras estén aquí."
-              : "Carpetas y metadatos sincronizados con tu catálogo privado."}
-          </p>
+          <CatalogDescription view={view} />
         </div>
         {view === "trash" && data.nodes.length > 0 ? (
           <div className="vd-catalog__heading-actions">
