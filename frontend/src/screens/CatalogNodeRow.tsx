@@ -19,7 +19,7 @@ interface CatalogNodeRowProps {
   onMove: (node: FilesCatalogNode) => void;
   onDelete: (node: FilesCatalogNode) => void;
   onPermanentDelete: (node: FilesCatalogNode) => void;
-  onRestore: (node: FilesCatalogNode) => void;
+  onRestore: (node: FilesCatalogNode) => void;\n  onFavorite: (node: Extract<FilesCatalogNode, { type: "file" }>) => void;
 }
 
 function formattedSize(size: number): string {
