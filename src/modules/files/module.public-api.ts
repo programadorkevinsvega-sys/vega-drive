@@ -193,7 +193,6 @@ export interface FilesModuleDependencies {
   transferEvents?: FilesTransferEventRepository;
   recentActivity?: FilesRecentActivityRepository;
   favorites?: FilesFavoritesRepository;
-  favorites?: FilesFavoritesRepository;
   multipartUploads?: FilesMultipartUploadRepository;
   storage?: IFileStoragePort;
   ready?: boolean;
