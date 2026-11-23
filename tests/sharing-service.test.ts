@@ -40,6 +40,7 @@ class MemorySharingRepository implements SharingRepository {
 }
 const fixedNow = new Date("2026-11-22T12:00:00.000Z");
 function fixture() {
+  let currentNow = new Date(fixedNow);
   const repository = new MemorySharingRepository();
   const downloadFile = vi
     .fn()
@@ -64,10 +65,16 @@ function fixture() {
   const service = createSharingService({
     repository,
     files: { downloadFile, getFileMetadata },
-    now: () => new Date(fixedNow),
+    now: () => new Date(currentNow),
     createId: () => "share-a",
   });
-  return { repository, downloadFile, getFileMetadata, service };
+  return {
+    repository,
+    downloadFile,
+    getFileMetadata,
+    service,
+    setNow: (value: Date) => { currentNow = value; },
+  };
 }
 describe("sharing service security", () => {
   it("creates an opaque 256-bit read-only link and persists only its hash", async () => {
@@ -109,7 +116,7 @@ describe("sharing service security", () => {
     expect(downloadFile).toHaveBeenCalledOnce();
   });
 
-  it("rejects revoked and expired tokens without asking Files to access storage", async () => {
+  it("rejects revoked tokens without asking Files to access storage", async () => {
     const { service, downloadFile } = fixture();
     const created = await service.create({ userId: "owner-a" }, "file-a", 3600);
     expect(created.ok).toBe(true);
@@ -123,6 +130,18 @@ describe("sharing service security", () => {
       service.download(created.value.token, null),
     ).resolves.toMatchObject({ ok: false, reason: "not-found" });
     expect(downloadFile).toHaveBeenCalledOnce();
+  });
+
+  it("rejects expired links before calling the Files module", async () => {
+    const { service, downloadFile, setNow } = fixture();
+    const created = await service.create({ userId: "owner-a" }, "file-a", 3600);
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    setNow(new Date(fixedNow.getTime() + 3601000));
+    await expect(
+      service.download(created.value.token, null),
+    ).resolves.toMatchObject({ ok: false, reason: "not-found" });
+    expect(downloadFile).not.toHaveBeenCalled();
   });
 
   it("does not create links for files that Files cannot resolve for the owner", async () => {
