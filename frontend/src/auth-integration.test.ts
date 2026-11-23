@@ -30,11 +30,16 @@ describe("integración de identidad en la interfaz", () => {
     expect(headers).toContain(
       "script-src 'self' https://challenges.cloudflare.com",
     );
-    expect(headers).toContain("frame-src https://challenges.cloudflare.com");
     expect(headers).toContain(
-      "connect-src 'self' https://challenges.cloudflare.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://*.r2." +
+        "cloudflarestorage.com",
+    );
+    expect(headers).toContain(
+      "connect-src 'self' https://challenges.cloudflare.com https://*.r2." +
+        "cloudflarestorage.com",
     );
     expect(headers).toContain("object-src 'none'");
-    expect(headers).toContain("frame-ancestors 'none'");
+    expect(headers).toContain("frame-ancestors 'self'");
+    expect(headers).not.toContain("frame-ancestors 'none'");
   });
 });
