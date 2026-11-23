@@ -25,6 +25,8 @@ export function routeMeta(route: Route): RouteMeta {
       return { title: "Búsqueda", layout: "shell" };
     case "settings":
       return { title: "Ajustes", layout: "shell" };
+    case "share":
+      return { title: "Archivo compartido", layout: "public" };
     case "not-found":
       return { title: "Página no encontrada", layout: "shell" };
   }
