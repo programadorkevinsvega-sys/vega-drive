@@ -61,6 +61,8 @@ export class InProcessFilesGateway implements FilesGateway {
     return this.api.status();
   }
 
+  getFileMetadata(...args: Parameters<FilesPublicApi["getFileMetadata"]>) { return this.api.getFileMetadata(...args); }
+
   createFolder(...args: Parameters<FilesPublicApi["createFolder"]>) {
     return this.api.createFolder(...args);
   }
