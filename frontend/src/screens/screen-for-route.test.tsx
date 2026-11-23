@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PasswordSettingsScreen } from "./PasswordSettingsScreen";
-import { FilesCatalogScreen } from "./FilesCatalogScreen";\nimport { FavoritesScreen } from "./FavoritesScreen";
+import { FilesCatalogScreen } from "./FilesCatalogScreen";
+import { FavoritesScreen } from "./FavoritesScreen";
 import { renderScreen } from "./screen-for-route";
 
 describe("pantallas conectadas al Worker", () => {
@@ -25,7 +26,11 @@ describe("pantallas conectadas al Worker", () => {
   });
 });
 
-it("conecta Favoritos a la pantalla real", () => {\n    expect(renderScreen({ name: "favorites" })).toMatchObject({ type: FavoritesScreen });\n  });\n\ndescribe("pantalla de ajustes", () => {
+it("conecta Favoritos a la pantalla real", () => {
+    expect(renderScreen({ name: "favorites" })).toMatchObject({ type: FavoritesScreen });
+  });
+
+describe("pantalla de ajustes", () => {
   it("usa el formulario real de seguridad de la cuenta", () => {
     expect(renderScreen({ name: "settings" })).toMatchObject({
       type: PasswordSettingsScreen,
