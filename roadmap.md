@@ -347,17 +347,22 @@ Esta fase no se considera completada por tener un Worker desplegado o un endpoin
 
 **Aceptación de la fase:** pruebas aplicables aprobadas en el commit candidato, evidencias registradas sin datos sensibles, excepciones justificadas y ninguna vulnerabilidad crítica/alta abierta. Los flujos aún no implementados quedan identificados como pendientes; no se declaran aprobados por no poder probarlos.
 
-## Fase 9 — Despliegue, operación y rollback
+## Fase 9 — Operación de producción y rollback (sin staging)
 
-- [ ] Separar staging y producción por configuración, con Worker, D1, bucket R2 y secretos aislados por entorno.
-- [ ] Configurar dominio/HTTPS, controles de Cloudflare, alertas y backups de D1; documentar y ensayar restauración.
-- [ ] Emitir logs estructurados sin secretos ni datos sensibles y documentar rotación de secretos e incidentes.
-- [ ] Documentar el deployment estable anterior, comprobar compatibilidad del esquema D1 y seguir [Rollback.md](./Rollback.md) para rollback de Worker.
-- [ ] Validar en staging un ciclo release candidate → migración compatible → Worker → smoke/E2E → rollback controlado.
-- [ ] Demostrar que el rollback del Worker no depende de revertir migraciones ni borrar objetos R2; revisar consistencia D1/R2.
-- [ ] Configurar Queues/DLQ y pruebas de compatibilidad solo si el producto incorpora procesamiento asíncrono.
-- [ ] Implementar y probar endpoints `/api/health/live` y `/api/health/ready` solo si se necesitan; hasta entonces, documentar que la verificación actual usa `/api/health`.
-- **Aceptación:** staging aislado; despliegue y rollback ejecutados con evidencia; restauración de D1 ensayada; salud, smoke/E2E, logs y métricas revisados. Rollback no se declara completo por una reversión del Worker únicamente.
+**Alcance acordado:** el proyecto no dispone de staging y esta fase no crea ni presupone ese entorno. Los tests locales/CI no se describen como un ensayo en producción.
+
+- [x] Documentar el procedimiento de release de producción con CI verde, preflight, migraciones, verificación del esquema, despliegue y comprobación posterior.
+- [x] Ampliar verify:production para comprobar frontend HTML, endpoint de salud, configuración de autenticación y cabeceras de seguridad/no-store en las rutas inspeccionadas.
+- [x] Documentar rollback del Worker con identificación explícita del deployment/SHA, comprobación de compatibilidad D1/R2, aprobación del propietario y verificación posterior.
+- [x] Documentar por separado recuperación D1, compatibilidad backward, expansión/contracción y prohibición de borrar objetos R2 automáticamente.
+- [x] Documentar observabilidad, gestión de secretos, registro privado de releases/incidentes y checklist operativo.
+- [x] Identificar Queues/DLQ como no aplicables: no hay binding declarado.
+- [ ] Confirmar en Cloudflare la retención y disponibilidad de backups D1 y quién puede restaurarlos.
+- [ ] Confirmar el historial de deployments, acceso a logs y política de alertas disponible en el plan/configuración real.
+- [ ] Ejecutar, con autorización explícita, un rollback controlado del Worker en producción y registrar su evidencia; no hacerlo durante CI ni como parte de este PR.
+- [ ] Ensayar/restaurar D1 solo con un procedimiento aprobado y una evaluación explícita de pérdida de escrituras; no asumir que rollback de Worker revierte datos.
+- **Aceptación de implementación:** runbook coherente con la infraestructura real, comprobaciones automáticas posteriores al deploy y CI verde.
+- **Aceptación operativa:** pendiente hasta verificar backups/logs/historial en Cloudflare y conservar evidencia de un rollback/restauración autorizados. No se marca como certificado por documentación o tests simulados.
 - 🔒 SEC-WEB-03, SEC-RATE-04, SEC-LOG-01…03.
 
 ## Fase 10 — Mejoras y extracción futura
