@@ -193,6 +193,38 @@ async function listTrash(c: Context<AuthenticatedEnv>) {
 filesRoutes.get("/", listFolder);
 filesRoutes.get("", listFolder);
 filesRoutes.get("/trash", listTrash);
+filesRoutes.get("/favorites", async (c) => {
+  const query = queryRecord(c.req.raw, ["limit", "cursor"]);
+  if (!query) return c.json(REQUEST_ERROR, 400);
+  const input: Record<string, unknown> = {};
+  if (Object.hasOwn(query, "limit")) input.limit = query.limit;
+  if (Object.hasOwn(query, "cursor")) input.cursor = query.cursor;
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.listFavorites(actorFor(c), input),
+  );
+});
+
+filesRoutes.post("/items/:id/favorite", async (c) => {
+  const rejected = mutationRejection(c);
+  if (rejected) return rejected;
+  if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.addFavorite(actorFor(c), c.req.param("id")),
+  );
+});
+
+filesRoutes.delete("/items/:id/favorite", async (c) => {
+  const rejected = mutationRejection(c);
+  if (rejected) return rejected;
+  if (await requestHasBody(c.req.raw)) return c.json(REQUEST_ERROR, 400);
+  return catalogResponse(
+    c,
+    await createCompositionRoot(c.env).files.removeFavorite(actorFor(c), c.req.param("id")),
+  );
+});
+
 filesRoutes.get("/recent", async (c) => {
   const query = queryRecord(c.req.raw, ["limit", "cursor"]);
   if (!query) return c.json(REQUEST_ERROR, 400);
