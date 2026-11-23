@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "../ui/Button";
-import { Icon } from "../ui/Icon";
+import { Icon } from "../ui/Icon";\nimport { TextField } from "../ui/TextField";
 import type { Route } from "../router/routes";
 
 export function ShareAccessScreen({ token }: Extract<Route, { name: "share" }>) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState("");\n  const [password, setPassword] = useState("");
   async function download() {
     if (loading) return;
     setLoading(true); setError("");
@@ -15,7 +15,7 @@ export function ShareAccessScreen({ token }: Extract<Route, { name: "share" }>) 
         credentials: "same-origin",
         cache: "no-store",
         headers: { "Content-Type": "application/json", Accept: "application/octet-stream" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, ...(password ? { password } : {}) }),
       });
       if (!response.ok) {
         setError(response.status === 404 ? "Este enlace no existe, venció o fue revocado." : "No se pudo acceder al archivo. Inténtalo de nuevo.");
@@ -38,7 +38,7 @@ export function ShareAccessScreen({ token }: Extract<Route, { name: "share" }>) 
       <span className="vd-share-access__icon"><Icon name="file" size="lg" /></span>
       <h1 className="vd-page__title">Archivo compartido</h1>
       <p>Este enlace permite descargar un único archivo. No concede acceso a otras carpetas ni archivos.</p>
-      <Button icon="file" loading={loading} onClick={() => void download()}>Descargar archivo</Button>
+      <TextField label="Contraseña (si fue solicitada)" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />\n      <Button icon="file" loading={loading} onClick={() => void download()}>Descargar archivo</Button>
       {error ? <p className="vd-catalog__form-error" role="alert">{error}</p> : null}
       <p className="vd-share-access__privacy">El enlace puede dejar de funcionar si vence o si su propietario lo revoca.</p>
     </section>
