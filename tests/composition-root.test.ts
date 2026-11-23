@@ -84,12 +84,7 @@ describe("composition root and module gateways", () => {
         gateway.downloadFile(actor, "file-a", "bytes=0-1", "preview"),
       ).resolves.toMatchObject({ ok: true });
       expect(listFolder).toHaveBeenCalledWith(actor, { folderId: null });
-      expect(downloadFile).toHaveBeenCalledWith(
-        actor,
-        "file-a",
-        "bytes=0-1",
-        "preview",
-      );
+      expect(downloadFile).toHaveBeenCalledWith(actor, "file-a", "bytes=0-1", "preview");
     },
   );
 });
