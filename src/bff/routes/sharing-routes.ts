@@ -13,13 +13,28 @@ function originAllowed(request: Request): boolean {
 async function strictBody(request: Request, allowed: string[]): Promise<Record<string, unknown> | null> {
   if (request.headers.get("Content-Type")?.split(";")[0]?.trim().toLowerCase() !== "application/json") return null;
   const length = request.headers.get("Content-Length");
-  if (length !== null && (!/^\d+$/.test(length) || Number(length) > 4096)) return null;
+  if (length !== null && (!/^\\d+$/.test(length) || Number(length) > 4096)) return null;
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let total = 0;
   try {
-    const body: unknown = await request.json();
-    if (!body || typeof body !== "object" || Array.isArray(body)) return null;
-    const record = body as Record<string, unknown>;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > 4096) { await reader.cancel(); return null; }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const parsed: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const record = parsed as Record<string, unknown>;
     return Object.keys(record).every((key) => allowed.includes(key)) ? record : null;
   } catch { return null; }
+  finally { reader.releaseLock(); }
 }
 function failure(c: Context<AuthenticatedEnv>, reason: string) {
   if (reason === "invalid-input") return c.json(INVALID, 400);
@@ -40,7 +55,7 @@ sharingRoutes.post("/", requireAuthenticatedActor, async (c) => {
   return result.ok ? c.json(result.value, 201) : failure(c, result.reason);
 });
 sharingRoutes.delete("/:id", requireAuthenticatedActor, async (c) => {
-  if (!originAllowed(c.req.raw) || new URL(c.req.url).search) return c.json(INVALID, 400);
+  if (!originAllowed(c.req.raw) || new URL(c.req.url).search || c.req.raw.body !== null) return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.revoke(actor(c), c.req.param("id"));
   return result.ok ? c.json(result.value) : failure(c, result.reason);
 });
@@ -49,6 +64,8 @@ sharingRoutes.post("/access", async (c) => {
   if (!body || typeof body.token !== "string") return c.json(INVALID, 400);
   const result = await createCompositionRoot(c.env).sharing.download(body.token, c.req.header("Range") ?? null, body.password);
   if (!result.ok) {
+    if (result.reason === "password-required") return c.json({ error: "Password required" }, 401, { "Cache-Control": "no-store" });
+    if (result.reason === "rate-limited") return c.json({ error: "Too many attempts" }, 429, { "Cache-Control": "no-store" });
     if (result.reason === "range-not-satisfiable") return c.body(null, 416, { "Content-Range": "bytes */" + (result.totalSizeBytes ?? 0), "Cache-Control": "no-store" });
     return c.json({ error: "This share link is invalid, expired, or revoked" }, 404);
   }
