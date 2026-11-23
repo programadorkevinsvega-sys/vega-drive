@@ -331,7 +331,12 @@ filesTransferRoutes.get("/:id/preview", async (c) => {
     return c.json(REQUEST_ERROR, 400);
   }
   const files = createCompositionRoot(c.env).files;
-  await files.recordRecentActivity(actorFor(c), c.req.param("id"), "open");
+  const activity = await files.recordRecentActivity(
+    actorFor(c),
+    c.req.param("id"),
+    "open",
+  );
+  if (!activity.ok) return transferError(activity.reason);
   return c.json(
     {
       url:
