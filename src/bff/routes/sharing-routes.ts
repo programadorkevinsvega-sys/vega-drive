@@ -135,7 +135,12 @@ sharingRoutes.post("/access", async (c) => {
       });
     }
     if (result.reason === "rate-limited") {
-      return c.json({ error: "Too many attempts" }, 429, {
+      return c.json({ error: "Rate limit reached" }, 429, {
+        "Cache-Control": "no-store",
+      });
+    }
+    if (result.reason === "unavailable") {
+      return c.json({ error: "Shared file temporarily unavailable" }, 503, {
         "Cache-Control": "no-store",
       });
     }
