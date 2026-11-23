@@ -16,10 +16,7 @@ import { CatalogDescription } from "./CatalogDescription";
 import { CatalogBreadcrumbs } from "./CatalogBreadcrumbs";
 import { CatalogFileOverlays } from "./CatalogFileOverlays";
 
-export interface FilesCatalogScreenProps {
-  view: CatalogView;
-  folderId: string | null;
-}
+type FilesCatalogScreenProps = { view: CatalogView; folderId: string | null };
 
 export function FilesCatalogScreen({
   view,
