@@ -17,6 +17,16 @@ export class D1SharingRepository implements SharingRepository {
       .bind(ownerId, Math.min(100, Math.max(1, Math.trunc(limit)))).all<ShareRecord>();
     return result.results;
   }
+  async consumePasswordAttempt(tokenHash: string, occurredAt: string, windowStart: string): Promise<boolean> {
+    const result = await this.db.prepare(
+      "INSERT INTO sharing_password_attempts (token_hash, window_start, attempts) VALUES (?, ?, 1) " +
+      "ON CONFLICT(token_hash) DO UPDATE SET " +
+      "window_start = CASE WHEN window_start < ? THEN ? ELSE window_start END, " +
+      "attempts = CASE WHEN window_start < ? THEN 1 ELSE attempts + 1 END " +
+      "WHERE window_start < ? OR attempts < 10"
+    ).bind(tokenHash, occurredAt, windowStart, occurredAt, windowStart, windowStart).run();
+    return result.meta.changes > 0;
+  }
   async revoke(id: string, ownerId: string, revokedAt: string): Promise<boolean> {
     const result = await this.db.prepare("UPDATE sharing_links SET revoked_at = ? WHERE id = ? AND owner_id = ? AND revoked_at IS NULL")
       .bind(revokedAt, id, ownerId).run();
