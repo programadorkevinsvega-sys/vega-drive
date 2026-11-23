@@ -24,6 +24,7 @@ Objetivo arquitectónico:
 La transferencia directa para las vistas y operaciones de la aplicación ya está cubierta por ADR-001. Esta propuesta solo podría reactivarse para un alcance adicional, como una API S3 compatible para clientes externos o distribución pública/CDN de objetos.
 
 Antes de iniciar ese alcance futuro:
+
 - [ ] El propietario debe aprobar explícitamente el producto, los clientes, los casos de uso y los límites de la API externa o de publicación pública.
 - [ ] Crear un ADR nuevo que defina autenticación de desarrolladores, aislamiento multiusuario, scopes, buckets/objetos, revocación, CORS, caché, auditoría y límites.
 - [ ] Añadir el trabajo al roadmap principal y definir criterios de aceptación medibles.
