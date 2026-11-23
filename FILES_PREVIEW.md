@@ -75,5 +75,7 @@ directamente al host R2.
 
 La suite de arquitectura comprueba además que el BFF no importa módulos ni
 accede directamente a D1/R2 y que el Worker mantiene un único composition root.
-Identity y Files se consumen mediante sus gateways públicos; Quota y Sharing
-siguen siendo placeholders limitados a `status()` con `ready: false`.
+Identity, Files y Sharing se consumen mediante sus contratos/gateways públicos.
+Sharing está implementado en la Fase 7. Quota permanece pendiente y sin
+operaciones funcionales hasta la Fase 6, que el propietario decidió reservar
+para el final.
