@@ -16,21 +16,33 @@ describe("integración de assets frontend/Cloudflare", () => {
     expect(config).not.toContain('directory = "./public"');
   });
 
-  it("define las cabeceras esperadas para todos los assets estáticos", () => {
+  it("define las cabeceras de seguridad esperadas para todos los assets estáticos", () => {
     const headers = read("frontend/public/_headers");
     expect(headers).toContain("/*");
     expect(headers).toContain("Content-Security-Policy: default-src 'self'");
     expect(headers).toContain("object-src 'none'");
     expect(headers).toContain("base-uri 'self'");
-    expect(headers).toContain("frame-ancestors 'none'");
+    expect(headers).toContain("form-action 'self'");
+    expect(headers).toContain("frame-ancestors 'self'");
+    expect(headers).toContain("frame-src 'self' https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com");
+    expect(headers).toContain("connect-src 'self' https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com");
+    expect(headers).toContain("img-src 'self' data: blob: https://*.r2.cloudflarestorage.com");
+    expect(headers).toContain("media-src 'self' blob: https://*.r2.cloudflarestorage.com");
     expect(headers).toContain("X-Content-Type-Options: nosniff");
     expect(headers).toContain(
       "Referrer-Policy: strict-origin-when-cross-origin",
     );
-    expect(headers).toContain("X-Frame-Options: DENY");
+    expect(headers).toContain("X-Frame-Options: SAMEORIGIN");
     expect(headers).toContain(
       "Strict-Transport-Security: max-age=31536000; includeSubDomains",
     );
+    expect(headers).toContain(
+      "Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    );
+    expect(headers).toContain("Cross-Origin-Opener-Policy: same-origin");
+    expect(headers).toContain("Cross-Origin-Resource-Policy: same-origin");
+    expect(headers).not.toContain("frame-ancestors 'none'");
+    expect(headers).not.toContain("X-Frame-Options: DENY");
   });
 
   it("mantiene el check frontend y los lockfiles separados", () => {
