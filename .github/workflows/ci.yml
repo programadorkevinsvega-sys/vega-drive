@@ -3,31 +3,27 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  # Validate every branch commit, including commits made before opening a PR.
   push:
-    branches: [main]
+    branches: ["**"]
+  merge_group:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   format:
     name: Format
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.format.outputs.changed }}
     steps:
+      # For pull_request, checkout the synthetic merge commit. For push and
+      # merge_group, checkout the exact commit GitHub is validating.
       - uses: actions/checkout@v6
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: pnpm/action-setup@v6
         with:
           version: 11.28.13
@@ -38,48 +34,16 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - name: Install formatter dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Apply Prettier formatting
-        id: format
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          BASE_REPOSITORY: ${{ github.repository }}
-          HEAD_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
-        run: |
-          pnpm exec prettier --write .
-          if git diff --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ]; then
-            :
-          elif [ "$EVENT_NAME" = "push" ] && [ "$HEAD_BRANCH" = "main" ]; then
-            :
-          else
-            echo "::error::Prettier found files that need formatting. Automatic formatting commits are only enabled for same-repository pull requests and pushes to main."
-            exit 1
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -u
-          git commit -m "style: apply Prettier formatting"
-          git push origin "HEAD:$HEAD_BRANCH"
-
-          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Verify formatting
+        run: pnpm run format:check
 
   verify:
     name: Verify
     needs: format
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
         with:
@@ -126,3 +90,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: "false"
+
+  required:
+    name: Required checks
+    if: always()
+    needs: [format, verify, secrets]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every validation job to pass
+        env:
+          FORMAT_RESULT: ${{ needs.format.result }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+          SECRETS_RESULT: ${{ needs.secrets.result }}
+        run: |
+          test "$FORMAT_RESULT" = "success"
+          test "$VERIFY_RESULT" = "success"
+          test "$SECRETS_RESULT" = "success"
